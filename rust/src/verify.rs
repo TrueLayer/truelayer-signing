@@ -18,6 +18,7 @@ pub struct Verifier<'a> {
     path: &'a str,
     headers: IndexMap<HeaderName<'a>, &'a str>,
     required_headers: IndexSet<HeaderName<'a>>,
+    allow_v1: bool,
 }
 
 /// Debug does not display key info.
@@ -36,6 +37,7 @@ impl<'a> Verifier<'a> {
             path: "",
             headers: <_>::default(),
             required_headers: <_>::default(),
+            allow_v1: false,
         }
     }
 
@@ -87,6 +89,15 @@ impl<'a> Verifier<'a> {
         self
     }
 
+    /// Sets whether v1 body-only signatures are allowed to pass verification.
+    /// Default `false`.
+    ///
+    /// `true` means both v1 & v2 signatures are allowed.
+    pub fn allow_v1(mut self, allow: bool) -> Self {
+        self.allow_v1 = allow;
+        self
+    }
+
     /// Verify the given `Tl-Signature` header value.
     ///
     /// Supports v1 (body only) & v2 full request signatures.
@@ -103,6 +114,10 @@ impl<'a> Verifier<'a> {
         }
 
         if jws_header.tl_version.is_empty() || jws_header.tl_version == "1" {
+            if !self.allow_v1 {
+                return Err(Error::JwsError(anyhow!("v1 signature not allowed")));
+            }
+
             // v1 signature: body only
             let payload = format!("{}.{}", header_b64, self.body.to_url_safe_base64());
             openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
