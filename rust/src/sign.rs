@@ -1,0 +1,152 @@
+use crate::{base64::ToUrlSafeBase64, http::HeaderName, jws::JwsHeader, openssl, Error};
+use indexmap::IndexMap;
+use std::fmt;
+
+/// Builder to generate a `Tl-Signature` header value using a private key.
+pub struct Signer<'a> {
+    kid: &'a str,
+    private_key: &'a str,
+    body: &'a [u8],
+    method: &'a str,
+    path: &'a str,
+    headers: IndexMap<HeaderName<'a>, &'a str>,
+}
+
+/// Debug does not display key info.
+impl fmt::Debug for Signer<'_> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "Signer")
+    }
+}
+
+impl<'a> Signer<'a> {
+    pub(crate) fn new(kid: &'a str, private_key_pem: &'a str) -> Self {
+        Self {
+            kid,
+            private_key: private_key_pem,
+            body: &[],
+            method: "POST",
+            path: "",
+            headers: <_>::default(),
+        }
+    }
+
+    /// Add the full request body.
+    ///
+    /// Note: This **must** be identical to what is sent with the request.
+    pub fn body(mut self, body: &'a [u8]) -> Self {
+        self.body = body;
+        self
+    }
+
+    /// Add the request method, defaults to `"POST"` if unspecified.
+    pub fn method(mut self, method: &'a str) -> Self {
+        self.method = method;
+        self
+    }
+
+    /// Add the request absolute path starting with a leading `/` and without
+    /// any trailing slashes.
+    pub fn path(mut self, path: &'a str) -> Self {
+        self.path = path;
+        self
+    }
+
+    /// Add a header name & value.
+    /// May be called multiple times to add multiple different headers.
+    ///
+    /// Warning: Only a single value per header name is supported.
+    pub fn header(mut self, key: &'a str, value: &'a str) -> Self {
+        self.add_header(key, value);
+        self
+    }
+
+    /// Add a header name & value.
+    /// May be called multiple times to add multiple different headers.
+    ///
+    /// Warning: Only a single value per header name is supported.
+    pub fn add_header(&mut self, key: &'a str, value: &'a str) {
+        self.headers.insert(HeaderName(key), value);
+    }
+
+    /// Produce a JWS `Tl-Signature` v1 header value, signing just the request body.
+    ///
+    /// Any specified method, path & headers will be ignored.
+    ///
+    /// In general full request signing should be preferred, see [`Signer::sign`].
+    pub fn sign_body_only(&self) -> Result<String, Error> {
+        let private_key = openssl::parse_ec_private_key(self.private_key.as_bytes())
+            .map_err(Error::InvalidKey)?;
+
+        let jws_header = format!(r#"{{"alg":"ES512","kid":"{}"}}"#, self.kid).to_url_safe_base64();
+        let jws_header_and_payload = format!("{}.{}", jws_header, self.body.to_url_safe_base64());
+
+        let signature = openssl::sign_es512(&private_key, jws_header_and_payload.as_bytes())
+            .map_err(Error::JwsError)?
+            .to_url_safe_base64();
+
+        let mut jws = jws_header;
+        jws.push_str("..");
+        jws.push_str(&signature);
+
+        Ok(jws)
+    }
+
+    /// Produce a JWS `Tl-Signature` v2 header value.
+    pub fn sign(&self) -> Result<String, Error> {
+        let private_key = openssl::parse_ec_private_key(self.private_key.as_bytes())
+            .map_err(Error::InvalidKey)?;
+
+        let jws_header = JwsHeader::new_v2(self.kid, &self.headers);
+        let jws_header_b64 = serde_json::to_string(&jws_header)
+            .map_err(|e| Error::JwsError(e.into()))?
+            .to_url_safe_base64();
+
+        let signing_payload =
+            build_v2_signing_payload(self.method, self.path, &self.headers, self.body);
+
+        let jws_header_and_payload = format!(
+            "{}.{}",
+            jws_header_b64,
+            signing_payload.to_url_safe_base64()
+        );
+        let signature = openssl::sign_es512(&private_key, jws_header_and_payload.as_bytes())
+            .map_err(Error::JwsError)?
+            .to_url_safe_base64();
+
+        let mut jws = jws_header_b64;
+        jws.push_str("..");
+        jws.push_str(&signature);
+
+        Ok(jws)
+    }
+}
+
+/// Build a v2 signing payload.
+///
+/// # Example
+/// ```txt
+/// POST /test-signature
+/// Idempotency-Key: 619410b3-b00c-406e-bb1b-2982f97edb8b
+/// {"bar":123}
+/// ```
+pub(crate) fn build_v2_signing_payload(
+    method: &str,
+    path: &str,
+    headers: &IndexMap<HeaderName<'_>, &str>,
+    body: &[u8],
+) -> Vec<u8> {
+    let mut payload = Vec::new();
+    payload.extend(method.to_ascii_uppercase().as_bytes());
+    payload.push(b' ');
+    payload.extend(path.as_bytes());
+    payload.push(b'\n');
+    for (h_name, h_val) in headers {
+        payload.extend(h_name.0.as_bytes());
+        payload.extend(b": ");
+        payload.extend(h_val.as_bytes());
+        payload.push(b'\n');
+    }
+    payload.extend(body);
+    payload
+}

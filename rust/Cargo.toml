@@ -1,0 +1,19 @@
+[package]
+name = "truelayer-request-signature"
+version = "0.1.0"
+authors = ["Alex Butler <alex.butler@truelayer.com>"]
+edition = "2018"
+description = "Produce & verify TrueLayer API requests signatures"
+# repository = "todo"
+keywords = ["truelayer"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[dependencies]
+openssl = "0.10"
+base64 = "0.13"
+thiserror = "1.0.30"
+anyhow = "1.0.44"
+serde_json = "1.0.68"
+serde = { version = "1.0.130", features = ["derive"] }
+indexmap = "1.7.0"
