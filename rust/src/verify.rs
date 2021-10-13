@@ -12,7 +12,7 @@ use std::fmt;
 
 /// Builder to verify a request against a `Tl-Signature` header.
 pub struct Verifier<'a> {
-    public_key: &'a str,
+    public_key: &'a [u8],
     body: &'a [u8],
     method: &'a str,
     path: &'a str,
@@ -28,7 +28,7 @@ impl fmt::Debug for Verifier<'_> {
 }
 
 impl<'a> Verifier<'a> {
-    pub(crate) fn new(public_key: &'a str) -> Self {
+    pub(crate) fn new(public_key: &'a [u8]) -> Self {
         Self {
             public_key,
             body: &[],
@@ -94,7 +94,7 @@ impl<'a> Verifier<'a> {
     /// Returns `Err(_)` if verification fails.
     pub fn verify(&self, tl_signature: &str) -> Result<(), Error> {
         let public_key =
-            openssl::parse_ec_public_key(self.public_key.as_bytes()).map_err(Error::InvalidKey)?;
+            openssl::parse_ec_public_key(self.public_key).map_err(Error::InvalidKey)?;
 
         let (jws_header, header_b64, signature) = parse_tl_signature(tl_signature)?;
 

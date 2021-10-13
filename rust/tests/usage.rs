@@ -1,5 +1,5 @@
-const PUBLIC_KEY: &str = include_str!("ec512-public.pem");
-const PRIVATE_KEY: &str = include_str!("ec512-private.pem");
+const PUBLIC_KEY: &[u8] = include_bytes!("ec512-public.pem");
+const PRIVATE_KEY: &[u8] = include_bytes!("ec512-private.pem");
 // we already know the public key, so the kid can be anything in these tests.
 const KID: &str = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
