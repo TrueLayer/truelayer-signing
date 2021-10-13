@@ -2,10 +2,10 @@
 //!
 //! # Example
 //! ```no_run
-//! # fn main() -> Result<(), truelayer_request_signature::Error> {
+//! # fn main() -> Result<(), truelayer_signing::Error> {
 //! # let (kid, private_key, idempotency_key, body) = unimplemented!();
 //! // `Tl-Signature` value to send with the request.
-//! let tl_signature = truelayer_request_signature::sign_with_pem(kid, private_key)
+//! let tl_signature = truelayer_signing::sign_with_pem(kid, private_key)
 //!     .method("POST")
 //!     .path("/payouts")
 //!     .header("Idempotency-Key", idempotency_key)
@@ -29,9 +29,9 @@ pub use verify::Verifier;
 ///
 /// # Example
 /// ```no_run
-/// # fn main() -> Result<(), truelayer_request_signature::Error> {
+/// # fn main() -> Result<(), truelayer_signing::Error> {
 /// # let (kid, private_key, idempotency_key, body) = unimplemented!();
-/// let tl_signature = truelayer_request_signature::sign_with_pem(kid, private_key)
+/// let tl_signature = truelayer_signing::sign_with_pem(kid, private_key)
 ///     .method("POST")
 ///     .path("/payouts")
 ///     .header("Idempotency-Key", idempotency_key)
@@ -47,9 +47,9 @@ pub fn sign_with_pem<'a>(kid: &'a str, private_key_pem: &'a str) -> Signer<'a> {
 ///
 /// # Example
 /// ```no_run
-/// # fn main() -> Result<(), truelayer_request_signature::Error> {
+/// # fn main() -> Result<(), truelayer_signing::Error> {
 /// # let (public_key, idempotency_key, body, tl_signature) = unimplemented!();
-/// truelayer_request_signature::verify_with_pem(public_key)
+/// truelayer_signing::verify_with_pem(public_key)
 ///     .method("POST")
 ///     .path("/payouts")
 ///     .require_header("Idempotency-Key")

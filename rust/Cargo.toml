@@ -1,10 +1,10 @@
 [package]
-name = "truelayer-request-signature"
+name = "truelayer-signing"
 version = "0.1.0"
 authors = ["Alex Butler <alex.butler@truelayer.com>"]
 edition = "2018"
 description = "Produce & verify TrueLayer API requests signatures"
-repository = "https://github.com/TrueLayer/truelayer-request-signature"
+repository = "https://github.com/TrueLayer/truelayer-signing"
 keywords = ["truelayer"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
