@@ -6,7 +6,7 @@ edition = "2018"
 description = "Produce & verify TrueLayer API requests signatures"
 repository = "https://github.com/TrueLayer/truelayer-request-signature"
 keywords = ["truelayer"]
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies]
