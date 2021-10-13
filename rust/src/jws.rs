@@ -21,7 +21,7 @@ pub struct JwsHeader {
 }
 
 impl JwsHeader {
-    pub(crate) fn new_v2(kid: &str, headers: &IndexMap<HeaderName<'_>, &str>) -> Self {
+    pub(crate) fn new_v2(kid: &str, headers: &IndexMap<HeaderName<'_>, &[u8]>) -> Self {
         let header_keys = headers.keys().fold(String::new(), |mut all, next| {
             if !all.is_empty() {
                 all.push(',');
@@ -42,8 +42,8 @@ impl JwsHeader {
     /// Returns an `Err(_)` if `headers` is missing any of the declared `tl_headers`.
     pub(crate) fn filter_headers<'a>(
         &'a self,
-        headers: &IndexMap<HeaderName<'_>, &'a str>,
-    ) -> anyhow::Result<IndexMap<HeaderName<'a>, &'a str>> {
+        headers: &IndexMap<HeaderName<'_>, &'a [u8]>,
+    ) -> anyhow::Result<IndexMap<HeaderName<'a>, &'a [u8]>> {
         let required_headers: IndexSet<_> = self
             .tl_headers
             .split(',')

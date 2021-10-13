@@ -47,7 +47,7 @@ fn verify_body_static_signature() {
 #[test]
 fn full_request_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
@@ -62,7 +62,7 @@ fn full_request_signature() {
         .method("POST")
         .path(path)
         .require_header("Idempotency-Key")
-        .header("X-Whatever", "aoitbeh")
+        .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
         .verify(&tl_signature)
@@ -72,14 +72,14 @@ fn full_request_signature() {
 #[test]
 fn verify_full_request_static_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
     let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
 
     truelayer_request_signature::verify_with_pem(PUBLIC_KEY)
         .method("POST")
         .path(path)
-        .header("X-Whatever-2", "t2345d")
+        .header("X-Whatever-2", b"t2345d")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
         .verify(tl_signature)
@@ -89,7 +89,7 @@ fn verify_full_request_static_signature() {
 #[test]
 fn full_request_signature_method_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
@@ -103,7 +103,7 @@ fn full_request_signature_method_mismatch() {
     truelayer_request_signature::verify_with_pem(PUBLIC_KEY)
         .method("DELETE") // different
         .path(path)
-        .header("X-Whatever", "aoitbeh")
+        .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
         .verify(&tl_signature)
@@ -113,7 +113,7 @@ fn full_request_signature_method_mismatch() {
 #[test]
 fn full_request_signature_path_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
@@ -127,7 +127,7 @@ fn full_request_signature_path_mismatch() {
     truelayer_request_signature::verify_with_pem(PUBLIC_KEY)
         .method("post")
         .path("/merchant_accounts/67b5b1cf-1d0c-45d4-a2ea-61bdc044327c/sweeping") // different
-        .header("X-Whatever", "aoitbeh")
+        .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
         .verify(&tl_signature)
@@ -137,7 +137,7 @@ fn full_request_signature_path_mismatch() {
 #[test]
 fn full_request_signature_header_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
@@ -151,8 +151,8 @@ fn full_request_signature_header_mismatch() {
     truelayer_request_signature::verify_with_pem(PUBLIC_KEY)
         .method("post")
         .path(path)
-        .header("X-Whatever", "aoitbeh")
-        .header("Idempotency-Key", "something-else") // different
+        .header("X-Whatever", b"aoitbeh")
+        .header("Idempotency-Key", b"something-else") // different
         .body(body)
         .verify(&tl_signature)
         .expect_err("verify should fail");
@@ -161,7 +161,7 @@ fn full_request_signature_header_mismatch() {
 #[test]
 fn full_request_signature_body_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
@@ -175,7 +175,7 @@ fn full_request_signature_body_mismatch() {
     truelayer_request_signature::verify_with_pem(PUBLIC_KEY)
         .method("post")
         .path(path)
-        .header("X-Whatever", "aoitbeh")
+        .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(br#"{"max_amount_in_minor":1234}"#) // different
         .verify(&tl_signature)
@@ -185,7 +185,7 @@ fn full_request_signature_body_mismatch() {
 #[test]
 fn full_request_signature_missing_signature_header() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
@@ -199,7 +199,7 @@ fn full_request_signature_missing_signature_header() {
     truelayer_request_signature::verify_with_pem(PUBLIC_KEY)
         .method("post")
         .path(path)
-        .header("X-Whatever", "aoitbeh")
+        .header("X-Whatever", b"aoitbeh")
         // missing Idempotency-Key
         .body(body)
         .verify(&tl_signature)
@@ -209,7 +209,7 @@ fn full_request_signature_missing_signature_header() {
 #[test]
 fn full_request_signature_required_header_missing_from_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
@@ -233,14 +233,14 @@ fn full_request_signature_required_header_missing_from_signature() {
 #[test]
 fn flexible_header_case_order_verify() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
-    let idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
         .method("post")
         .path(path)
         .header("Idempotency-Key", idempotency_key)
-        .header("X-Custom", "123")
+        .header("X-Custom", b"123")
         .body(body)
         .sign()
         .expect("sign");
@@ -248,7 +248,7 @@ fn flexible_header_case_order_verify() {
     truelayer_request_signature::verify_with_pem(PUBLIC_KEY)
         .method("post")
         .path(path)
-        .header("X-CUSTOM", "123") // different order & case, it's ok!
+        .header("X-CUSTOM", b"123") // different order & case, it's ok!
         .header("idempotency-key", idempotency_key) // different order & case, it's ok!
         .body(body)
         .verify(&tl_signature)
@@ -260,7 +260,7 @@ fn extract_jws_header() {
     let tl_signature = truelayer_request_signature::sign_with_pem(KID, PRIVATE_KEY)
         .method("delete")
         .path("/foo")
-        .header("X-Custom", "123")
+        .header("X-Custom", b"123")
         .sign()
         .expect("sign");
 

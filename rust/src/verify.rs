@@ -16,7 +16,7 @@ pub struct Verifier<'a> {
     body: &'a [u8],
     method: &'a str,
     path: &'a str,
-    headers: IndexMap<HeaderName<'a>, &'a str>,
+    headers: IndexMap<HeaderName<'a>, &'a [u8]>,
     required_headers: IndexSet<HeaderName<'a>>,
 }
 
@@ -63,7 +63,7 @@ impl<'a> Verifier<'a> {
     /// All request headers may be added here, any headers not mentioned
     /// in the jws signature header will be ignored unless required using
     /// [`Verifier::require_header`].
-    pub fn header(mut self, key: &'a str, value: &'a str) -> Self {
+    pub fn header(mut self, key: &'a str, value: &'a [u8]) -> Self {
         self.add_header(key, value);
         self
     }
@@ -74,7 +74,7 @@ impl<'a> Verifier<'a> {
     /// All request headers may be added here, any headers not mentioned
     /// in the jws signature header will be ignored unless required using
     /// [`Verifier::require_header`].
-    pub fn add_header(&mut self, key: &'a str, value: &'a str) {
+    pub fn add_header(&mut self, key: &'a str, value: &'a [u8]) {
         self.headers.insert(HeaderName(key), value);
     }
 
