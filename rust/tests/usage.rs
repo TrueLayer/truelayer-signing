@@ -14,6 +14,7 @@ fn body_signature() {
         .expect("sign_body");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .allow_v1(true)
         .body(body)
         .verify(&tl_signature)
         .expect("verify");
@@ -27,6 +28,7 @@ fn body_signature_mismatch() {
         .expect("sign_body");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .allow_v1(true)
         .body(br#"{"abc":124}"#) // different
         .verify(&tl_signature)
         .expect_err("verify should fail");
@@ -38,9 +40,22 @@ fn verify_body_static_signature() {
     let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AdDESSiHQVQSRFrD8QO6V8m0CWIfsDGyMOlipOt9LQhyG1lKjDR17crBgy_7TYi4ZQH--dyNtN9Nab3P7yFQzgqOALl8S-beevWYpnIMXHQCgrv-XpfNtenJTckCH2UAQIwR-pjV8XiTM1be1RMYpMl8qYTbCL5Bf8t_dME-1E6yZQEH";
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .allow_v1(true)
         .body(body)
         .verify(tl_signature)
         .expect("verify");
+}
+
+#[test]
+fn verify_body_static_signature_not_allowed() {
+    let body = br#"{"abc":123}"#;
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AdDESSiHQVQSRFrD8QO6V8m0CWIfsDGyMOlipOt9LQhyG1lKjDR17crBgy_7TYi4ZQH--dyNtN9Nab3P7yFQzgqOALl8S-beevWYpnIMXHQCgrv-XpfNtenJTckCH2UAQIwR-pjV8XiTM1be1RMYpMl8qYTbCL5Bf8t_dME-1E6yZQEH";
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        // v1 not allowed by default
+        .body(body)
+        .verify(tl_signature)
+        .expect_err("verify should not be allowed");
 }
 
 /// Sign method, path, headers & body and verify.
