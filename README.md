@@ -6,8 +6,8 @@ They can then be verified using the associated public key.
 
 * [Rust](./rust)
 
-## Key generation
-See [paydirect-signing-examples#generating-a-key-pair](https://github.com/TrueLayer/paydirect-signing-examples#generating-a-key-pair).
+## Request signing specification
+See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how request signing is implemented.
 
 #### License
 <sup>
