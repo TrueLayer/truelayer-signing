@@ -69,6 +69,22 @@ impl<'a> Signer<'a> {
         self.headers.insert(HeaderName(key), value);
     }
 
+    /// Appends multiple header names & values.
+    ///
+    /// Warning: Only a single value per header name is supported.
+    ///
+    /// # Example
+    /// ```
+    /// # let (kid, key) = ("", &[]);
+    /// truelayer_signing::sign_with_pem(kid, key)
+    ///     .headers([("X-Head-A", "123".as_bytes()), ("X-Head-B", "345".as_bytes())]);
+    /// ```
+    pub fn headers(mut self, headers: impl IntoIterator<Item = (&'a str, &'a [u8])>) -> Self {
+        self.headers
+            .extend(headers.into_iter().map(|(k, v)| (HeaderName(k), v)));
+        self
+    }
+
     /// Produce a JWS `Tl-Signature` v1 header value, signing just the request body.
     ///
     /// Any specified method, path & headers will be ignored.
