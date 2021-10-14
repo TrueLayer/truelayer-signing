@@ -5,7 +5,7 @@ use std::fmt;
 /// Builder to generate a `Tl-Signature` header value using a private key.
 pub struct Signer<'a> {
     kid: &'a str,
-    private_key: &'a str,
+    private_key: &'a [u8],
     body: &'a [u8],
     method: &'a str,
     path: &'a str,
@@ -20,7 +20,7 @@ impl fmt::Debug for Signer<'_> {
 }
 
 impl<'a> Signer<'a> {
-    pub(crate) fn new(kid: &'a str, private_key_pem: &'a str) -> Self {
+    pub(crate) fn new(kid: &'a str, private_key_pem: &'a [u8]) -> Self {
         Self {
             kid,
             private_key: private_key_pem,
@@ -75,8 +75,8 @@ impl<'a> Signer<'a> {
     ///
     /// In general full request signing should be preferred, see [`Signer::sign`].
     pub fn sign_body_only(&self) -> Result<String, Error> {
-        let private_key = openssl::parse_ec_private_key(self.private_key.as_bytes())
-            .map_err(Error::InvalidKey)?;
+        let private_key =
+            openssl::parse_ec_private_key(self.private_key).map_err(Error::InvalidKey)?;
 
         let jws_header = format!(r#"{{"alg":"ES512","kid":"{}"}}"#, self.kid).to_url_safe_base64();
         let jws_header_and_payload = format!("{}.{}", jws_header, self.body.to_url_safe_base64());
@@ -94,8 +94,8 @@ impl<'a> Signer<'a> {
 
     /// Produce a JWS `Tl-Signature` v2 header value.
     pub fn sign(&self) -> Result<String, Error> {
-        let private_key = openssl::parse_ec_private_key(self.private_key.as_bytes())
-            .map_err(Error::InvalidKey)?;
+        let private_key =
+            openssl::parse_ec_private_key(self.private_key).map_err(Error::InvalidKey)?;
 
         let jws_header = JwsHeader::new_v2(self.kid, &self.headers);
         let jws_header_b64 = serde_json::to_string(&jws_header)

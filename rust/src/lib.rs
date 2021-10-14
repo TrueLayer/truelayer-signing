@@ -39,7 +39,7 @@ pub use verify::Verifier;
 ///     .sign()?;
 /// # Ok(()) }
 /// ```
-pub fn sign_with_pem<'a>(kid: &'a str, private_key_pem: &'a str) -> Signer<'a> {
+pub fn sign_with_pem<'a>(kid: &'a str, private_key_pem: &'a [u8]) -> Signer<'a> {
     Signer::new(kid, private_key_pem)
 }
 
@@ -58,7 +58,7 @@ pub fn sign_with_pem<'a>(kid: &'a str, private_key_pem: &'a str) -> Signer<'a> {
 ///     .verify(tl_signature)?;
 /// # Ok(()) }
 /// ```
-pub fn verify_with_pem(public_key_pem: &str) -> Verifier<'_> {
+pub fn verify_with_pem(public_key_pem: &[u8]) -> Verifier<'_> {
     Verifier::new(public_key_pem)
 }
 
