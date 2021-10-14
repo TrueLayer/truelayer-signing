@@ -80,6 +80,24 @@ impl<'a> Verifier<'a> {
         self.headers.insert(HeaderName(key), value);
     }
 
+    /// Appends multiple header names & values.
+    ///
+    /// All request headers may be added here, any headers not mentioned
+    /// in the jws signature header will be ignored unless required using
+    /// [`Verifier::require_header`].
+    ///
+    /// # Example
+    /// ```
+    /// # let key = &[];
+    /// truelayer_signing::verify_with_pem(key)
+    ///     .headers([("X-Head-A", "123".as_bytes()), ("X-Head-B", "345".as_bytes())]);
+    /// ```
+    pub fn headers(mut self, headers: impl IntoIterator<Item = (&'a str, &'a [u8])>) -> Self {
+        self.headers
+            .extend(headers.into_iter().map(|(k, v)| (HeaderName(k), v)));
+        self
+    }
+
     /// Require a header name that must be included in the `Tl-Signature`.
     /// May be called multiple times to add multiple required headers.
     ///
