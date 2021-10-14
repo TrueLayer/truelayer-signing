@@ -11,6 +11,8 @@ use indexmap::{IndexMap, IndexSet};
 use std::fmt;
 
 /// Builder to verify a request against a `Tl-Signature` header.
+///
+/// See [`crate::verify_with_pem`] for examples.
 pub struct Verifier<'a> {
     public_key: &'a [u8],
     body: &'a [u8],

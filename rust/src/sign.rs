@@ -3,6 +3,8 @@ use indexmap::IndexMap;
 use std::fmt;
 
 /// Builder to generate a `Tl-Signature` header value using a private key.
+///
+/// See [`crate::sign_with_pem`] for examples.
 pub struct Signer<'a> {
     kid: &'a str,
     private_key: &'a [u8],
@@ -34,12 +36,26 @@ impl<'a> Signer<'a> {
     /// Add the full request body.
     ///
     /// Note: This **must** be identical to what is sent with the request.
+    ///
+    /// # Example
+    /// ```
+    /// # let (kid, key) = ("", &[]);
+    /// truelayer_signing::sign_with_pem(kid, key)
+    ///     .body(b"{...}");
+    /// ```
     pub fn body(mut self, body: &'a [u8]) -> Self {
         self.body = body;
         self
     }
 
     /// Add the request method, defaults to `"POST"` if unspecified.
+    ///
+    /// # Example
+    /// ```
+    /// # let (kid, key) = ("", &[]);
+    /// truelayer_signing::sign_with_pem(kid, key)
+    ///     .method("POST");
+    /// ```
     pub fn method(mut self, method: &'a str) -> Self {
         self.method = method;
         self
@@ -47,6 +63,13 @@ impl<'a> Signer<'a> {
 
     /// Add the request absolute path starting with a leading `/` and without
     /// any trailing slashes.
+    ///
+    /// # Example
+    /// ```
+    /// # let (kid, key) = ("", &[]);
+    /// truelayer_signing::sign_with_pem(kid, key)
+    ///     .path("/payouts");
+    /// ```
     pub fn path(mut self, path: &'a str) -> Self {
         self.path = path;
         self
@@ -56,6 +79,13 @@ impl<'a> Signer<'a> {
     /// May be called multiple times to add multiple different headers.
     ///
     /// Warning: Only a single value per header name is supported.
+    ///
+    /// # Example
+    /// ```
+    /// # let (kid, key) = ("", &[]);
+    /// truelayer_signing::sign_with_pem(kid, key)
+    ///     .header("Idempotency-Key", b"60df4d00-9778-4297-be6d-817d7a6d27bb");
+    /// ```
     pub fn header(mut self, key: &'a str, value: &'a [u8]) -> Self {
         self.add_header(key, value);
         self
@@ -65,6 +95,12 @@ impl<'a> Signer<'a> {
     /// May be called multiple times to add multiple different headers.
     ///
     /// Warning: Only a single value per header name is supported.
+    ///
+    /// # Example
+    /// ```
+    /// # let mut signer = truelayer_signing::sign_with_pem("", &[]);
+    /// signer.add_header("Idempotency-Key", b"60df4d00-9778-4297-be6d-817d7a6d27bb");
+    /// ```
     pub fn add_header(&mut self, key: &'a str, value: &'a [u8]) {
         self.headers.insert(HeaderName(key), value);
     }
