@@ -9,7 +9,7 @@ pub struct Signer<'a> {
     body: &'a [u8],
     method: &'a str,
     path: &'a str,
-    headers: IndexMap<HeaderName<'a>, &'a str>,
+    headers: IndexMap<HeaderName<'a>, &'a [u8]>,
 }
 
 /// Debug does not display key info.
@@ -56,7 +56,7 @@ impl<'a> Signer<'a> {
     /// May be called multiple times to add multiple different headers.
     ///
     /// Warning: Only a single value per header name is supported.
-    pub fn header(mut self, key: &'a str, value: &'a str) -> Self {
+    pub fn header(mut self, key: &'a str, value: &'a [u8]) -> Self {
         self.add_header(key, value);
         self
     }
@@ -65,7 +65,7 @@ impl<'a> Signer<'a> {
     /// May be called multiple times to add multiple different headers.
     ///
     /// Warning: Only a single value per header name is supported.
-    pub fn add_header(&mut self, key: &'a str, value: &'a str) {
+    pub fn add_header(&mut self, key: &'a str, value: &'a [u8]) {
         self.headers.insert(HeaderName(key), value);
     }
 
@@ -133,7 +133,7 @@ impl<'a> Signer<'a> {
 pub(crate) fn build_v2_signing_payload(
     method: &str,
     path: &str,
-    headers: &IndexMap<HeaderName<'_>, &str>,
+    headers: &IndexMap<HeaderName<'_>, &[u8]>,
     body: &[u8],
 ) -> Vec<u8> {
     let mut payload = Vec::new();
@@ -144,7 +144,7 @@ pub(crate) fn build_v2_signing_payload(
     for (h_name, h_val) in headers {
         payload.extend(h_name.0.as_bytes());
         payload.extend(b": ");
-        payload.extend(h_val.as_bytes());
+        payload.extend(*h_val);
         payload.push(b'\n');
     }
     payload.extend(body);
