@@ -1,0 +1,153 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using Jose;
+
+namespace TrueLayer.Signing
+{
+    /// <summary>
+    /// Builder to verify a request against a `Tl-Signature` header using a public key.
+    /// </summary>
+    public sealed class Verifier
+    {
+        /// <summary>
+        /// Start building a `Tl-Signature` header verifier using public key pem data.
+        /// </summary>
+        public static Verifier VerifyWithPem(ReadOnlySpan<char> publicKeyPem) => new Verifier(publicKeyPem);
+
+        /// <summary>
+        /// Start building a `Tl-Signature` header verifier using public key pem data.
+        /// </summary>
+        public static Verifier VerifyWithPem(ReadOnlySpan<byte> publicKeyPem)
+            => new Verifier(Encoding.UTF8.GetString(publicKeyPem));
+
+        /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        public static string ExtractKid(string tlSignature)
+        {
+            var kid = Jose.JWT.Headers(tlSignature)["kid"] as string;
+            if (kid == null)
+            {
+                throw new SignatureException("missing kid");
+            }
+            return kid;
+        }
+
+        private ECDsa key;
+        private string method = "";
+        private string path = "";
+        private Dictionary<string, byte[]> headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
+        private HashSet<string> requiredHeaders = new HashSet<string>(new HeaderNameComparer());
+        private byte[] body = new byte[0];
+
+        private Verifier(ReadOnlySpan<char> publicKeyPem)
+        {
+            var ecdsa = ECDsa.Create();
+            ecdsa.ImportFromPem(publicKeyPem);
+            key = ecdsa;
+        }
+
+        /// <summary>Add the request method.</summary>
+        public Verifier Method(string method)
+        {
+            this.method = method;
+            return this;
+        }
+
+        /// <summary>
+        /// Add the request absolute path starting with a leading `/` and without any trailing slashes.
+        /// </summary>
+        public Verifier Path(string path)
+        {
+            this.path = path;
+            return this;
+        }
+
+        /// <summary>
+        /// Add a header name and value.
+        /// May be called multiple times to add multiple different headers.
+        /// </summary>
+        public Verifier Header(string name, byte[] value)
+        {
+            this.headers.Add(name.Trim(), value);
+            return this;
+        }
+
+        /// <summary>
+        /// Add a header name and value.
+        /// May be called multiple times to add multiple different headers.
+        /// </summary>
+        public Verifier Header(string name, string value) => Header(name, value.ToUtf8());
+
+        /// <summary>
+        /// Require a header name that must be included in the `Tl-Signature`.
+        /// May be called multiple times to add multiple required headers.
+        /// </summary>
+        public Verifier RequireHeader(string name)
+        {
+            requiredHeaders.Add(name);
+            return this;
+        }
+
+        /// <summary>Add the full unmodified request body.</summary>
+        public Verifier Body(byte[] body)
+        {
+            this.body = body;
+            return this;
+        }
+
+        /// <summary>Add the full unmodified request body.</summary>
+        public Verifier Body(string body) => Body(body.ToUtf8());
+
+        /// <summary>Verify the given `Tl-Signature` header value.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        public void Verify(string tlSignature)
+        {
+            var jwsHeaders = Jose.JWT.Headers(tlSignature);
+
+            SignatureException.Ensure(jwsHeaders["alg"] as string == "ES512", "unsupported jws alg");
+            SignatureException.Ensure(jwsHeaders["tl_version"] as string == "2", "unsupported jws tl_version");
+
+            var signatureHeaderNames = (jwsHeaders["tl_headers"] as string ?? "")
+                .Split(",")
+                .Select(h => h.Trim())
+                .ToList();
+
+            var missingRequired = requiredHeaders.SingleOrDefault(h => !signatureHeaderNames.Contains(h));
+            SignatureException.Ensure(missingRequired == null, $"signature is missing required header {missingRequired}");
+
+            var signedHeaders = FilterOrderHeaders(signatureHeaderNames);
+
+            var signingPayload = Util.BuildV2SigningPayload(method, path, signedHeaders, body);
+            var jws = tlSignature.Replace("..", $".{Base64Url.Encode(signingPayload)}.");
+            try
+            {
+                Jose.JWT.Decode(jws, key);
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException("Invalid signature", e);
+            }
+        }
+
+        /// <summary>Filter and order headers to match jws header `tl_headers`.</summary>
+        private List<(string, byte[])> FilterOrderHeaders(List<string> signedHeaderNames)
+        {
+            var orderedHeaders = new List<(string, byte[])>(signedHeaderNames.Count);
+            foreach (var name in signedHeaderNames)
+            {
+                if (headers.TryGetValue(name.ToLowerInvariant(), out var value))
+                {
+                    orderedHeaders.Add((name, value));
+                }
+                else
+                {
+                    throw new SignatureException($"Missing tl_header `{name}` declared in signature");
+                }
+            }
+            return orderedHeaders;
+        }
+    }
+}

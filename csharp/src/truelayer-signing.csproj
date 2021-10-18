@@ -1,0 +1,19 @@
+<!-- Note: Auto published using version in file PUBLISH-VERSION, **not by tag** -->
+
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <TargetFramework>net5.0</TargetFramework>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>CS8600;CS8602;CS8603;CS8604;CS8618</WarningsAsErrors>
+    <Authors>Alex Butler</Authors>
+    <AssemblyName>truelayer-signing</AssemblyName>
+    <PackageId>truelayer-signing</PackageId>
+    <PackageProjectUrl>https://github.com/TrueLayer/truelayer-signing</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="jose-jwt" Version="3.2.0" />
+  </ItemGroup>
+</Project>
