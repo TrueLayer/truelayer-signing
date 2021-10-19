@@ -9,6 +9,15 @@
     <AssemblyName>truelayer-signing</AssemblyName>
     <PackageId>truelayer-signing</PackageId>
     <PackageProjectUrl>https://github.com/TrueLayer/truelayer-signing</PackageProjectUrl>
+    <PackageReleaseNotes>See $(PackageProjectUrl)/csharp/CHANGELOG.md for details.</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Repository>truelayer-signing</Repository>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>$(PackageProjectUrl).git</RepositoryUrl>
+    <Company>TrueLayer</Company>
+    <Copyright>TrueLayer (c) $([System.DateTime]::Now.ToString(yyyy))</Copyright>
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+    <Description>Produce and verify TrueLayer API requests signatures.</Description>
   </PropertyGroup>
 
   <ItemGroup>
