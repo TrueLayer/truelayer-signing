@@ -105,7 +105,7 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public void Verify(string tlSignature)
         {
-            var jwsHeaders = Jose.JWT.Headers(tlSignature);
+            var jwsHeaders = SignatureException.Try(() => Jose.JWT.Headers(tlSignature));
 
             SignatureException.Ensure(jwsHeaders["alg"] as string == "ES512", "unsupported jws alg");
             SignatureException.Ensure(jwsHeaders["tl_version"] as string == "2", "unsupported jws tl_version");
@@ -122,14 +122,8 @@ namespace TrueLayer.Signing
 
             var signingPayload = Util.BuildV2SigningPayload(method, path, signedHeaders, body);
             var jws = tlSignature.Replace("..", $".{Base64Url.Encode(signingPayload)}.");
-            try
-            {
-                Jose.JWT.Decode(jws, key);
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException("Invalid signature", e);
-            }
+
+            SignatureException.Try(() => Jose.JWT.Decode(jws, key), "Invalid signature");
         }
 
         /// <summary>Filter and order headers to match jws header `tl_headers`.</summary>

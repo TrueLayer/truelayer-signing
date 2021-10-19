@@ -9,20 +9,20 @@ namespace Tests
     {
         // Note: Should be the same keys used in all lang tests
         //       so static signature tests ensure cross-lang consistency.
-        private const string PublicKey = "-----BEGIN PUBLIC KEY-----\n"
+        internal const string PublicKey = "-----BEGIN PUBLIC KEY-----\n"
             + "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBVIVnghUzHmCEZ3HNjDmaZMJ7UwZf\n"
             + "av2SYcEtbDQc4uPhiEwWoYZMxzgvsz1vVGkusfTIjcXeCfDZ+xu9grRYt4kBo39z\n"
             + "w0i0j1rau4T7Bi+thc/VZpCyuwt63mZWcRs5PlQzpL34bBSXL5L6G9XUtXn8pXwU\n"
             + "GMhNDp5xVGbslRqTU8s=\n"
             + "-----END PUBLIC KEY-----\n";
-        private const string PrivateKey = "-----BEGIN EC PRIVATE KEY-----\n"
+        internal const string PrivateKey = "-----BEGIN EC PRIVATE KEY-----\n"
             + "MIHcAgEBBEIAVItA/A9H8WA0rOmDO5kq774be6noZ73xWJkbmzihkhtnYJ+eCQl4\n"
             + "G68ZFKildLuR2DElMBrNgJHY1TkL9hr7U9GgBwYFK4EEACOhgYkDgYYABAFUhWeC\n"
             + "FTMeYIRncc2MOZpkwntTBl9q/ZJhwS1sNBzi4+GITBahhkzHOC+zPW9UaS6x9MiN\n"
             + "xd4J8Nn7G72CtFi3iQGjf3PDSLSPWtq7hPsGL62Fz9VmkLK7C3reZlZxGzk+VDOk\n"
             + "vfhsFJcvkvob1dS1efylfBQYyE0OnnFUZuyVGpNTyw==\n"
             + "-----END EC PRIVATE KEY-----\n";
-        private const string Kid = "45fc75cf-5649-4134-84b3-192c2c78e990";
+        internal const string Kid = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
         [Fact]
         public void SignAndVerify()

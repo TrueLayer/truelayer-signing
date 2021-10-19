@@ -15,6 +15,25 @@ namespace TrueLayer.Signing
             }
         }
 
+        /// <summary>
+        /// Run the function converting any thrown exception into a SignatureException.
+        /// </summary>
+        internal static T Try<T>(Func<T> f, string? message = null)
+        {
+            try
+            {
+                return f();
+            }
+            catch (SignatureException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException(message ?? e.Message ?? e.GetType().Name, e);
+            }
+        }
+
         internal SignatureException(string message) : base(message) { }
         internal SignatureException(string message, Exception? innerException) : base(message, innerException) { }
     }
