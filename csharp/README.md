@@ -1,5 +1,5 @@
 # truelayer-signing
-C# crate to produce & verify TrueLayer API requests signatures.
+C# library to produce & verify TrueLayer API requests signatures.
 
 ```csharp
 using TrueLayer.Signing;
