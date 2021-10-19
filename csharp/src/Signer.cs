@@ -102,7 +102,7 @@ namespace TrueLayer.Signing
                 {"alg", "ES512"},
                 {"kid", kid},
                 {"tl_version", "2"},
-                {"tl_headers", string.Join(",", headerList.Select(h => h.Key.Trim()))},
+                {"tl_headers", string.Join(",", headerList.Select(h => h.Key))},
             };
             var signingPayload = Util.BuildV2SigningPayload(method, path, headerList, body);
 
