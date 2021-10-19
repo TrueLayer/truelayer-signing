@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <PackageVersion>0.1.0</PackageVersion>
     <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <Nullable>enable</Nullable>
@@ -15,7 +15,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>$(PackageProjectUrl).git</RepositoryUrl>
     <Company>TrueLayer</Company>
-    <Copyright>TrueLayer (c) $([System.DateTime]::Now.ToString(yyyy))</Copyright>
+    <Copyright>Copyright (c) TrueLayer $([System.DateTime]::Now.ToString(yyyy))</Copyright>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <Description>Produce and verify TrueLayer API requests signatures.</Description>
   </PropertyGroup>
