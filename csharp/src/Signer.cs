@@ -88,6 +88,8 @@ namespace TrueLayer.Signing
         /// <summary>
         /// Add the full request body.
         /// Note: This *must* be identical to what is sent with the request.
+        /// <br/>
+        /// In this method it is assumed the body will be encoded using UTF-8.
         /// </summary>
         public Signer Body(string body) => Body(body.ToUtf8());
 

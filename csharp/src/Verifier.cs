@@ -93,7 +93,11 @@ namespace TrueLayer.Signing
             return this;
         }
 
-        /// <summary>Add the full unmodified request body.</summary>
+        /// <summary>
+        /// Add the full unmodified request body.
+        /// <br/>
+        /// In this method it is assumed the body was encoded using, or identical to, UTF-8.
+        /// </summary>
         public Verifier Body(string body) => Body(body.ToUtf8());
 
         /// <summary>Verify the given `Tl-Signature` header value.</summary>
