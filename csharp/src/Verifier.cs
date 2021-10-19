@@ -77,6 +77,44 @@ namespace TrueLayer.Signing
         public Verifier Header(string name, string value) => Header(name, value.ToUtf8());
 
         /// <summary>
+        /// Appends multiple header names and values.
+        /// <br/>
+        /// Warning: Only a single value per header name is supported.
+        /// </summary>
+        public Verifier Headers(IEnumerable<KeyValuePair<string, string>> headers)
+        {
+            foreach (var entry in headers)
+            {
+                Header(entry.Key, entry.Value);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Appends multiple header names and values.
+        /// <br/>
+        /// Warning: Only a single value per header name is supported.
+        /// </summary>
+        public Verifier Headers(IEnumerable<KeyValuePair<string, byte[]>> headers)
+        {
+            foreach (var entry in headers)
+            {
+                Header(entry.Key, entry.Value);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Appends multiple header names and values.
+        /// <br/>
+        /// Warning: Only a single value per header name is supported, the first is used.
+        /// </summary>
+        public Verifier Headers(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+            => Headers(headers
+                .Where(e => e.Value.Any())
+                .Select(e => KeyValuePair.Create(e.Key, e.Value.First())));
+
+        /// <summary>
         /// Require a header name that must be included in the `Tl-Signature`.
         /// May be called multiple times to add multiple required headers.
         /// </summary>

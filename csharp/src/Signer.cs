@@ -76,6 +76,34 @@ namespace TrueLayer.Signing
         public Signer Header(string name, string value) => Header(name, value.ToUtf8());
 
         /// <summary>
+        /// Appends multiple header names and values.
+        /// <br/>
+        /// Warning: Only a single value per header name is supported.
+        /// </summary>
+        public Signer Headers(IEnumerable<KeyValuePair<string, string>> headers)
+        {
+            foreach (var entry in headers)
+            {
+                Header(entry.Key, entry.Value);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Appends multiple header names and values.
+        /// <br/>
+        /// Warning: Only a single value per header name is supported.
+        /// </summary>
+        public Signer Headers(IEnumerable<KeyValuePair<string, byte[]>> headers)
+        {
+            foreach (var entry in headers)
+            {
+                Header(entry.Key, entry.Value);
+            }
+            return this;
+        }
+
+        /// <summary>
         /// Add the full request body.
         /// Note: This *must* be identical to what is sent with the request.
         /// </summary>
