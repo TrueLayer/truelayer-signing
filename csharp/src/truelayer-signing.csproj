@@ -1,5 +1,3 @@
-<!-- Note: Auto published using version in file PUBLISH-VERSION, **not by tag** -->
-
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>0.1.0</Version>
