@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace TrueLayer.Signing
@@ -67,6 +69,54 @@ namespace TrueLayer.Signing
 
         /// <summary>Convert to utf-8 bytes</summary>
         internal static byte[] ToUtf8(this string text) => Encoding.UTF8.GetBytes(text);
+
+        /// <summary>Parses a RFC 7468 PEM-encoded key into a `ECDsa`.</summary>
+        internal static ECDsa ParsePem(this ReadOnlySpan<char> pem)
+        {
+            var ecdsa = ECDsa.Create();
+#if (NET5_0 || NET5_0_OR_GREATER)
+            ecdsa.ImportFromPem(pem);
+#else
+            ecdsa.PreNet5ImportPem(pem);
+#endif
+            return ecdsa;
+        }
+
+        /// <summary>
+        /// Imports an RFC 7468 PEM-encoded key, replacing the keys for this object.
+        /// </summary>
+        private static void PreNet5ImportPem(this ECDsa key, ReadOnlySpan<char> pem)
+        {
+            try
+            {
+                var sb = new StringBuilder();
+                using (var reader = new StringReader(pem.ToString()))
+                {
+                    string? line = null;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (!line.StartsWith("--"))
+                        {
+                            sb.Append(line);
+                        }
+                    }
+                }
+                var decodedPem = Convert.FromBase64String(sb.ToString());
+                if (pem.Contains("PRIVATE KEY-----", StringComparison.InvariantCulture))
+                {
+                    key.ImportECPrivateKey(decodedPem, out _);
+                }
+                else
+                {
+                    key.ImportSubjectPublicKeyInfo(decodedPem, out _);
+                }
+            }
+            catch (Exception e)
+            {
+                // throw somewhat consistently with `ImportFromPem`.
+                throw new ArgumentException($"Invalid key pem data: {e.Message}");
+            }
+        }
     }
 
     /// <summary>Case-insensitive string header name comparison.</summary>

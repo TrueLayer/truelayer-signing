@@ -14,17 +14,17 @@ namespace TrueLayer.Signing
     {
         /// <summary>
         /// Start building a request Tl-Signature header value using private key
-        /// pem data and the key's kid.
+        /// RFC 7468 PEM-encoded data and the key's kid.
         /// </summary>
-        public static Signer SignWithPem(string kid, ReadOnlySpan<char> publicKeyPem)
-            => new Signer(kid, publicKeyPem);
+        public static Signer SignWithPem(string kid, ReadOnlySpan<char> privateKeyPem)
+            => new Signer(kid, privateKeyPem);
 
         /// <summary>
         /// Start building a request Tl-Signature header value using private key
-        /// pem data and the key's kid.
+        /// RFC 7468 PEM-encoded data and the key's kid.
         /// </summary>
-        public static Signer SignWithPem(string kid, ReadOnlySpan<byte> publicKeyPem)
-            => new Signer(kid, Encoding.UTF8.GetString(publicKeyPem));
+        public static Signer SignWithPem(string kid, ReadOnlySpan<byte> privateKeyPem)
+            => new Signer(kid, Encoding.UTF8.GetString(privateKeyPem));
 
         private ECDsa key;
         private string kid;
@@ -33,12 +33,10 @@ namespace TrueLayer.Signing
         private Dictionary<string, byte[]> headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
         private byte[] body = new byte[0];
 
-        private Signer(string _kid, ReadOnlySpan<char> publicKeyPem)
+        private Signer(string _kid, ReadOnlySpan<char> privateKeyPem)
         {
-            var ecdsa = ECDsa.Create();
-            ecdsa.ImportFromPem(publicKeyPem);
+            key = privateKeyPem.ParsePem();
             kid = _kid;
-            key = ecdsa;
         }
 
         /// <summary>Add the request method, defaults to `"POST"` if unspecified.</summary>
