@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>CS8600;CS8602;CS8603;CS8604;CS8618</WarningsAsErrors>
     <Authors>Alex Butler</Authors>
-    <AssemblyName>truelayer-signing</AssemblyName>
-    <PackageId>truelayer-signing</PackageId>
+    <AssemblyName>TrueLayer.Signing</AssemblyName>
+    <PackageId>TrueLayer.Signing</PackageId>
     <PackageProjectUrl>https://github.com/TrueLayer/truelayer-signing</PackageProjectUrl>
     <PackageReleaseNotes>See $(PackageProjectUrl)/csharp/CHANGELOG.md for details.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
