@@ -39,6 +39,7 @@ describe('sign', () => {
       method: "POST",
       path,
       body,
+      requiredHeaders: ["Idempotency-Key"],
       headers: {
         "X-Whatever-2": "yarshtarst",
         "Idempotency-Key": idempotencyKey,
@@ -52,6 +53,7 @@ describe('verify', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    // Note: Same signature use in all other lang tests
     const signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
 
     // verify should work (not throw)
@@ -207,10 +209,11 @@ describe('verify', () => {
       method: "post",
       path,
       body,
+      requiredHeaders: ["idempotency-KEY"], // different case, no worries!
       headers: {
         "X-CUSTOM": "123", // different order & case, it's ok!
         "X-Whatever-2": "foaulrsjth",
-        "idempotency-key": idempotencyKey, // different order & case, it's ok!
+        "idempotency-key": idempotencyKey, // different order & case, chill it'll work!
       }
     });
   });
