@@ -1,6 +1,10 @@
 # truelayer-signing
 Javascript library to produce & verify TrueLayer API requests signatures.
 
+```sh
+npm install --save truelayer-signing
+```
+
 ```javascript
 const tlSigning = require('truelayer-signing');
 
