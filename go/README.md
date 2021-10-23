@@ -10,3 +10,11 @@ signature, err := tlsigning.SignWithPem(Kid, privateKeyBytes).
     Body(body).
     Sign()
 ```
+
+## Installation
+
+Install the package with:
+
+```shell
+go get github.com/Truelayer/truelayer-signing/go
+```
