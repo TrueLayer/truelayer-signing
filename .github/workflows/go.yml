@@ -2,7 +2,7 @@ name: Go
 
 on:
   push:
-    branches: [ main, go ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
