@@ -5,6 +5,7 @@ Request signatures are created using a private key and included with certain API
 They can then be verified using the associated public key.
 
 * [Rust](./rust)
+* [Go](./go)
 
 ## Request signing specification
 See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how request signing is implemented.
