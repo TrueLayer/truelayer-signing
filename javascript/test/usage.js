@@ -48,14 +48,13 @@ describe('sign', () => {
 });
 
 describe('verify', () => {
-  it('should verify a valid static signature', () => {
+  it('should not throw using a valid static signature', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
     // Note: Same signature use in all other lang tests
     const signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
 
-    // verify should work (not throw)
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
@@ -69,7 +68,7 @@ describe('verify', () => {
     });
   });
 
-  it('should not verify a signature with mismatched method', () => {
+  it('should throw using a signature with mismatched method', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -98,7 +97,7 @@ describe('verify', () => {
       SignatureError);
   });
 
-  it('should not verify a signature with mismatched path', () => {
+  it('should throw using a signature with mismatched path', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -127,7 +126,7 @@ describe('verify', () => {
       SignatureError);
   });
 
-  it('should not verify a signature with mismatched header', () => {
+  it('should throw using a signature with mismatched header', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -156,7 +155,7 @@ describe('verify', () => {
       SignatureError);
   });
 
-  it('should not verify a signature with mismatched body', () => {
+  it('should throw using a signature with mismatched body', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -185,7 +184,7 @@ describe('verify', () => {
       SignatureError);
   });
 
-  it('should not verify a signature with missing signature header', () => {
+  it('should throw using a signature with missing signature header', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
