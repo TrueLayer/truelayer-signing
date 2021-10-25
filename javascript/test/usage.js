@@ -18,7 +18,7 @@ const PRIVATE_KEY = "-----BEGIN EC PRIVATE KEY-----\n"
 const KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
 describe('sign', () => {
-  it('should sign a full request which can be successfully verified', () => {
+  it("should sign a full request which can be successfully verified (verify won't throw)", () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -32,7 +32,6 @@ describe('sign', () => {
       body,
     });
 
-    // verify should work (not throw)
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
