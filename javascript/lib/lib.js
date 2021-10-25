@@ -67,6 +67,7 @@ module.exports = {
    * @param {string} [args.body=""] - Request body.
    * @param {Object} [args.headers={}] - Request headers to be signed.
    * Warning: Only a single value per header name is supported.
+   * @returns {string} Tl-Signature header value.
    * @throws {SignatureError} Will throw if signing fails.
    */
   sign: (args) => {
@@ -125,6 +126,7 @@ module.exports = {
   /**
    * Extract kid from unverified jws Tl-Signature.
    * @param {string} tlSignature - Tl-Signature header value.
+   * @returns {string} Tl-Signature header kid.
    * @throws {SignatureError} Will throw if signature is invalid.
    */
   extractKid: (tlSignature) => parseSignature(tlSignature).headerJson.kid,
