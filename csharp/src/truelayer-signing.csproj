@@ -22,5 +22,12 @@
 
   <ItemGroup>
     <PackageReference Include="jose-jwt" Version="3.2.0" />
+    <!-- Resolves: Found conflicts between different versions of "System.Text.Encodings.Web" -->
+    <PackageReference Include="System.Text.Encodings.Web" Version="5.0.1" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
 </Project>
