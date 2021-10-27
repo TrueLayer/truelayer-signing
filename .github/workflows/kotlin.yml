@@ -1,0 +1,26 @@
+name: Kotlin
+
+on:
+  push:
+    branches: [ main, kotlin ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        java: [ adopt@1.8, adopt@1.11, adopt@1.17 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ matrix.java }}
+          cache: gradle
+      - name: Build with Gradle
+        run: cd kotlin && ./gradlew test
