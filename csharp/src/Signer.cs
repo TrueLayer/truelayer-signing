@@ -17,14 +17,19 @@ namespace TrueLayer.Signing
         /// RFC 7468 PEM-encoded data and the key's kid.
         /// </summary>
         public static Signer SignWithPem(string kid, ReadOnlySpan<char> privateKeyPem)
-            => new Signer(kid, privateKeyPem);
+            => SignWith(kid, privateKeyPem.ParsePem());
 
         /// <summary>
         /// Start building a request Tl-Signature header value using private key
         /// RFC 7468 PEM-encoded data and the key's kid.
         /// </summary>
         public static Signer SignWithPem(string kid, ReadOnlySpan<byte> privateKeyPem)
-            => new Signer(kid, Encoding.UTF8.GetString(privateKeyPem));
+            => SignWithPem(kid, Encoding.UTF8.GetString(privateKeyPem));
+
+        /// <summary>
+        /// Start building a request Tl-Signature header value using private key and the key's kid.
+        /// </summary>
+        public static Signer SignWith(string kid, ECDsa privateKey) => new Signer(kid, privateKey);
 
         private ECDsa key;
         private string kid;
@@ -33,9 +38,9 @@ namespace TrueLayer.Signing
         private Dictionary<string, byte[]> headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
         private byte[] body = new byte[0];
 
-        private Signer(string _kid, ReadOnlySpan<char> privateKeyPem)
+        private Signer(string _kid, ECDsa privateKey)
         {
-            key = privateKeyPem.ParsePem();
+            key = privateKey;
             kid = _kid;
         }
 
@@ -139,7 +144,7 @@ namespace TrueLayer.Signing
                 key,
                 JwsAlgorithm.ES512,
                 jwsHeaders,
-                options: new JwtOptions{ DetachPayload = true });
+                options: new JwtOptions { DetachPayload = true });
         }
     }
 }

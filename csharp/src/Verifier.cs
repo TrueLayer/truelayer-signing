@@ -15,13 +15,17 @@ namespace TrueLayer.Signing
         /// <summary>
         /// Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
         /// </summary>
-        public static Verifier VerifyWithPem(ReadOnlySpan<char> publicKeyPem) => new Verifier(publicKeyPem);
+        public static Verifier VerifyWithPem(ReadOnlySpan<char> publicKeyPem)
+            => VerifyWith(publicKeyPem.ParsePem());
 
         /// <summary>
         /// Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
         /// </summary>
         public static Verifier VerifyWithPem(ReadOnlySpan<byte> publicKeyPem)
-            => new Verifier(Encoding.UTF8.GetString(publicKeyPem));
+            => VerifyWithPem(Encoding.UTF8.GetString(publicKeyPem));
+
+        /// <summary>Start building a `Tl-Signature` header verifier usinga a public key.</summary>
+        public static Verifier VerifyWith(ECDsa publicKey) => new Verifier(publicKey);
 
         /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
@@ -42,7 +46,7 @@ namespace TrueLayer.Signing
         private HashSet<string> requiredHeaders = new HashSet<string>(new HeaderNameComparer());
         private byte[] body = new byte[0];
 
-        private Verifier(ReadOnlySpan<char> publicKeyPem) => key = publicKeyPem.ParsePem();
+        private Verifier(ECDsa publicKey) => key = publicKey;
 
         /// <summary>Add the request method.</summary>
         public Verifier Method(string method)
