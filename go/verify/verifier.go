@@ -20,7 +20,6 @@ type Verifier struct {
 	path            string
 	headers         map[string][]byte
 	requiredHeaders []string
-	allowV1         bool
 }
 
 // Truelayer signature data
@@ -37,16 +36,7 @@ func NewVerifier(publicKeyPem []byte) *Verifier {
 	verifier.path = ""
 	verifier.body = []byte("")
 	verifier.headers = make(map[string][]byte)
-	verifier.allowV1 = false
 	return &verifier
-}
-
-// AllowV1 sets whether v1 body-only signature are allowed to pass verification.
-// Default "false".
-// "true" means both v1 & v2 signatures are allowed.
-func (v *Verifier) AllowV1(allowV1 bool) *Verifier {
-	v.allowV1 = allowV1
-	return v
 }
 
 // Body adds the full received request body.
@@ -108,19 +98,7 @@ func (v *Verifier) Verify(tlSignature string) error {
 	}
 
 	if jwsHeader.TlVersion == "" || jwsHeader.TlVersion == "1" {
-		if !v.allowV1 {
-			return errors.NewJwsError("v1 signature not allowed")
-		}
-
-		// v1 signature: body only
-		body := base64.RawURLEncoding.EncodeToString(v.body)
-		payload := fmt.Sprintf("%s.%s", tlSignatureData.HeaderBase64, body)
-		err := crypto.VerifyES512(publicKey, []byte(payload), tlSignatureData.Signature)
-		if err != nil {
-			return errors.NewJwsError(fmt.Sprintf("verification failed: %v", err))
-		}
-
-		return nil
+		return errors.NewJwsError("v1 signature not allowed")
 	}
 
 	// check and order all required headers

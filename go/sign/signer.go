@@ -75,31 +75,6 @@ func (s *Signer) AddHeader(name string, value []byte) {
 	s.headers.Set(strings.ToLower(name), header)
 }
 
-// SignBodyOnly produces a JWS "Tl-Signature" v1 header value, signing just the request body.
-//
-// Any specified method, path & headers will be ignored.
-//
-// In general full request signing should be preferred.
-func (s *Signer) SignBodyOnly() (string, error) {
-	privateKey, err := crypto.ParseEcPrivateKey(s.privateKey)
-	if err != nil {
-		return "", errors.NewInvalidKeyError(fmt.Sprintf("private key parsing failed: %v", err))
-	}
-
-	body := base64.RawURLEncoding.EncodeToString(s.body)
-	jwsHeaderB64 := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("{\"alg\":\"ES512\",\"kid\":\"%s\"}", s.kid)))
-	jwsHeaderAndPayload := fmt.Sprintf("%s.%s", jwsHeaderB64, body)
-	signature, err := crypto.SignES512(privateKey, []byte(jwsHeaderAndPayload))
-	if err != nil {
-		return "", errors.NewJwsError(fmt.Sprintf("signing failed: %v", err))
-	}
-	signatureB64 := base64.RawURLEncoding.EncodeToString(signature)
-
-	jws := jwsHeaderB64 + ".." + signatureB64
-
-	return jws, nil
-}
-
 // Sign produces a JWS 'Tl-Signature' v2 header value.
 func (s *Signer) Sign() (string, error) {
 	privateKey, err := crypto.ParseEcPrivateKey(s.privateKey)

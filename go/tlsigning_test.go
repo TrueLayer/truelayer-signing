@@ -19,43 +19,7 @@ func getTestKeys(assert *assert.Assertions) ([]byte, []byte) {
 	return privateKeyBytes, publicKeyBytes
 }
 
-func TestBodySignature(t *testing.T) {
-	assert := assert.New(t)
-	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
-
-	body := []byte("{\"abc\":123}")
-
-	signature, err := SignWithPem(Kid, privateKeyBytes).
-		Body(body).
-		SignBodyOnly()
-	assert.Nilf(err, "body signing failed: %v", err)
-
-	err = VerifyWithPem(publicKeyBytes).
-		AllowV1(true).
-		Body(body).
-		Verify(signature)
-	assert.Nilf(err, "body signature verification should not fail: %v", err)
-}
-
-func TestBodySignatureMismatch(t *testing.T) {
-	assert := assert.New(t)
-	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
-
-	body := []byte("{\"abc\":123}")
-	differentBody := []byte("{\"abc\":\"124\"}")
-
-	signature, err := SignWithPem(Kid, privateKeyBytes).
-		Body(body).
-		SignBodyOnly()
-	assert.Nilf(err, "body signing failed: %v", err)
-
-	err = VerifyWithPem(publicKeyBytes).AllowV1(true).
-		Body(differentBody).
-		Verify(signature)
-	assert.NotNilf(err, "body signature verification should fail: %v", err)
-}
-
-func TestVerifyBodyStaticSignature(t *testing.T) {
+func TestVerifyV1StaticSignatureShouldFail(t *testing.T) {
 	assert := assert.New(t)
 
 	_, publicKeyBytes := getTestKeys(assert)
@@ -64,28 +28,12 @@ func TestVerifyBodyStaticSignature(t *testing.T) {
 	body := []byte("{\"abc\":123}")
 
 	err := VerifyWithPem(publicKeyBytes).
-		AllowV1(true).
 		Body(body).
 		Verify(tlSignature)
-	assert.Nilf(err, "body signature verification should not fail: %v", err)
+	assert.NotNilf(err, "v1 signature verification should fail: %v", err)
 }
 
-func TestVerifyBodyStaticSignatureNotAllowed(t *testing.T) {
-	assert := assert.New(t)
-
-	_, publicKeyBytes := getTestKeys(assert)
-
-	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AdDESSiHQVQSRFrD8QO6V8m0CWIfsDGyMOlipOt9LQhyG1lKjDR17crBgy_7TYi4ZQH--dyNtN9Nab3P7yFQzgqOALl8S-beevWYpnIMXHQCgrv-XpfNtenJTckCH2UAQIwR-pjV8XiTM1be1RMYpMl8qYTbCL5Bf8t_dME-1E6yZQEH"
-	body := []byte("{\"abc\":123}")
-
-	err := VerifyWithPem(publicKeyBytes).
-		// v1 not allowed by default
-		Body(body).
-		Verify(tlSignature)
-	assert.NotNilf(err, "body signature verification should fail: %v", err)
-}
-
-func TestFullRequestSignature(t *testing.T) {
+func TestSignature(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
@@ -113,7 +61,7 @@ func TestFullRequestSignature(t *testing.T) {
 	assert.Nilf(err, "signature verification should not fail: %v", err)
 }
 
-func TestVerifyFullRequestStaticSignature(t *testing.T) {
+func TestVerifyStaticSignature(t *testing.T) {
 	assert := assert.New(t)
 
 	_, publicKeyBytes := getTestKeys(assert)
@@ -133,7 +81,7 @@ func TestVerifyFullRequestStaticSignature(t *testing.T) {
 	assert.Nilf(err, "signature verification should not fail: %v", err)
 }
 
-func TestFullRequestSignatureMethodMismatch(t *testing.T) {
+func TestSignatureMethodMismatch(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
@@ -160,7 +108,7 @@ func TestFullRequestSignatureMethodMismatch(t *testing.T) {
 	assert.NotNilf(err, "signature verification should fail: %v", err)
 }
 
-func TestFullRequestSignatureHeaderMismatch(t *testing.T) {
+func TestSignatureHeaderMismatch(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
@@ -187,7 +135,7 @@ func TestFullRequestSignatureHeaderMismatch(t *testing.T) {
 	assert.NotNilf(err, "signature verification should fail: %v", err)
 }
 
-func TestFullRequestSignatureBodyMismatch(t *testing.T) {
+func TestSignatureBodyMismatch(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
@@ -214,7 +162,7 @@ func TestFullRequestSignatureBodyMismatch(t *testing.T) {
 	assert.NotNilf(err, "signature verification should fail: %v", err)
 }
 
-func TestFullRequestSignatureMissingSignatureHeader(t *testing.T) {
+func TestSignatureMissingSignatureHeader(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
@@ -241,7 +189,7 @@ func TestFullRequestSignatureMissingSignatureHeader(t *testing.T) {
 	assert.NotNilf(err, "signature verification should fail: %v", err)
 }
 
-func TestFullRequestRequiredHeaderMissingFromSignature(t *testing.T) {
+func TestRequiredHeaderMissingFromSignature(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
