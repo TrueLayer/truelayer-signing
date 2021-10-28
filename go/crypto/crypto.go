@@ -10,6 +10,7 @@ import (
 	"math/big"
 )
 
+// ParseEcPrivateKey parses the private key data and produces an elliptic curve private key
 func ParseEcPrivateKey(privateKeyData []byte) (*ecdsa.PrivateKey, error) {
 	block, _ := pem.Decode(privateKeyData)
 	x509Encoded := block.Bytes
@@ -23,6 +24,7 @@ func ParseEcPrivateKey(privateKeyData []byte) (*ecdsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
+// ParseEcPublicKey parses the public key data and produces an elliptic curve public key
 func ParseEcPublicKey(publicKeyData []byte) (*ecdsa.PublicKey, error) {
 	block, _ := pem.Decode(publicKeyData)
 	x509Encoded := block.Bytes
@@ -40,7 +42,7 @@ func ParseEcPublicKey(publicKeyData []byte) (*ecdsa.PublicKey, error) {
 	return publicKey, nil
 }
 
-// Sign a payload using the provided private key and return the signature
+// SignES512 signs a payload using the provided private key and return the signature
 // Check section A.4 of RFC7515 for the details <https://www.rfc-editor.org/rfc/rfc7515.txt>
 func SignES512(key *ecdsa.PrivateKey, payload []byte) ([]byte, error) {
 	sha512 := crypto.SHA512.New()
@@ -68,7 +70,7 @@ func SignES512(key *ecdsa.PrivateKey, payload []byte) ([]byte, error) {
 	return signature, nil
 }
 
-// Verify the signature of a payload using the provided public key
+// VerifyES512 verifies the signature of a payload using the provided public key
 func VerifyES512(key *ecdsa.PublicKey, payload []byte, signature []byte) error {
 	if len(signature) != 132 {
 		return fmt.Errorf("signature length != 132")

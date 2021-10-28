@@ -34,7 +34,7 @@ func NewJwsHeaderV2(kid string, headers *orderedmap.OrderedMap) JwsHeader {
 	}
 }
 
-// Filter & order headers to match jws header "tl_headers".
+// FilterHeaders filters & orders headers to match jws header "tl_headers".
 //
 // Returns an error if "headers" is missing any of the declared "tl_headers".
 func (j *JwsHeader) FilterHeaders(headers map[string][]byte) (*orderedmap.OrderedMap, error) {

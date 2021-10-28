@@ -34,7 +34,7 @@ func NewSigner(kid string, privateKeyPem []byte) *Signer {
 	}
 }
 
-// Add the full request body.
+// Body adds the full request body.
 //
 // Note: This **must** be identical to what is sent with the request.
 func (s *Signer) Body(body []byte) *Signer {
@@ -42,19 +42,19 @@ func (s *Signer) Body(body []byte) *Signer {
 	return s
 }
 
-// Add the request method, defaults to "POST" if unspecified.
+// Method adds the request method, defaults to "POST" if unspecified.
 func (s *Signer) Method(method string) *Signer {
 	s.method = method
 	return s
 }
 
-// Add the request absolute path starting with a leading '/' and without any trailing slashes.
+// Path adds the request absolute path starting with a leading '/' and without any trailing slashes.
 func (s *Signer) Path(path string) *Signer {
 	s.path = path
 	return s
 }
 
-// Add a header name & value.
+// Header adds a header name & value.
 // May be called multiple times to add multiple different headers.
 //
 // Warning: Only a single value per header name is supported.
@@ -63,7 +63,7 @@ func (s *Signer) Header(name string, value []byte) *Signer {
 	return s
 }
 
-// Add a header name & value.
+// AddHeader adds a header name & value.
 // May be called multiple times to add multiple different headers.
 //
 // Warning: Only a single value per header name is supported.
@@ -75,7 +75,7 @@ func (s *Signer) AddHeader(name string, value []byte) {
 	s.headers.Set(strings.ToLower(name), header)
 }
 
-// Produce a JWS "Tl-Signature" v1 header value, signing just the request body.
+// SignBodyOnly produces a JWS "Tl-Signature" v1 header value, signing just the request body.
 //
 // Any specified method, path & headers will be ignored.
 //
@@ -100,7 +100,7 @@ func (s *Signer) SignBodyOnly() (string, error) {
 	return jws, nil
 }
 
-// Produce a JWS 'Tl-Signature' v2 header value.
+// Sign produces a JWS 'Tl-Signature' v2 header value.
 func (s *Signer) Sign() (string, error) {
 	privateKey, err := crypto.ParseEcPrivateKey(s.privateKey)
 	if err != nil {
@@ -128,7 +128,7 @@ func (s *Signer) Sign() (string, error) {
 	return jws, nil
 }
 
-// Build a v2 signing payload.
+// BuildV2SigningPayload builds a v2 signing payload.
 func BuildV2SigningPayload(method string, path string, headers *orderedmap.OrderedMap, body []byte) []byte {
 	payload := make([]byte, 0)
 	payload = append(payload, []byte(strings.ToUpper(method))...)

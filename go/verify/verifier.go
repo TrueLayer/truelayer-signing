@@ -41,7 +41,7 @@ func NewVerifier(publicKeyPem []byte) *Verifier {
 	return &verifier
 }
 
-// Sets whether v1 body-only signature are allowed to pass verification.
+// AllowV1 sets whether v1 body-only signature are allowed to pass verification.
 // Default "false".
 // "true" means both v1 & v2 signatures are allowed.
 func (v *Verifier) AllowV1(allowV1 bool) *Verifier {
@@ -49,25 +49,25 @@ func (v *Verifier) AllowV1(allowV1 bool) *Verifier {
 	return v
 }
 
-// Add the full received request body.
+// Body adds the full received request body.
 func (v *Verifier) Body(body []byte) *Verifier {
 	v.body = body
 	return v
 }
 
-// Add the request method, e.g. "POST".
+// Method adds the request method, e.g. "POST".
 func (v *Verifier) Method(method string) *Verifier {
 	v.method = method
 	return v
 }
 
-// Add the request path, e.g. "/payouts".
+// Path adds the request path, e.g. "/payouts".
 func (v *Verifier) Path(path string) *Verifier {
 	v.path = path
 	return v
 }
 
-// Add a header name & value.
+// Header adds a header name & value.
 // May be called multiple times to add multiple different headers.
 //
 // All request headers may be added here, any headers not mentioned
@@ -78,7 +78,7 @@ func (v *Verifier) Header(name string, value []byte) *Verifier {
 	return v
 }
 
-// Required a header name that must be included in the "Tl-Signature".
+// RequireHeader specifies a header name that must be included in the "Tl-Signature".
 // May be called multiple times to add multiple required headers.
 //
 // Signatures missing these will fail verification.
@@ -87,7 +87,7 @@ func (v *Verifier) RequireHeader(name string) *Verifier {
 	return v
 }
 
-// Verify the given "Tl-Signature" header value.
+// Verify verifies the given "Tl-Signature" header value.
 //
 // Supports v1 (body-only) & v2 full request signatures.
 //
@@ -148,7 +148,7 @@ func (v *Verifier) Verify(tlSignature string) error {
 	return nil
 }
 
-// Parse a tl signature header value into (header, headerBase64, signature).
+// ParseTlSignature parses a tl signature header value into (header, headerBase64, signature).
 func ParseTlSignature(tlSignature string) (*TlSignature, error) {
 	splits := strings.Split(tlSignature, "..")
 	if len(splits) != 2 {
