@@ -6,6 +6,7 @@ They can then be verified using the associated public key.
 
 * [Rust](./rust)
 * [C#](./csharp)
+* [Javascript](./javascript)
 
 ## Request signing specification
 See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how request signing is implemented.
