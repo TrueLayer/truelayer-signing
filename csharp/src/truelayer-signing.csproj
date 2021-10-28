@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageVersion>0.1.0</PackageVersion>
+    <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>CS8600;CS8602;CS8603;CS8604;CS8618</WarningsAsErrors>
+    <Authors>Alex Butler</Authors>
+    <AssemblyName>TrueLayer.Signing</AssemblyName>
+    <PackageId>TrueLayer.Signing</PackageId>
+    <PackageProjectUrl>https://github.com/TrueLayer/truelayer-signing</PackageProjectUrl>
+    <PackageReleaseNotes>See $(PackageProjectUrl)/csharp/CHANGELOG.md for details.</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Repository>truelayer-signing</Repository>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>$(PackageProjectUrl).git</RepositoryUrl>
+    <Company>TrueLayer</Company>
+    <Copyright>Copyright (c) TrueLayer $([System.DateTime]::Now.ToString(yyyy))</Copyright>
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+    <Description>Produce and verify TrueLayer API requests signatures.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="jose-jwt" Version="3.2.0" />
+    <!-- Resolves: Found conflicts between different versions of "System.Text.Encodings.Web" -->
+    <PackageReference Include="System.Text.Encodings.Web" Version="5.0.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+</Project>
