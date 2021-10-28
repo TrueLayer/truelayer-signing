@@ -24,14 +24,14 @@ type Signer struct {
 }
 
 func NewSigner(kid string, privateKeyPem []byte) *Signer {
-	signer := Signer{}
-	signer.kid = kid
-	signer.privateKey = privateKeyPem
-	signer.method = "POST"
-	signer.path = ""
-	signer.body = []byte("")
-	signer.headers = orderedmap.New()
-	return &signer
+	return &Signer{
+		kid:        kid,
+		privateKey: privateKeyPem,
+		method:     "POST",
+		path:       "",
+		body:       []byte(""),
+		headers:    orderedmap.New(),
+	}
 }
 
 // Add the full request body.

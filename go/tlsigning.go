@@ -24,9 +24,9 @@ func VerifyWithPem(publicKeyPem []byte) *verify.Verifier {
 //
 // This can then be used to pick a verification key using the "kid" etc.
 func ExtractJwsHeader(tlSignature string) (*jws.JwsHeader, error) {
-	jwsHeader, _, _, err := verify.ParseTlSignature(tlSignature)
+	tlSignatureData, err := verify.ParseTlSignature(tlSignature)
 	if err != nil {
 		return nil, errors.NewJwsError(fmt.Sprintf("signature parsing failed: %v", err))
 	}
-	return jwsHeader, nil
+	return tlSignatureData.JwsHeader, nil
 }

@@ -25,13 +25,13 @@ func NewJwsHeaderV2(kid string, headers *orderedmap.OrderedMap) JwsHeader {
 		}
 		headerKeys += header.Name
 	}
-	jwsHeader := JwsHeader{}
-	jwsHeader.Alg = "ES512"
-	jwsHeader.Kid = kid
-	jwsHeader.TlVersion = "2"
-	jwsHeader.TlHeaders = headerKeys
 
-	return jwsHeader
+	return JwsHeader{
+		Alg:       "ES512",
+		Kid:       kid,
+		TlVersion: "2",
+		TlHeaders: headerKeys,
+	}
 }
 
 // Filter & order headers to match jws header "tl_headers".

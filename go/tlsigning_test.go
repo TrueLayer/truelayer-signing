@@ -30,12 +30,11 @@ func TestBodySignature(t *testing.T) {
 		SignBodyOnly()
 	assert.Nilf(err, "body signing failed: %v", err)
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		AllowV1(true).
 		Body(body).
 		Verify(signature)
 	assert.Nilf(err, "body signature verification should not fail: %v", err)
-	assert.Truef(valid, "body signature should be valid")
 }
 
 func TestBodySignatureMismatch(t *testing.T) {
@@ -50,11 +49,10 @@ func TestBodySignatureMismatch(t *testing.T) {
 		SignBodyOnly()
 	assert.Nilf(err, "body signing failed: %v", err)
 
-	valid, err := VerifyWithPem(publicKeyBytes).AllowV1(true).
+	err = VerifyWithPem(publicKeyBytes).AllowV1(true).
 		Body(differentBody).
 		Verify(signature)
-	assert.Nilf(err, "body signature verification should not fail: %v", err)
-	assert.Falsef(valid, "body signature should not be valid")
+	assert.NotNilf(err, "body signature verification should fail: %v", err)
 }
 
 func TestVerifyBodyStaticSignature(t *testing.T) {
@@ -65,12 +63,11 @@ func TestVerifyBodyStaticSignature(t *testing.T) {
 	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AdDESSiHQVQSRFrD8QO6V8m0CWIfsDGyMOlipOt9LQhyG1lKjDR17crBgy_7TYi4ZQH--dyNtN9Nab3P7yFQzgqOALl8S-beevWYpnIMXHQCgrv-XpfNtenJTckCH2UAQIwR-pjV8XiTM1be1RMYpMl8qYTbCL5Bf8t_dME-1E6yZQEH"
 	body := []byte("{\"abc\":123}")
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err := VerifyWithPem(publicKeyBytes).
 		AllowV1(true).
 		Body(body).
 		Verify(tlSignature)
 	assert.Nilf(err, "body signature verification should not fail: %v", err)
-	assert.Truef(valid, "body signature should be valid")
 }
 
 func TestVerifyBodyStaticSignatureNotAllowed(t *testing.T) {
@@ -81,7 +78,7 @@ func TestVerifyBodyStaticSignatureNotAllowed(t *testing.T) {
 	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AdDESSiHQVQSRFrD8QO6V8m0CWIfsDGyMOlipOt9LQhyG1lKjDR17crBgy_7TYi4ZQH--dyNtN9Nab3P7yFQzgqOALl8S-beevWYpnIMXHQCgrv-XpfNtenJTckCH2UAQIwR-pjV8XiTM1be1RMYpMl8qYTbCL5Bf8t_dME-1E6yZQEH"
 	body := []byte("{\"abc\":123}")
 
-	_, err := VerifyWithPem(publicKeyBytes).
+	err := VerifyWithPem(publicKeyBytes).
 		// v1 not allowed by default
 		Body(body).
 		Verify(tlSignature)
@@ -105,7 +102,7 @@ func TestFullRequestSignature(t *testing.T) {
 		Sign()
 	assert.Nilf(err, "signing failed: %v", err)
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		Method("POST").
 		Path(path).
 		RequireHeader("Idempotency-Key").
@@ -114,7 +111,6 @@ func TestFullRequestSignature(t *testing.T) {
 		Body(body).
 		Verify(signature)
 	assert.Nilf(err, "signature verification should not fail: %v", err)
-	assert.Truef(valid, "signature should be valid")
 }
 
 func TestVerifyFullRequestStaticSignature(t *testing.T) {
@@ -127,7 +123,7 @@ func TestVerifyFullRequestStaticSignature(t *testing.T) {
 	path := "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
 	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi"
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err := VerifyWithPem(publicKeyBytes).
 		Method("POST").
 		Path(path).
 		Header("X-Whatever-2", []byte("t2345d")).
@@ -135,7 +131,6 @@ func TestVerifyFullRequestStaticSignature(t *testing.T) {
 		Body(body).
 		Verify(tlSignature)
 	assert.Nilf(err, "signature verification should not fail: %v", err)
-	assert.Truef(valid, "signature should be valid")
 }
 
 func TestFullRequestSignatureMethodMismatch(t *testing.T) {
@@ -155,15 +150,14 @@ func TestFullRequestSignatureMethodMismatch(t *testing.T) {
 		Sign()
 	assert.Nilf(err, "signing failed: %v", err)
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		Method("DELETE"). // different
 		Path(path).
 		Header("X-Whatever-2", []byte("aoitbeh")).
 		Header("Idempotency-Key", idempotencyKey).
 		Body(body).
 		Verify(signature)
-	assert.Nilf(err, "signature verification should not fail: %v", err)
-	assert.Falsef(valid, "signature should not be valid")
+	assert.NotNilf(err, "signature verification should fail: %v", err)
 }
 
 func TestFullRequestSignatureHeaderMismatch(t *testing.T) {
@@ -183,15 +177,14 @@ func TestFullRequestSignatureHeaderMismatch(t *testing.T) {
 		Sign()
 	assert.Nilf(err, "signing failed: %v", err)
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		Method("post").
 		Path(path).
 		Header("X-Whatever-2", []byte("aoitbeh")).
 		Header("Idempotency-Key", []byte("something-else")).
 		Body(body).
 		Verify(signature)
-	assert.Nilf(err, "signature verification should not fail: %v", err)
-	assert.Falsef(valid, "signature should not be valid")
+	assert.NotNilf(err, "signature verification should fail: %v", err)
 }
 
 func TestFullRequestSignatureBodyMismatch(t *testing.T) {
@@ -211,15 +204,14 @@ func TestFullRequestSignatureBodyMismatch(t *testing.T) {
 		Sign()
 	assert.Nilf(err, "signing failed: %v", err)
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		Method("post").
 		Path(path).
 		Header("X-Whatever-2", []byte("aoitbeh")).
 		Header("Idempotency-Key", idempotencyKey).
 		Body([]byte("{\"max_amount_in_minor\":1234}")). // different
 		Verify(signature)
-	assert.Nilf(err, "signature verification should not fail: %v", err)
-	assert.Falsef(valid, "signature should not be valid")
+	assert.NotNilf(err, "signature verification should fail: %v", err)
 }
 
 func TestFullRequestSignatureMissingSignatureHeader(t *testing.T) {
@@ -239,7 +231,7 @@ func TestFullRequestSignatureMissingSignatureHeader(t *testing.T) {
 		Sign()
 	assert.Nilf(err, "signing failed: %v", err)
 
-	_, err = VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		Method("post").
 		Path(path).
 		Header("X-Whatever-2", []byte("aoitbeh")).
@@ -266,7 +258,7 @@ func TestFullRequestRequiredHeaderMissingFromSignature(t *testing.T) {
 		Sign()
 	assert.Nilf(err, "signing failed: %v", err)
 
-	_, err = VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		Method("post").
 		Path(path).
 		RequireHeader("X-Required").
@@ -294,7 +286,7 @@ func TestFlexibleHeaderCaseOrderVerify(t *testing.T) {
 		Sign()
 	assert.Nilf(err, "signing failed: %v", err)
 
-	valid, err := VerifyWithPem(publicKeyBytes).
+	err = VerifyWithPem(publicKeyBytes).
 		Method("POST").
 		Path(path).
 		Header("X-CUSTOM", []byte("123")).
@@ -302,7 +294,6 @@ func TestFlexibleHeaderCaseOrderVerify(t *testing.T) {
 		Body(body).
 		Verify(signature)
 	assert.Nilf(err, "signature verification should not fail: %v", err)
-	assert.Truef(valid, "signature should be valid")
 }
 
 func TestJwsHeaderExtraction(t *testing.T) {

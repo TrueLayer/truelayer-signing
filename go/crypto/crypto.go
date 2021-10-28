@@ -69,9 +69,9 @@ func SignES512(key *ecdsa.PrivateKey, payload []byte) ([]byte, error) {
 }
 
 // Verify the signature of a payload using the provided public key
-func VerifyES512(key *ecdsa.PublicKey, payload []byte, signature []byte) (bool, error) {
+func VerifyES512(key *ecdsa.PublicKey, payload []byte, signature []byte) error {
 	if len(signature) != 132 {
-		return false, fmt.Errorf("signature length != 132")
+		return fmt.Errorf("signature length != 132")
 	}
 
 	r := new(big.Int)
@@ -83,11 +83,14 @@ func VerifyES512(key *ecdsa.PublicKey, payload []byte, signature []byte) (bool, 
 	sha512 := crypto.SHA512.New()
 	_, err := sha512.Write(payload)
 	if err != nil {
-		return false, fmt.Errorf(fmt.Sprintf("hashing failed: %v", err))
+		return fmt.Errorf("hashing failed: %v", err)
 	}
 	hash := sha512.Sum(nil)
 
 	valid := ecdsa.Verify(key, hash, r, s)
 
-	return valid, nil
+	if !valid {
+		return fmt.Errorf("signature not valid")
+	}
+	return nil
 }
