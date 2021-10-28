@@ -5,6 +5,8 @@ Request signatures are created using a private key and included with certain API
 They can then be verified using the associated public key.
 
 * [Rust](./rust)
+* [C#](./csharp)
+* [Javascript](./javascript)
 * [Go](./go)
 
 ## Request signing specification
