@@ -55,9 +55,8 @@ class Verifier private constructor (
 
     companion object {
         @JvmStatic
-        fun from(publicKey: ByteArray): Verifier {
-            val publicKey = parseEcPublicKey(publicKey).getOrThrow()
-            return Verifier(publicKey)
+        fun from(publicKeyPem: ByteArray): Verifier {
+            return Verifier(parseEcPublicKey(publicKeyPem).getOrThrow())
         }
     }
 }

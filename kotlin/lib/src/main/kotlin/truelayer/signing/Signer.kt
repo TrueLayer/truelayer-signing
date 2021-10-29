@@ -42,8 +42,7 @@ class Signer private constructor(
     companion object {
         @JvmStatic
         fun from(kid: String, privateKeyPem: ByteArray): Signer {
-            val privateKey = parseEcPrivateKey(privateKeyPem).getOrThrow()
-            return Signer(kid, privateKey)
+            return Signer(kid, parseEcPrivateKey(privateKeyPem).getOrThrow())
         }
     }
 }
