@@ -258,9 +258,7 @@ public class UsageJava {
                 .requiredHeader("X-required")
                 .body(body);
 
-        JwsErrorException jwsErrorException = assertThrows(JwsErrorException.class, () -> {
-            verifier.verify(tlSignature);
-        });
+        JwsErrorException jwsErrorException = assertThrows(JwsErrorException.class, () -> verifier.verify(tlSignature));
 
         assertEquals("JWS signing/verification failed: missing required header", jwsErrorException.getMessage());
     }
