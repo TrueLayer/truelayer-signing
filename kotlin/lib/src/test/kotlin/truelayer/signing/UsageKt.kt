@@ -8,7 +8,7 @@ const val KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
 val privateKey = File("src/test/resources/ec512-private.pem").readBytes();
 val publicKey = File("src/test/resources/ec512-public.pem").readBytes();
 
-class Usage {
+class UsageKt {
 
     @Test
     fun fullSignature() {

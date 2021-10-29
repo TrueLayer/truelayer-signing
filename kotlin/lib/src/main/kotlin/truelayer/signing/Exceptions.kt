@@ -1,15 +1,15 @@
 package truelayer.signing
 
-internal class InvalidKeyException(message: String, cause: Throwable) : Exception(message, cause) {
+class InvalidKeyException private constructor(message: String, cause: Throwable) : Exception(message, cause) {
     companion object {
         internal fun <T> evaluate(block: () -> T): Result<T> =
             Result.evaluate(block) { e -> InvalidKeyException("Invalid Key: ${e.message}", e) }
     }
 }
 
-internal class JwsErrorException : Exception {
-    constructor(message: String, cause: Throwable) : super(message, cause)
-    constructor(message: String) : super(message)
+class JwsErrorException : Exception {
+    private constructor(message: String, cause: Throwable) : super(message, cause)
+    private constructor(message: String) : super(message)
 
     companion object {
         internal fun ensure(predicate: () -> Boolean, message: String) {
