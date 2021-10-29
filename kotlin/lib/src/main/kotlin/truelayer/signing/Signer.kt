@@ -1,9 +1,11 @@
 package truelayer.signing
 
+import java.security.interfaces.ECPrivateKey
+
 
 class Signer private constructor(
     private val kid: String,
-    private val private_key: ByteArray,
+    private val private_key: ECPrivateKey,
 ) {
     private var body: ByteArray = ByteArray(0)
 
@@ -34,14 +36,14 @@ class Signer private constructor(
     }
 
     fun sign(): String {
-        val privateKey = parseEcPrivateKey(this.private_key).getOrThrow()
-        return signEs512(privateKey, kid, headers, method, path, body).getOrThrow()
+        return signEs512(private_key, kid, headers, method, path, body).getOrThrow()
     }
 
     companion object {
         @JvmStatic
         fun from(kid: String, privateKeyPem: ByteArray): Signer {
-            return Signer(kid, privateKeyPem)
+            val privateKey = parseEcPrivateKey(privateKeyPem).getOrThrow()
+            return Signer(kid, privateKey)
         }
     }
 }

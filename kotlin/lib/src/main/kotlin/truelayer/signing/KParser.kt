@@ -24,8 +24,8 @@ internal fun parseEcPrivateKey(privateKey: ByteArray): Result<ECPrivateKey> = In
     kf.generatePrivate(keySpec) as ECPrivateKey
 }
 
-internal fun parseEcPublicKey(public_key: ByteArray): Result<ECPublicKey> = InvalidKeyException.evaluate {
+internal fun parseEcPublicKey(publicKey: ByteArray): Result<ECPublicKey> = InvalidKeyException.evaluate {
     Security.addProvider(BouncyCastleProvider())
-    val pemObject = PemReader(InputStreamReader(ByteArrayInputStream(public_key))).readPemObject()
+    val pemObject = PemReader(InputStreamReader(ByteArrayInputStream(publicKey))).readPemObject()
     KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(pemObject.content)) as ECPublicKey
 }

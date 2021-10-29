@@ -1,7 +1,9 @@
 package truelayer.signing
 
+import java.security.interfaces.ECPublicKey
+
 class Verifier private constructor (
-    private val publicKey: ByteArray
+    private val publicKey: ECPublicKey
 ) {
     private var method: String = ""
 
@@ -40,7 +42,6 @@ class Verifier private constructor (
     }
 
     fun verify(signature: String): Boolean {
-        val publicKey = parseEcPublicKey(this.publicKey).getOrThrow()
         return verifyTlSignature(
             signature,
             publicKey,
@@ -55,6 +56,7 @@ class Verifier private constructor (
     companion object {
         @JvmStatic
         fun from(publicKey: ByteArray): Verifier {
+            val publicKey = parseEcPublicKey(publicKey).getOrThrow()
             return Verifier(publicKey)
         }
     }
