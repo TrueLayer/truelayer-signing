@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.1.1
 * Fix changelog path in PackageReleaseNotes.
-* Build in release mode.
+* Build in release mode & add symbols to package.
 
 ## 0.1.0
 * Added `Signer` & `Verifier` implementations.
