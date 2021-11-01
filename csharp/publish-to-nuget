@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Pack & publish to nuget.org using env `NUGET_API_KEY`.
+set -eu
+
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$dir"
+
+rm -rf src/bin/Release/*nuget 2>/dev/null || true
+
+dotnet pack src/truelayer-signing.csproj \
+  -c Release \
+  --include-source \
+  -p:SymbolPackageFormat=snupkg
+
+dotnet nuget push src/bin/Release/TrueLayer.Signing.*.nupkg \
+  -s https://api.nuget.org/v3/index.json \
+  -k "$NUGET_API_KEY"
