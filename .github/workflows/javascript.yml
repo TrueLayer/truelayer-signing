@@ -14,4 +14,4 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 'lts/*'
-    - run: cd javascript && npm ci && npm t
+    - run: cd javascript && yarn --frozen-lockfile && yarn test
