@@ -2,8 +2,8 @@
   "name": "truelayer-signing",
   "version": "0.1.0",
   "description": "Produce & verify TrueLayer API requests signatures",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/lib.js",
+  "types": "lib/lib.d.ts",
   "scripts": {
     "test": "jest --config jestconfig.json",
     "build": "tsc --p tsconfig.prod.json",
@@ -37,5 +37,7 @@
     "tsc": "^2.0.3",
     "typescript": "^4.4.4"
   },
-  "files": ["lib/**/*"]
+  "files": [
+    "lib/**/*"
+  ]
 }

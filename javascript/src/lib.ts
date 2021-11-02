@@ -12,7 +12,7 @@ const hasMessage = (e: unknown): e is { message: string } => {
   return typeof e === "object" && e !== null && "message" in e;
 };
 
-const enum HttpMethod {
+export const enum HttpMethod {
   Post = "POST",
   Get = "GET",
   Patch = "PATCH",
@@ -79,7 +79,7 @@ const signPayload = ({
 };
 
 type JOSEHeader = {
-  alg: jws.Algorithm; 
+  alg: jws.Algorithm;
   tl_version: string;
   tl_headers: string;
   kid: string;
@@ -108,7 +108,7 @@ const parseSignature = (signature: string) => {
   }
 };
 
-type VerifyArguments = {
+type SignArguments = {
   kid: string;
   privateKeyPem: string;
   method: HttpMethod;
@@ -131,7 +131,7 @@ type VerifyArguments = {
  * @returns {string} Tl-Signature header value.
  * @throws {SignatureError} Will throw if signing fails.
  */
-function sign(args: VerifyArguments) {
+function sign(args: SignArguments) {
   const kid = requireArg(args.kid, "kid");
   const privateKeyPem = requireArg(args.privateKeyPem, "privateKeyPem");
   const method = (args.method || HttpMethod.Post).toUpperCase() as HttpMethod;
