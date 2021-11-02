@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.Headers = void 0;
 /** Http headers collection. */
 var Headers = /** @class */ (function () {

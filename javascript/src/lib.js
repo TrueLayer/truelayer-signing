@@ -1,9 +1,6 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var jws_1 = __importDefault(require("jws"));
+exports.__esModule = true;
+var jws_1 = require("jws");
 var js_base64_1 = require("js-base64");
 var error_1 = require("./error");
 var headers_1 = require("./headers");
@@ -28,16 +25,16 @@ var buildV2SigningPayload = function (_a) {
 var signPayload = function (_a) {
     var privateKeyPem = _a.privateKeyPem, kid = _a.kid, payload = _a.payload, headerNames = _a.headerNames;
     try {
-        var _b = jws_1.default
+        var _b = jws_1["default"]
             .sign({
             header: {
                 alg: "ES512",
                 kid: kid,
                 tl_version: "2",
-                tl_headers: headerNames.join(","),
+                tl_headers: headerNames.join(",")
             },
             payload: payload,
-            privateKey: privateKeyPem,
+            privateKey: privateKeyPem
         })
             .split("."), header = _b[0], _ = _b[1], signature = _b[2];
         return header + ".." + signature;
@@ -56,7 +53,7 @@ var parseSignature = function (signature) {
         return {
             headerJson: headerJson,
             header: header,
-            footer: footer,
+            footer: footer
         };
     }
     catch (e) {
@@ -90,7 +87,7 @@ function sign(args) {
         privateKeyPem: privateKeyPem,
         kid: kid,
         payload: payload,
-        headerNames: headers.names(),
+        headerNames: headers.names()
     });
 }
 /**
@@ -129,7 +126,7 @@ function verify(args) {
     headers.retainAndSort(tlHeaders);
     var payload = buildV2SigningPayload({ method: method, path: path, headers: headers, body: body });
     var fullSignature = header + "." + js_base64_1.Base64.encode(payload, true) + "." + footer;
-    if (!jws_1.default.verify(fullSignature, headerJson.alg, publicKeyPem)) {
+    if (!jws_1["default"].verify(fullSignature, headerJson.alg, publicKeyPem)) {
         throw new error_1.SignatureError("Invalid signature");
     }
 }
@@ -142,9 +139,9 @@ function verify(args) {
 function extractKid(tlSignature) {
     return parseSignature(tlSignature).headerJson.kid;
 }
-exports.default = {
+exports["default"] = {
     sign: sign,
     verify: verify,
     extractKid: extractKid,
-    SignatureError: error_1.SignatureError,
+    SignatureError: error_1.SignatureError
 };

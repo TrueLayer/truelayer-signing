@@ -1,5 +1,7 @@
-const assert = require('assert');
-const { sign, verify, extractKid, SignatureError } = require("..");
+
+import Lib from '../lib';
+
+const { sign, verify, extractKid, SignatureError } = Lib;
 
 // Use the same values as rust tests for cross-lang consistency assurance
 const PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\n"
@@ -26,7 +28,7 @@ describe('sign', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: "post" as any,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
@@ -35,7 +37,7 @@ describe('sign', () => {
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "POST",
+      method: "POST" as any,
       path,
       body,
       requiredHeaders: ["Idempotency-Key"],
@@ -64,7 +66,7 @@ describe('verify', () => {
         "X-Whatever-2": "foaulrsjth",
         "Idempotency-Key": idempotencyKey,
       }
-    });
+    } as any);
   });
 
   it('should throw using a signature with mismatched method', () => {
@@ -75,25 +77,25 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: "post" as any,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
+    
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "DELETE", // different
+      path,
+      body,
+      headers: {
+        "X-Whatever-2": "foaulrsjth",
+        "Idempotency-Key": idempotencyKey,
+      }
+    } as any)
 
-    assert.throws(
-      () => verify({
-        publicKeyPem: PUBLIC_KEY,
-        signature,
-        method: "DELETE", // different
-        path,
-        body,
-        headers: {
-          "X-Whatever-2": "foaulrsjth",
-          "Idempotency-Key": idempotencyKey,
-        }
-      }),
-      SignatureError);
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
   it('should throw using a signature with mismatched path', () => {
@@ -108,21 +110,21 @@ describe('verify', () => {
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
 
-    assert.throws(
-      () => verify({
-        publicKeyPem: PUBLIC_KEY,
-        signature,
-        method: "post",
-        path: "/merchant_accounts/123/sweeping", // different
-        body,
-        headers: {
-          "X-Whatever-2": "foaulrsjth",
-          "Idempotency-Key": idempotencyKey,
-        }
-      }),
-      SignatureError);
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path: "/merchant_accounts/123/sweeping", // different
+      body,
+      headers: {
+        "X-Whatever-2": "foaulrsjth",
+        "Idempotency-Key": idempotencyKey,
+      }
+    } as any)
+
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
   it('should throw using a signature with mismatched header', () => {
@@ -137,21 +139,21 @@ describe('verify', () => {
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
 
-    assert.throws(
-      () => verify({
-        publicKeyPem: PUBLIC_KEY,
-        signature,
-        method: "post",
-        path,
-        body,
-        headers: {
-          "X-Whatever-2": "foaulrsjth",
-          "Idempotency-Key": "37fa5dc5", // different
-        }
-      }),
-      SignatureError);
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path,
+      body,
+      headers: {
+        "X-Whatever-2": "foaulrsjth",
+        "Idempotency-Key": "37fa5dc5", // different
+      }
+    } as any);
+
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
   it('should throw using a signature with mismatched body', () => {
@@ -166,21 +168,21 @@ describe('verify', () => {
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
 
-    assert.throws(
-      () => verify({
-        publicKeyPem: PUBLIC_KEY,
-        signature,
-        method: "post",
-        path,
-        body: '{"max_amount_in_minor":5000000}', // different
-        headers: {
-          "X-Whatever-2": "foaulrsjth",
-          "Idempotency-Key": idempotencyKey,
-        }
-      }),
-      SignatureError);
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path,
+      body: '{"max_amount_in_minor":5000000}', // different
+      headers: {
+        "X-Whatever-2": "foaulrsjth",
+        "Idempotency-Key": idempotencyKey,
+      }
+    } as any);
+
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
   it('should throw using a signature with missing signature header', () => {
@@ -195,21 +197,21 @@ describe('verify', () => {
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
 
-    assert.throws(
-      () => verify({
-        publicKeyPem: PUBLIC_KEY,
-        signature,
-        method: "post",
-        path,
-        body,
-        headers: {
-          "X-Whatever-2": "foaulrsjth",
-          // missing Idempotency-Key
-        }
-      }),
-      SignatureError);
+    const fn  = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path,
+      body,
+      headers: {
+        "X-Whatever-2": "foaulrsjth",
+        // missing Idempotency-Key
+      }
+    } as any);
+
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
   it('should verify header order/casing flexibly', () => {
@@ -227,7 +229,7 @@ describe('verify', () => {
         "X-Custom": "123",
       },
       body,
-    });
+    } as any);
 
     verify({
       publicKeyPem: PUBLIC_KEY,
@@ -241,7 +243,7 @@ describe('verify', () => {
         "X-Whatever-2": "foaulrsjth",
         "idempotency-key": idempotencyKey, // different order & case, chill it'll work!
       }
-    });
+    } as any);
   });
 
   it('should allow requiring that a given header is included in the signature', () => {
@@ -256,19 +258,19 @@ describe('verify', () => {
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
 
-    assert.throws(
-      () => verify({
-        publicKeyPem: PUBLIC_KEY,
-        signature,
-        method: "post",
-        path,
-        body,
-        requiredHeaders: ["X-Required"], // missing from signature
-        headers: { "Idempotency-Key": idempotencyKey },
-      }),
-      SignatureError);
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path,
+      body,
+      requiredHeaders: ["X-Required"], // missing from signature
+      headers: { "Idempotency-Key": idempotencyKey },
+    } as any);
+
+    expect(fn).toThrow(new SignatureError("signature is missing required header X-Required"));
   });
 });
 
@@ -285,9 +287,9 @@ describe('extractKid', () => {
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
 
     const kid = extractKid(signature);
-    assert.equal(kid, KID);
+    expect(kid).toEqual(KID);
   });
 });
