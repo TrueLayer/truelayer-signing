@@ -14,12 +14,26 @@ plugins {
     id 'java-library'
 
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.31'
+
+    id 'maven-publish'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.truelayer'
+            artifactId = 'truelayer-signing'
+            version = '0.0.1'
+            from components.java
+        }
+    }
 }
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
+
 
 dependencies {
     // Align versions of all Kotlin components
