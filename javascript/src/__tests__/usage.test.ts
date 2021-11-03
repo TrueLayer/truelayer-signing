@@ -28,16 +28,16 @@ describe('sign', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post" as any,
+      method: "post",
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    });
+    } as any);
 
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "POST" as any,
+      method: "POST",
       path,
       body,
       requiredHeaders: ["Idempotency-Key"],
@@ -45,7 +45,7 @@ describe('sign', () => {
         "X-Whatever-2": "yarshtarst",
         "Idempotency-Key": idempotencyKey,
       }
-    });
+    } as any);
   });
 });
 
