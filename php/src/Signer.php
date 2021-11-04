@@ -14,11 +14,11 @@ use TrueLayer\Signing\Contracts\Signer as ISigner;
 
 final class Signer extends AbstractJws implements ISigner
 {
-    protected CompactSerializer $serializer;
-    protected JWSBuilder $builder;
-    protected JWK $jwk;
+    private CompactSerializer $serializer;
+    private JWSBuilder $builder;
+    private JWK $jwk;
 
-    protected string $kid;
+    private string $kid;
 
     public static function signWithKey(string $kid, JWK $jwk): Signer
     {
@@ -48,7 +48,7 @@ final class Signer extends AbstractJws implements ISigner
         return new self($kid, $jwk);
     }
 
-    protected function __construct(string $kid, JWK $jwk)
+    private function __construct(string $kid, JWK $jwk)
     {
         $this->jwk = $jwk;
         $this->kid = $kid;

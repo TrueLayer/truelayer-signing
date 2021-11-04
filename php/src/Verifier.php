@@ -21,13 +21,13 @@ use TrueLayer\Signing\Exceptions\TrueLayerHeadersNotFoundException;
 
 final class Verifier extends AbstractJws implements IVerifier
 {
-    protected JWSSerializerManager $serializerManager;
-    protected JWSVerifier $verifier;
-    protected JWK $jwk;
+    private JWSSerializerManager $serializerManager;
+    private JWSVerifier $verifier;
+    private JWK $jwk;
 
-    protected string $kid;
+    private string $kid;
 
-    protected array $required_headers = [];
+    private array $required_headers = [];
 
     public static function verifyWithKey(JWK $jwk): Verifier
     {
@@ -57,7 +57,7 @@ final class Verifier extends AbstractJws implements IVerifier
         return new self($jwk);
     }
 
-    protected function __construct(JWK $jwk)
+    private function __construct(JWK $jwk)
     {
         $this->jwk = $jwk;
         $this->serializerManager = new JWSSerializerManager([ new CompactSerializer() ]);
