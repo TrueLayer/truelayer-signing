@@ -2,9 +2,9 @@ package truelayer.signing;
 
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 
 import static java.nio.file.Files.readAllBytes;
 import static org.junit.Assert.*;
@@ -15,8 +15,9 @@ public class UsageJava {
 
     @Test
     public void fullSignature() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -43,7 +44,7 @@ public class UsageJava {
 
     @Test
     public void verifyBodyStaticSignature() throws IOException {
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -64,8 +65,8 @@ public class UsageJava {
 
     @Test
     public void fullRequestSignatureMethodMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -93,8 +94,8 @@ public class UsageJava {
 
     @Test
     public void fullRequestSignaturePathMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -122,8 +123,8 @@ public class UsageJava {
 
     @Test
     public void fullRequestSignatureHeaderMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -150,8 +151,8 @@ public class UsageJava {
 
     @Test
     public void fullRequestSignatureBodyMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -178,8 +179,8 @@ public class UsageJava {
 
     @Test
     public void fullRequestSignatureMissingSignatureHeader() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -206,8 +207,8 @@ public class UsageJava {
 
     @Test
     public void flexibleHeaderCaseOrderVerify() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -235,8 +236,8 @@ public class UsageJava {
 
     @Test
     public void fullRequestSignatureRequiredHeaderMissingFromSignature() throws IOException {
-        byte[] privateKey = readAllBytes(Path.of("src/test/resources/ec512-private.pem"));
-        byte[] publicKey = readAllBytes(Path.of("src/test/resources/ec512-public.pem"));
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
