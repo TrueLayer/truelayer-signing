@@ -1,4 +1,4 @@
 install:
-  - echo "Publishing Markdown Generator"
-  - cd Source/MarkdownGenerator/
+  - echo "publish trulayer-signing"
+  - cd kotlin
   - ./gradlew clean build publishToMavenLocal
