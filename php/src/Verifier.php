@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
@@ -93,8 +94,9 @@ final class Verifier extends AbstractJws implements IVerifier
             throw new InvalidTrueLayerSignatureVersionException();
         }
 
+        $tlHeaders = explode(',', $jwsHeaders['tl_headers']);
         foreach ($this->required_headers as $header) {
-            if (!in_array($header, $jwsHeaders['tl_headers'])) {
+            if (!in_array($header, $tlHeaders)) {
                 throw new RequiredHeaderMissingException("Signature is missing the {$header} required header");
             }
         }
