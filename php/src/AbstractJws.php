@@ -17,24 +17,41 @@ abstract class AbstractJws implements IJws
      */
     protected array $requestHeaders = [];
 
+    /**
+     * @param string $method
+     * @return $this
+     */
     public function method(string $method): self
     {
         $this->requestMethod = strtoupper($method);
         return $this;
     }
 
+    /**
+     * @param string $path
+     * @return $this
+     */
     public function path(string $path): self
     {
         $this->requestPath = $path;
         return $this;
     }
 
+    /**
+     * @param string $body
+     * @return $this
+     */
     public function body(string $body): self
     {
         $this->requestBody = $body;
         return $this;
     }
 
+    /**
+     * @param string $key
+     * @param string $value
+     * @return $this
+     */
     public function header(string $key, string $value): self
     {
         $this->requestHeaders[$key] = $value;
@@ -53,6 +70,10 @@ abstract class AbstractJws implements IJws
         return $this;
     }
 
+    /**
+     * @return string
+     * @throws RequestPathNotFoundException
+     */
     public function buildPayload(): string
     {
         if (empty($this->requestPath)) {

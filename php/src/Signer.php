@@ -20,11 +20,22 @@ final class Signer extends AbstractJws implements ISigner
 
     private string $kid;
 
+    /**
+     * @param string $kid
+     * @param JWK $jwk
+     * @return Signer
+     */
     public static function signWithKey(string $kid, JWK $jwk): Signer
     {
         return new self($kid, $jwk);
     }
 
+    /**
+     * @param string $kid
+     * @param string $pem
+     * @param string|null $passphrase
+     * @return Signer
+     */
     public static function signWithPem(string $kid, string $pem, ?string $passphrase): Signer
     {
         $jwk = JWKFactory::createFromKey($pem, $passphrase, [
@@ -34,11 +45,23 @@ final class Signer extends AbstractJws implements ISigner
         return new self($kid, $jwk);
     }
 
+    /**
+     * @param string $kid
+     * @param string $pemBase64
+     * @param string|null $passphrase
+     * @return Signer
+     */
     public static function signWithPemBase64(string $kid, string $pemBase64, ?string $passphrase): Signer
     {
         return self::signWithPem($kid, base64_decode($pemBase64), $passphrase);
     }
 
+    /**
+     * @param string $kid
+     * @param string $path
+     * @param string|null $passphrase
+     * @return Signer
+     */
     public static function signWithPemFile(string $kid, string $path, ?string $passphrase): Signer
     {
         $jwk = JWKFactory::createFromKeyFile($path, $passphrase, [
@@ -48,6 +71,10 @@ final class Signer extends AbstractJws implements ISigner
         return new self($kid, $jwk);
     }
 
+    /**
+     * @param string $kid
+     * @param JWK $jwk
+     */
     private function __construct(string $kid, JWK $jwk)
     {
         $this->jwk = $jwk;
