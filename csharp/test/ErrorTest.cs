@@ -53,5 +53,24 @@ namespace Tests
 
             verify.Should().Throw<SignatureException>();
         }
+
+         [Fact]
+        public void MissingJwsHeaders()
+        {
+            // jws headers are lacking bits we need
+            const string Signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
+                + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX2hlYWRlcnMiOiIifQ..AHrNENw"
+                + "CMqQ_kDEQZiXeXsLxgXCDn-62b_Oh1yEPKsE8n1-qC3EIpA360WeCJXMyeMVH3FKi"
+                + "aJ1A1px7AnmzUIpeATgzbPSlWjyB-q2e--XeyOhausFq0BCWWfHbhlyGkjfk9zkBq"
+                + "XXd2iibbLPvId-tL50UhNBKNse_EMoKsW_Lav7D";
+
+            Action verify = () => Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path("/foo")
+                .Body("{}")
+                .Verify(Signature);
+
+            verify.Should().Throw<SignatureException>();
+        }
     }
 }
