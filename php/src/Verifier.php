@@ -100,6 +100,7 @@ final class Verifier extends AbstractJws implements IVerifier
      * @throws InvalidTrueLayerSignatureVersionException
      * @throws RequiredHeaderMissingException
      * @throws RequestPathNotFoundException
+     * @throws \Exception
      */
     public function verify(string $signature): void
     {
@@ -116,7 +117,7 @@ final class Verifier extends AbstractJws implements IVerifier
             throw new InvalidTrueLayerSignatureVersionException();
         }
 
-        $tlHeaders = explode(',', $jwsHeaders['tl_headers']);
+        $tlHeaders = !empty($jwsHeaders['tl_headers']) ? explode(',', $jwsHeaders['tl_headers']) : [];
         $normalisedTlHeaders = Util::normaliseHeaderKeys($tlHeaders);
         foreach ($this->requiredHeaders as $header) {
             if (!in_array(strtolower($header), $normalisedTlHeaders, true)) {

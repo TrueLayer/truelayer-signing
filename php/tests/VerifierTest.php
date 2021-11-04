@@ -92,3 +92,76 @@ it('should throw when the signature is invalid', function () {
         ])
         ->verify($signature);
 })->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class);
+
+it('should verify header order/casing flexibility', function () {
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $verifier = Verifier::verifyWithKey($keys['public']);
+
+    $signature = $signer->method("PUT")
+        ->path("/test")
+        ->headers([
+            'Idempotency-Key' => 'test',
+            'X-Custom' => '123',
+        ])
+        ->body('{"random-key": "random-value"}')
+        ->sign();
+
+    $verifier->method("PUT")
+        ->path("/test")
+        ->headers([
+            'X-CUSTOM' => '123', // different order & case, it's ok!
+            'X-Whatever-2' => 'foaulrsjth',
+            'idempotency-key' => 'test', // different order & case, chill it'll work!
+        ])
+        ->body('{"random-key": "random-value"}')
+        ->requireHeaders([
+            'idempotency-KEY', // different case
+        ]);
+
+    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+});
+
+it('should not verify the wrong HTTP method', function () {
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $verifier = Verifier::verifyWithKey($keys['public']);
+
+    $signature = $signer->method("PUT")
+        ->path("/test")
+        ->headers([
+            'Idempotency-Key' => 'test',
+            'X-Custom' => '123',
+        ])
+        ->body('{"random-key": "random-value"}')
+        ->sign();
+
+    $verifier->method("POST")
+        ->path("/test")
+        ->headers([
+            'Idempotency-Key' => 'test',
+            'X-Custom' => '123',
+        ])
+        ->body('{"random-key": "random-value"}')
+        ->requireHeaders([
+            'Idempotency-Key',
+        ])
+        ->verify($signature);
+})->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class);
+
+it('should verify a signature that has no headers', function () {
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $verifier = Verifier::verifyWithKey($keys['public']);
+
+    $signature = $signer->method("POST")
+        ->path("/test")
+        ->body('{"random-key": "random-value"}')
+        ->sign();
+
+    $verifier->method("POST")
+        ->path("/test")
+        ->body('{"random-key": "random-value"}');
+
+    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+});
