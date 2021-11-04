@@ -85,7 +85,7 @@ final class Verifier extends AbstractJws implements IVerifier
     }
 
     /**
-     * @param array<string, string> $headers
+     * @param string[] $headers
      * @return $this
      */
     public function requireHeaders(array $headers): Verifier
