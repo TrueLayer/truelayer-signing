@@ -50,10 +50,15 @@ abstract class AbstractJws implements IJws
             throw new RequestPathNotFoundException();
         }
 
+        // Add the HTTP Method and Path
         $payload = "{$this->request_method} {$this->request_path}\n";
+
+        // Add the request headers
         foreach ($this->request_headers as $key => $value) {
             $payload .= "{$key}: {$value}\n";
         }
+
+        // Add the request body
         $payload .= $this->request_body;
 
         return $payload;

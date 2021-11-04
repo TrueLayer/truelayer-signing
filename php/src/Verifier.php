@@ -79,9 +79,11 @@ final class Verifier extends AbstractJws implements IVerifier
             ->unserialize($signature);
 
         $jwsHeaders = $jws->getSignature(TrueLayerSignatures::SIGNATURE_INDEX)->getProtectedHeader();
+
         if ($jwsHeaders['alg'] !== TrueLayerSignatures::ALGORITHM) {
             throw new InvalidAlgorithmException();
         }
+
         if ($jwsHeaders['tl_version'] !== TrueLayerSignatures::SIGNING_VERSION) {
             throw new InvalidTrueLayerSignatureVersionException();
         }
