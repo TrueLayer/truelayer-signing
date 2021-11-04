@@ -17,6 +17,7 @@ use TrueLayer\Signing\Exceptions\InvalidSignatureException;
 use TrueLayer\Signing\Exceptions\InvalidTrueLayerSignatureVersionException;
 use TrueLayer\Signing\Exceptions\RequestPathNotFoundException;
 use TrueLayer\Signing\Exceptions\RequiredHeaderMissingException;
+use TrueLayer\Signing\Exceptions\SignatureMustUseDetachedPayloadException;
 
 final class Verifier extends AbstractJws implements IVerifier
 {
@@ -106,6 +107,10 @@ final class Verifier extends AbstractJws implements IVerifier
     {
         $jws = $this->serializerManager
             ->unserialize($signature);
+
+        if (!is_null($jws->getPayload())) {
+            throw new SignatureMustUseDetachedPayloadException();
+        }
 
         $jwsHeaders = $jws->getSignature(TrueLayerSignatures::SIGNATURE_INDEX)->getProtectedHeader();
 

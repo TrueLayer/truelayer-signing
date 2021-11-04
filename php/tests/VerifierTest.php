@@ -11,9 +11,9 @@ it('should verify a valid signature', function () {
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
-    $signature = $signer->method("PUT")
-        ->path("/test")
-        ->header("X-Idempotency-Key", "idempotency-test")
+    $signature = $signer->method('PUT')
+        ->path('/test')
+        ->header('X-Idempotency-Key', 'idempotency-test')
         ->body('{"random-key": "random-value"}')
         ->sign();
 
@@ -52,15 +52,15 @@ it('should throw when required header is missing', function () {
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
-    $signature = $signer->method("PUT")
-        ->path("/test")
-        ->header("X-Idempotency-Key", "idempotency-test")
+    $signature = $signer->method('PUT')
+        ->path('/test')
+        ->header('X-Idempotency-Key', 'idempotency-test')
         ->body('{"random-key": "random-value"}')
         ->sign();
 
-    $verifier->method("PUT")
-        ->path("/test")
-        ->header("X-Idempotency-Key", "idempotency-test")
+    $verifier->method('PUT')
+        ->path('/test')
+        ->header('X-Idempotency-Key', 'idempotency-test')
         ->body('{"random-key": "random-value"}')
         ->requireHeaders([
             'X-Idempotency-Key',
@@ -77,15 +77,15 @@ it('should throw when the signature is invalid', function () {
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
-    $signature = $signer->method("PUT")
-        ->path("/test")
-        ->header("X-Idempotency-Key", "idempotency-test")
+    $signature = $signer->method('PUT')
+        ->path('/test')
+        ->header('X-Idempotency-Key', 'idempotency-test')
         ->body('{"random-key": "random-value"}')
         ->sign();
 
-    $verifier->method("PUT")
-        ->path("/wrong-path")
-        ->header("X-Idempotency-Key", "idempotency-test")
+    $verifier->method('PUT')
+        ->path('/wrong-path')
+        ->header('X-Idempotency-Key', 'idempotency-test')
         ->body('{"random-key": "random-value"}')
         ->requireHeaders([
             'X-Idempotency-Key',
@@ -98,8 +98,8 @@ it('should verify header order/casing flexibility', function () {
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
-    $signature = $signer->method("PUT")
-        ->path("/test")
+    $signature = $signer->method('PUT')
+        ->path('/test')
         ->headers([
             'Idempotency-Key' => 'test',
             'X-Custom' => '123',
@@ -107,8 +107,8 @@ it('should verify header order/casing flexibility', function () {
         ->body('{"random-key": "random-value"}')
         ->sign();
 
-    $verifier->method("PUT")
-        ->path("/test")
+    $verifier->method('PUT')
+        ->path('/test')
         ->headers([
             'X-CUSTOM' => '123', // different order & case, it's ok!
             'X-Whatever-2' => 'foaulrsjth',
@@ -127,7 +127,7 @@ it('should not verify the wrong HTTP method', function () {
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
-    $signature = $signer->method("PUT")
+    $signature = $signer->method('PUT')
         ->path("/test")
         ->headers([
             'Idempotency-Key' => 'test',
@@ -136,7 +136,7 @@ it('should not verify the wrong HTTP method', function () {
         ->body('{"random-key": "random-value"}')
         ->sign();
 
-    $verifier->method("POST")
+    $verifier->method('POST')
         ->path("/test")
         ->headers([
             'Idempotency-Key' => 'test',
@@ -154,14 +154,23 @@ it('should verify a signature that has no headers', function () {
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
-    $signature = $signer->method("POST")
+    $signature = $signer->method('POST')
         ->path("/test")
         ->body('{"random-key": "random-value"}')
         ->sign();
 
-    $verifier->method("POST")
+    $verifier->method('POST')
         ->path("/test")
         ->body('{"random-key": "random-value"}');
 
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
+
+it('should not verify a signature that has an attached payload', function () {
+    $signature = 'eyJhbGciOiJFUzUxMiIsImtpZCI6ImU5OTYzOTNmLWFiZGQtNDc4ZS1iZDIzLTZlYTU4OGJhY2IzMyIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IiJ9.UFVUIC90ZXN0CnsicmFuZG9tLWtleSI6ICJyYW5kb20tdmFsdWUifQ.AVfKw5gNZCKTfa7p_z4S7RQs6qpqWFTbg7x-Rv-1wmPffPCNBktVwbxTu5I359pP6ilFTTgS0IR58JKkDbRE2NqsALDh08EYea17dfZPUaDFh7E8r9eOHllrHTGyF2mKj9rRILoBauYgRJ3shAG2XBIL6GB6tklchUGJHxsRXA0bTp8M';
+
+    $keys = MockData::generateKeyPair();
+    $verifier = Verifier::verifyWithKey($keys['public']);
+
+    $verifier->verify($signature);
+})->throws(\TrueLayer\Signing\Exceptions\SignatureMustUseDetachedPayloadException::class);
