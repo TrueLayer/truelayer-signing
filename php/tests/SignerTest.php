@@ -16,4 +16,3 @@ it('should throw when the request path is not set', function () {
     $signer = Signer::signWithPemBase64(Uuid::uuid4(), MockData::PRIVATE_KEY_PEM_BASE64, null);
     $signer->sign();
 })->throws(\TrueLayer\Signing\Exceptions\RequestPathNotFoundException::class);
-
