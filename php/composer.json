@@ -1,0 +1,33 @@
+{
+    "name": "truelayer/signing",
+    "description": "Produce and verify TrueLayer API requests signatures",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "TrueLayer\\Signing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TrueLayer\\Signing\\Tests\\": "tests"
+        }
+    },
+    "authors": [
+        {
+            "name": "Stefan Adrian Danaita",
+            "email": "me@dsa.io"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "web-token/jwt-core": "^2.2",
+        "web-token/jwt-signature": "^2.2",
+        "web-token/jwt-signature-algorithm-ecdsa": "^2.2",
+        "web-token/jwt-key-mgmt": "^2.2"
+    },
+    "require-dev": {
+        "pestphp/pest": "^1.20",
+        "ramsey/uuid": "^4.2"
+    }
+}
