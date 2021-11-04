@@ -29,6 +29,7 @@
     "require-dev": {
         "pestphp/pest": "^1.20",
         "ramsey/uuid": "^4.2",
-        "phpstan/phpstan": "^1.0"
+        "phpstan/phpstan": "^1.0",
+        "roave/security-advisories": "dev-latest"
     }
 }
