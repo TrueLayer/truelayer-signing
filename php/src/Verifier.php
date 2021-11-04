@@ -28,6 +28,11 @@ final class Verifier extends AbstractJws implements IVerifier
 
     protected array $required_headers = [];
 
+    public static function verifyWithKey(JWK $jwk): Verifier
+    {
+        return new self($jwk);
+    }
+
     public static function verifyWithPem(string $pem): Verifier
     {
         $jwk = JWKFactory::createFromKey($pem, null, [

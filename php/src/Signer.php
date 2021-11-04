@@ -19,6 +19,11 @@ final class Signer extends AbstractJws implements ISigner
 
     protected string $kid;
 
+    public static function signWithKey(string $kid, JWK $jwk): Signer
+    {
+        return new self($kid, $jwk);
+    }
+
     public static function signWithPem(string $kid, string $pem, ?string $passphrase): Signer
     {
         $jwk = JWKFactory::createFromKey($pem, $passphrase, [

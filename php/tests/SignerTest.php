@@ -5,7 +5,8 @@ use TrueLayer\Signing\Signer;
 use TrueLayer\Signing\Tests\MockData;
 
 it('should produce a signature', function () {
-    $signer = Signer::signWithPemBase64(Uuid::uuid4(), MockData::PRIVATE_KEY_PEM_BASE64, null);
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4(), $keys['private'], null);
 
     $signer->method('PUT')->path('/test');
     expect($signer->sign())->not->toThrow(Exception::class);
@@ -13,6 +14,7 @@ it('should produce a signature', function () {
 });
 
 it('should throw when the request path is not set', function () {
-    $signer = Signer::signWithPemBase64(Uuid::uuid4(), MockData::PRIVATE_KEY_PEM_BASE64, null);
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4(), $keys['private'], null);
     $signer->sign();
 })->throws(\TrueLayer\Signing\Exceptions\RequestPathNotFoundException::class);

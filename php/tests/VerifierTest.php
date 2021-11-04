@@ -6,8 +6,9 @@ use TrueLayer\Signing\Verifier;
 use TrueLayer\Signing\Tests\MockData;
 
 it('should validate a valid signature', function () {
-    $signer = Signer::signWithPemBase64(Uuid::uuid4(), MockData::PRIVATE_KEY_PEM_BASE64, null);
-    $verifier = Verifier::verifyWithPemBase64(MockData::PUBLIC_KEY_PEM_BASE64);
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4(), $keys['private'], null);
+    $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method("PUT")
         ->path("/test")
@@ -27,8 +28,9 @@ it('should validate a valid signature', function () {
 });
 
 it('should throw when required header is missing', function () {
-    $signer = Signer::signWithPemBase64(Uuid::uuid4(), MockData::PRIVATE_KEY_PEM_BASE64, null);
-    $verifier = Verifier::verifyWithPemBase64(MockData::PUBLIC_KEY_PEM_BASE64);
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4(), $keys['private'], null);
+    $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method("PUT")
         ->path("/test")
@@ -51,8 +53,9 @@ it('should throw when required header is missing', function () {
 );
 
 it('should throw when the signature is invalid', function () {
-    $signer = Signer::signWithPemBase64(Uuid::uuid4(), MockData::PRIVATE_KEY_PEM_BASE64, null);
-    $verifier = Verifier::verifyWithPemBase64(MockData::PUBLIC_KEY_PEM_BASE64);
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4(), $keys['private'], null);
+    $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method("PUT")
         ->path("/test")
