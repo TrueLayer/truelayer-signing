@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
+use Exception;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
@@ -86,19 +87,21 @@ final class Signer extends AbstractJws implements ISigner
     /**
      * @return string
      * @throws Exceptions\RequestPathNotFoundException
+     * @throws Exception
      */
     public function sign(): string
     {
+        $tlHeaders = array_keys(Util::normaliseHeaders($this->requestHeaders));
         $headers = [
             'alg' => TrueLayerSignatures::ALGORITHM,
             'kid' => $this->kid,
             'tl_version' => TrueLayerSignatures::SIGNING_VERSION,
-            'tl_headers' => implode(',', array_keys($this->requestHeaders)),
+            'tl_headers' => implode(',', $tlHeaders),
         ];
 
         $jws = $this->builder
             ->create()
-            ->withPayload($this->buildPayload(), true)
+            ->withPayload($this->buildPayload($tlHeaders), true)
             ->addSignature($this->jwk, $headers)
             ->build();
 

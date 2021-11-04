@@ -37,7 +37,8 @@ interface Jws
     public function headers(array $headers): self;
 
     /**
+     * @param string[] $orderOfHeaderKeys
      * @return string
      */
-    public function buildPayload(): string;
+    public function buildPayload(array $orderOfHeaderKeys): string;
 }

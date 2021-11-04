@@ -117,13 +117,14 @@ final class Verifier extends AbstractJws implements IVerifier
         }
 
         $tlHeaders = explode(',', $jwsHeaders['tl_headers']);
+        $normalisedTlHeaders = Util::normaliseHeaderKeys($tlHeaders);
         foreach ($this->requiredHeaders as $header) {
-            if (!in_array($header, $tlHeaders, true)) {
+            if (!in_array(strtolower($header), $normalisedTlHeaders, true)) {
                 throw new RequiredHeaderMissingException("Signature is missing the {$header} required header");
             }
         }
 
-        if (! $this->verifier->verifyWithKey($jws, $this->jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload())) {
+        if (! $this->verifier->verifyWithKey($jws, $this->jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders))) {
             throw new InvalidSignatureException();
         }
     }

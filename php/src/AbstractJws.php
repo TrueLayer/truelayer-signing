@@ -3,13 +3,25 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
+use Exception;
 use TrueLayer\Signing\Contracts\Jws as IJws;
 use TrueLayer\Signing\Exceptions\RequestPathNotFoundException;
 
 abstract class AbstractJws implements IJws
 {
+    /**
+     * @var string
+     */
     protected string $requestMethod = 'POST';
+
+    /**
+     * @var string
+     */
     protected string $requestPath;
+
+    /**
+     * @var string
+     */
     protected string $requestBody = '';
 
     /**
@@ -54,7 +66,7 @@ abstract class AbstractJws implements IJws
      */
     public function header(string $key, string $value): self
     {
-        $this->requestHeaders[$key] = $value;
+        $this->requestHeaders[strtolower($key)] = $value;
         return $this;
     }
 
@@ -71,10 +83,12 @@ abstract class AbstractJws implements IJws
     }
 
     /**
+     * @param string[] $orderOfHeaderKeys
      * @return string
      * @throws RequestPathNotFoundException
+     * @throws Exception
      */
-    public function buildPayload(): string
+    public function buildPayload(array $orderOfHeaderKeys): string
     {
         if (empty($this->requestPath)) {
             throw new RequestPathNotFoundException();
@@ -84,8 +98,10 @@ abstract class AbstractJws implements IJws
         $payload = "{$this->requestMethod} {$this->requestPath}\n";
 
         // Add the request headers
-        foreach ($this->requestHeaders as $key => $value) {
-            $payload .= "{$key}: {$value}\n";
+        $normalisedRequestHeaders = Util::normaliseHeaders($this->requestHeaders);
+        foreach ($orderOfHeaderKeys as $headerKey) {
+            $value = $normalisedRequestHeaders[strtolower($headerKey)];
+            $payload .= "{$headerKey}: {$value}\n";
         }
 
         // Add the request body
