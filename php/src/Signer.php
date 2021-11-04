@@ -66,7 +66,7 @@ final class Signer extends AbstractJws implements ISigner
             'alg' => TrueLayerSignatures::ALGORITHM,
             'kid' => $this->kid,
             'tl_version' => TrueLayerSignatures::SIGNING_VERSION,
-            'tl_headers' => implode(',', array_keys($this->request_headers)),
+            'tl_headers' => implode(',', array_keys($this->requestHeaders)),
         ];
 
         $jws = $this->builder

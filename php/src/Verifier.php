@@ -27,7 +27,7 @@ final class Verifier extends AbstractJws implements IVerifier
 
     private string $kid;
 
-    private array $required_headers = [];
+    private array $requiredHeaders = [];
 
     public static function verifyWithKey(JWK $jwk): Verifier
     {
@@ -66,7 +66,7 @@ final class Verifier extends AbstractJws implements IVerifier
 
     public function requireHeaders(array $headers): Verifier
     {
-        array_push($this->required_headers, ...$headers);
+        array_push($this->requiredHeaders, ...$headers);
         return $this;
     }
 
@@ -95,7 +95,7 @@ final class Verifier extends AbstractJws implements IVerifier
         }
 
         $tlHeaders = explode(',', $jwsHeaders['tl_headers']);
-        foreach ($this->required_headers as $header) {
+        foreach ($this->requiredHeaders as $header) {
             if (!in_array($header, $tlHeaders)) {
                 throw new RequiredHeaderMissingException("Signature is missing the {$header} required header");
             }

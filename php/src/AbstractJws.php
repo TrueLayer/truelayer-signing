@@ -8,32 +8,32 @@ use TrueLayer\Signing\Exceptions\RequestPathNotFoundException;
 
 abstract class AbstractJws implements IJws
 {
-    protected string $request_method = 'POST';
-    protected string $request_path;
-    protected string $request_body = '';
-    protected array $request_headers = [];
+    protected string $requestMethod = 'POST';
+    protected string $requestPath;
+    protected string $requestBody = '';
+    protected array $requestHeaders = [];
 
     public function method(string $method): self
     {
-        $this->request_method = strtoupper($method);
+        $this->requestMethod = strtoupper($method);
         return $this;
     }
 
     public function path(string $path): self
     {
-        $this->request_path = $path;
+        $this->requestPath = $path;
         return $this;
     }
 
     public function body(string $body): self
     {
-        $this->request_body = $body;
+        $this->requestBody = $body;
         return $this;
     }
 
     public function header(string $key, string $value): self
     {
-        $this->request_headers[$key] = $value;
+        $this->requestHeaders[$key] = $value;
         return $this;
     }
 
@@ -47,20 +47,20 @@ abstract class AbstractJws implements IJws
 
     public function buildPayload(): string
     {
-        if (empty($this->request_path)) {
+        if (empty($this->requestPath)) {
             throw new RequestPathNotFoundException();
         }
 
         // Add the HTTP Method and Path
-        $payload = "{$this->request_method} {$this->request_path}\n";
+        $payload = "{$this->requestMethod} {$this->requestPath}\n";
 
         // Add the request headers
-        foreach ($this->request_headers as $key => $value) {
+        foreach ($this->requestHeaders as $key => $value) {
             $payload .= "{$key}: {$value}\n";
         }
 
         // Add the request body
-        $payload .= $this->request_body;
+        $payload .= $this->requestBody;
 
         return $payload;
     }
