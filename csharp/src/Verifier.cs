@@ -150,10 +150,12 @@ namespace TrueLayer.Signing
 
             SignatureException.Ensure(jwsHeaders["alg"] as string == "ES512", "unsupported jws alg");
             SignatureException.Ensure(jwsHeaders["tl_version"] as string == "2", "unsupported jws tl_version");
+            SignatureException.Ensure(tlSignature.Contains(".."), "signature must have a detached payload");
 
             var signatureHeaderNames = (jwsHeaders["tl_headers"] as string ?? "")
                 .Split(",")
                 .Select(h => h.Trim())
+                .Where(h => !string.IsNullOrEmpty(h))
                 .ToList();
 
             var missingRequired = requiredHeaders.SingleOrDefault(h => !signatureHeaderNames.Contains(h));
