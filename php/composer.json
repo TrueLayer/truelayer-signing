@@ -3,6 +3,11 @@
     "description": "Produce and verify TrueLayer API requests signatures",
     "type": "library",
     "license": "MIT",
+    "keywords": [
+        "truelayer",
+        "signing",
+        "jws"
+    ],
     "autoload": {
         "psr-4": {
             "TrueLayer\\Signing\\": "src/"
