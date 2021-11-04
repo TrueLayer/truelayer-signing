@@ -17,7 +17,6 @@ use TrueLayer\Signing\Exceptions\InvalidSignatureException;
 use TrueLayer\Signing\Exceptions\InvalidTrueLayerSignatureVersionException;
 use TrueLayer\Signing\Exceptions\RequestPathNotFoundException;
 use TrueLayer\Signing\Exceptions\RequiredHeaderMissingException;
-use TrueLayer\Signing\Exceptions\TrueLayerHeadersNotFoundException;
 
 final class Verifier extends AbstractJws implements IVerifier
 {
@@ -25,15 +24,24 @@ final class Verifier extends AbstractJws implements IVerifier
     private JWSVerifier $verifier;
     private JWK $jwk;
 
-    private string $kid;
-
+    /**
+     * @var string[]
+     */
     private array $requiredHeaders = [];
 
+    /**
+     * @param JWK $jwk
+     * @return Verifier
+     */
     public static function verifyWithKey(JWK $jwk): Verifier
     {
         return new self($jwk);
     }
 
+    /**
+     * @param string $pem
+     * @return Verifier
+     */
     public static function verifyWithPem(string $pem): Verifier
     {
         $jwk = JWKFactory::createFromKey($pem, null, [
@@ -43,11 +51,19 @@ final class Verifier extends AbstractJws implements IVerifier
         return new self($jwk);
     }
 
+    /**
+     * @param string $pemBase64
+     * @return Verifier
+     */
     public static function verifyWithPemBase64(string $pemBase64): Verifier
     {
         return self::verifyWithPem(base64_decode($pemBase64));
     }
 
+    /**
+     * @param string $path
+     * @return Verifier
+     */
     public static function verifyWithPemFile(string $path): Verifier
     {
         $jwk = JWKFactory::createFromKeyFile($path, null, [
@@ -57,6 +73,9 @@ final class Verifier extends AbstractJws implements IVerifier
         return new self($jwk);
     }
 
+    /**
+     * @param JWK $jwk
+     */
     private function __construct(JWK $jwk)
     {
         $this->jwk = $jwk;
@@ -64,6 +83,10 @@ final class Verifier extends AbstractJws implements IVerifier
         $this->verifier = new JWSVerifier(new AlgorithmManager([ new ES512() ]));
     }
 
+    /**
+     * @param array<string, string> $headers
+     * @return $this
+     */
     public function requireHeaders(array $headers): Verifier
     {
         array_push($this->requiredHeaders, ...$headers);
@@ -75,7 +98,6 @@ final class Verifier extends AbstractJws implements IVerifier
      * @throws InvalidAlgorithmException
      * @throws InvalidSignatureException
      * @throws InvalidTrueLayerSignatureVersionException
-     * @throws TrueLayerHeadersNotFoundException
      * @throws RequiredHeaderMissingException
      * @throws RequestPathNotFoundException
      */

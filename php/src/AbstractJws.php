@@ -11,6 +11,10 @@ abstract class AbstractJws implements IJws
     protected string $requestMethod = 'POST';
     protected string $requestPath;
     protected string $requestBody = '';
+
+    /**
+     * @var array<string, string>
+     */
     protected array $requestHeaders = [];
 
     public function method(string $method): self
@@ -37,6 +41,10 @@ abstract class AbstractJws implements IJws
         return $this;
     }
 
+    /**
+     * @param array<string, string> $headers
+     * @return $this
+     */
     public function headers(array $headers): self
     {
         foreach ($headers as $key => $value) {
