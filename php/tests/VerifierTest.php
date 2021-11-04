@@ -49,7 +49,7 @@ it('should verify the full request static signature', function () {
 
 it('should throw when required header is missing', function () {
     $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private'], null);
+    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method("PUT")
@@ -74,7 +74,7 @@ it('should throw when required header is missing', function () {
 
 it('should throw when the signature is invalid', function () {
     $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private'], null);
+    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method("PUT")
