@@ -96,7 +96,7 @@ final class Verifier extends AbstractJws implements IVerifier
 
         $tlHeaders = explode(',', $jwsHeaders['tl_headers']);
         foreach ($this->requiredHeaders as $header) {
-            if (!in_array($header, $tlHeaders)) {
+            if (!in_array($header, $tlHeaders, true)) {
                 throw new RequiredHeaderMissingException("Signature is missing the {$header} required header");
             }
         }
