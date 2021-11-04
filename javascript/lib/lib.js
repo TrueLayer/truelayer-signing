@@ -106,7 +106,7 @@ module.exports = {
     const headers = new Headers(args.headers || {}).validated();
 
     const { headerJson, header, footer } = parseSignature(signature);
-    const tlHeaders = (headerJson.tl_headers || "").split(",");
+    const tlHeaders = (headerJson.tl_headers || "").split(",").filter(h => !!h);
 
     // fail if signature is missing a required header
     for (const required of requiredHeaders) {
