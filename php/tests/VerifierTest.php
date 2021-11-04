@@ -8,7 +8,7 @@ use TrueLayer\Signing\Tests\MockData;
 
 it('should verify a valid signature', function () {
     $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private'], null);
+    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method("PUT")
