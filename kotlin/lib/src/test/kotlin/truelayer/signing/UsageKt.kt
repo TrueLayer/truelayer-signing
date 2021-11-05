@@ -3,6 +3,9 @@ package truelayer.signing
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
+import java.security.PrivateKey
+import java.security.PublicKey
+
 
 const val KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
 val privateKey = File("src/test/resources/ec512-private.pem").readBytes();
@@ -252,5 +255,24 @@ class UsageKt {
         val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(signature) }
 
         assertEquals("JWS signing/verification failed: The payload Base64URL part must be empty", exception.message)
+    }
+
+    @Test
+    fun signAndVerifyNoHeaders() {
+        val body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".toByteArray()
+        val path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+        val tlSignature = Signer.from(KID, privateKey)
+            .method("POST")
+            .path(path)
+            .body(body)
+            .sign()
+
+        val verified = Verifier.from(publicKey)
+            .method("POST")
+            .path(path)
+            .body(body)
+            .verify(tlSignature)
+
+        assertTrue(verified)
     }
 }

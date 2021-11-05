@@ -284,4 +284,27 @@ public class UsageJava {
 
         assertEquals("JWS signing/verification failed: The payload Base64URL part must be empty", invalidSignatureException.getMessage());
     }
+
+    @Test
+    public void signAndVerifyNoHeaders() throws IOException {
+        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
+
+        byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes();
+        String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+        String tlSignature = Signer.from(KID, privateKey)
+                .method("POST")
+                .path(path)
+                .body(body)
+                .sign();
+
+        boolean verified = Verifier.from(publicKey)
+                .method("POST")
+                .path(path)
+                .body(body)
+                .verify(tlSignature);
+
+        assertTrue(verified);
+    }
 }
