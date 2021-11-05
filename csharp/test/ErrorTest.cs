@@ -2,6 +2,10 @@ using Xunit;
 using TrueLayer.Signing;
 using System;
 using FluentAssertions;
+using Jose;
+using System.Text;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Tests
 {
@@ -54,21 +58,52 @@ namespace Tests
             verify.Should().Throw<SignatureException>();
         }
 
-         [Fact]
-        public void MissingJwsHeaders()
+        [Theory]
+        [InlineData("alg")]
+        [InlineData("kid")]
+        [InlineData("tl_version")]
+        public void MissingJwsHeaders(string sansHeader)
         {
-            // jws headers are lacking bits we need
-            const string Signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
-                + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX2hlYWRlcnMiOiIifQ..AHrNENw"
-                + "CMqQ_kDEQZiXeXsLxgXCDn-62b_Oh1yEPKsE8n1-qC3EIpA360WeCJXMyeMVH3FKi"
-                + "aJ1A1px7AnmzUIpeATgzbPSlWjyB-q2e--XeyOhausFq0BCWWfHbhlyGkjfk9zkBq"
-                + "XXd2iibbLPvId-tL50UhNBKNse_EMoKsW_Lav7D";
+            // creates a (POST /bar {}) signature
+            string CreateSignature(Dictionary<string, string> jwsHeaderMap)
+            {
+                var jwsEncoded = Base64Url.Encode(
+                    Encoding.UTF8.GetBytes(JsonSerializer.Serialize(jwsHeaderMap)));
+
+                return $"{jwsEncoded}..ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
+                    + "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC"
+                    + "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB"
+                    + "d2d3D17Wd9UA";
+            }
+
+            var jwsHeaderMap = new Dictionary<string, string>()
+            {
+                {"alg", "ES512"},
+                {"kid", Kid},
+                {"tl_version", "2"},
+                {"tl_headers", ""},
+            };
+
+            var goodSignature = CreateSignature(jwsHeaderMap);
+
+            // signature is valid with all required jws headers
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path("/bar")
+                .Body("{}")
+                .Verify(goodSignature); // should not throw
+
+            // if we remove a required header verify should fail
+            jwsHeaderMap.Remove(sansHeader).Should()
+                .BeTrue($"jwsHeaderMap didn't contain {sansHeader}");
+
+            var badSignature = CreateSignature(jwsHeaderMap);
 
             Action verify = () => Verifier.VerifyWithPem(PublicKey)
                 .Method("POST")
-                .Path("/foo")
+                .Path("/bar")
                 .Body("{}")
-                .Verify(Signature);
+                .Verify(badSignature);
 
             verify.Should().Throw<SignatureException>();
         }
