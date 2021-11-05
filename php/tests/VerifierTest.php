@@ -174,3 +174,28 @@ it('should not verify a signature that has an attached payload', function () {
 
     $verifier->verify($signature);
 })->throws(\TrueLayer\Signing\Exceptions\SignatureMustUseDetachedPayloadException::class);
+
+it('should verify a valid signature from pem string', function () {
+    $privateKey = file_get_contents(__DIR__ . '/ec512-private.pem');
+    $publicKey = file_get_contents(__DIR__ . '/ec512-public.pem');
+    $signer = Signer::signWithPem(Uuid::uuid4()->toString(), $privateKey, null);
+    $signer->method('PUT')->path('/test');
+
+    $verifier = Verifier::verifyWithPem($publicKey);
+
+    $signature = $signer->method('PUT')
+        ->path('/test')
+        ->header('X-Idempotency-Key', 'idempotency-test')
+        ->body('{"random-key": "random-value"}')
+        ->sign();
+
+    $verifier->method('PUT')
+        ->path('/test')
+        ->header('X-Idempotency-Key', 'idempotency-test')
+        ->body('{"random-key": "random-value"}')
+        ->requireHeaders([
+            'X-Idempotency-Key'
+        ]);
+
+    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+});
