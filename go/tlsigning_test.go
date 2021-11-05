@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/Truelayer/truelayer-signing/go/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +32,7 @@ func TestVerifyV1StaticSignatureShouldFail(t *testing.T) {
 		Body(body).
 		Verify(tlSignature)
 	assert.NotNilf(err, "v1 signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
 
 func TestSignature(t *testing.T) {
@@ -106,6 +108,7 @@ func TestSignatureMethodMismatch(t *testing.T) {
 		Body(body).
 		Verify(signature)
 	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
 
 func TestSignatureHeaderMismatch(t *testing.T) {
@@ -133,6 +136,7 @@ func TestSignatureHeaderMismatch(t *testing.T) {
 		Body(body).
 		Verify(signature)
 	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
 
 func TestSignatureBodyMismatch(t *testing.T) {
@@ -160,6 +164,7 @@ func TestSignatureBodyMismatch(t *testing.T) {
 		Body([]byte("{\"max_amount_in_minor\":1234}")). // different
 		Verify(signature)
 	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
 
 func TestSignatureMissingSignatureHeader(t *testing.T) {
@@ -187,6 +192,7 @@ func TestSignatureMissingSignatureHeader(t *testing.T) {
 		Body(body).
 		Verify(signature)
 	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
 
 func TestRequiredHeaderMissingFromSignature(t *testing.T) {
@@ -214,6 +220,7 @@ func TestRequiredHeaderMissingFromSignature(t *testing.T) {
 		Body(body).
 		Verify(signature)
 	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.InvalidKeyError{}, &err, "error should be an InvalidKeyError")
 }
 
 func TestFlexibleHeaderCaseOrderVerify(t *testing.T) {
@@ -242,6 +249,25 @@ func TestFlexibleHeaderCaseOrderVerify(t *testing.T) {
 		Body(body).
 		Verify(signature)
 	assert.Nilf(err, "signature verification should not fail: %v", err)
+}
+
+func TestEnforceDetached(t *testing.T) {
+	assert := assert.New(t)
+
+	_, publicKeyBytes := getTestKeys(assert)
+
+	// signature for `/bar` but with a valid jws-body pre-attached
+	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRDz7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oCQHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUBd2d3D17Wd9UA"
+
+	body := []byte("{}")
+	path := "/foo"
+	err := VerifyWithPem(publicKeyBytes).
+		Method("post").
+		Path(path).
+		Body(body).
+		Verify(tlSignature)
+	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
 
 func TestJwsHeaderExtraction(t *testing.T) {
