@@ -117,6 +117,16 @@ namespace TrueLayer.Signing
                 throw new ArgumentException($"Invalid key pem data: {e.Message}");
             }
         }
+
+        /// <summary>Gets a value from the map as a string or null.</summary>
+        public static string? GetString(this IDictionary<string, object> dict, string key)
+        {
+            if (dict.TryGetValue(key, out var value))
+            {
+                return value as string;
+            }
+            return null;
+        }
     }
 
     /// <summary>Case-insensitive string header name comparison.</summary>
