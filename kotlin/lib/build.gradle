@@ -46,7 +46,7 @@ dependencies {
     implementation 'com.google.guava:guava:30.1.1-jre'
 
     //Needed to parse EC pem files
-    implementation("org.bouncycastle:bcprov-jdk15on:1.69")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
 
     //Jws library support
     implementation("com.nimbusds:nimbus-jose-jwt:9.15.2")
