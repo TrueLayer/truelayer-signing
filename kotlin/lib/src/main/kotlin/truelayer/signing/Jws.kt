@@ -17,7 +17,7 @@ internal fun signEs512(
     path: String,
     body: ByteArray
 ): Result<String> =
-    JwsErrorException.evaluate {
+    InvalidSignatureException.evaluate {
         val json = Json.encodeToString(
             mapOf(
                 "alg" to "ES512",
@@ -45,9 +45,9 @@ internal fun verifyTlSignature(
     body: ByteArray,
     headers: Map<HeaderName, String>
 ): Result<Boolean> {
-    val header = JwsErrorException.evaluate { JWSHeader.parse(JOSEObject.split(signature)[0]) }.getOrThrow()
+    val header = InvalidSignatureException.evaluate { JWSHeader.parse(JOSEObject.split(signature)[0]) }.getOrThrow()
     val signatureHeaderNames = validSignatureHeaders(header, requiredHeaders).getOrThrow()
-    return JwsErrorException.evaluate {
+    return InvalidSignatureException.evaluate {
         val orderedHeaders =
             signatureHeaderNames.fold(LinkedHashMap<HeaderName, String>(0)) { acc, curr ->
                 val value: String? = headers[HeaderName((curr))]
@@ -90,15 +90,15 @@ private fun validSignatureHeaders(
     signatureHeaders: JWSHeader,
     requiredHeaders: HashSet<String>
 ): Result<List<String>> = runCatching {
-    JwsErrorException.ensure({ signatureHeaders.algorithm.equals(JWSAlgorithm.ES512) }, "unexpected header algorithm")
+    InvalidSignatureException.ensure({ signatureHeaders.algorithm.equals(JWSAlgorithm.ES512) }, "unexpected header algorithm")
 
-    JwsErrorException.ensure(
+    InvalidSignatureException.ensure(
         { signatureHeaders.getCustomParam("tl_version").toString() == "2" },
         "only version 2 is allowed"
     )
 
     val signatureHeaderNames = signatureHeaders.getCustomParam("tl_headers").toString().split(",").map { it.trim() }
-    JwsErrorException.ensure(
+    InvalidSignatureException.ensure(
         { requiredHeaders.all { rHeader -> signatureHeaderNames.any { it.contains(rHeader, true) } } },
         "missing required header"
     )

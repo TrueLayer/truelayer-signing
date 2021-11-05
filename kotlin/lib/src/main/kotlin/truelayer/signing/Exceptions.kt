@@ -7,7 +7,7 @@ class InvalidKeyException private constructor(message: String, cause: Throwable)
     }
 }
 
-class JwsErrorException : Exception {
+class InvalidSignatureException : Exception {
     private constructor(message: String, cause: Throwable) : super(message, cause)
     private constructor(message: String) : super(message)
 
@@ -16,11 +16,11 @@ class JwsErrorException : Exception {
             if (predicate()) {
                 return
             } else {
-                throw JwsErrorException("JWS signing/verification failed: $message")
+                throw InvalidSignatureException("JWS signing/verification failed: $message")
             }
         }
 
         internal fun <T> evaluate(block: () -> T) =
-            Result.evaluate(block) { e -> JwsErrorException("JWS signing/verification failed: ${e.message}", e) }
+            Result.evaluate(block) { e -> InvalidSignatureException("JWS signing/verification failed: ${e.message}", e) }
     }
 }

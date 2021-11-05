@@ -259,9 +259,9 @@ public class UsageJava {
                 .requiredHeader("X-required")
                 .body(body);
 
-        JwsErrorException jwsErrorException = assertThrows(JwsErrorException.class, () -> verifier.verify(tlSignature));
+        InvalidSignatureException invalidSignatureException = assertThrows(InvalidSignatureException.class, () -> verifier.verify(tlSignature));
 
-        assertEquals("JWS signing/verification failed: missing required header", jwsErrorException.getMessage());
+        assertEquals("JWS signing/verification failed: missing required header", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -280,8 +280,8 @@ public class UsageJava {
                 .path("/foo")
                 .body("{}".getBytes());
 
-        JwsErrorException jwsErrorException = assertThrows(JwsErrorException.class, () -> verifier.verify(signature));
+        InvalidSignatureException invalidSignatureException = assertThrows(InvalidSignatureException.class, () -> verifier.verify(signature));
 
-        assertEquals("JWS signing/verification failed: The payload Base64URL part must be empty", jwsErrorException.getMessage());
+        assertEquals("JWS signing/verification failed: The payload Base64URL part must be empty", invalidSignatureException.getMessage());
     }
 }

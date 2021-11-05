@@ -230,7 +230,7 @@ class UsageKt {
             .requiredHeader("X-required")
             .body(body)
 
-        val excpetion = assertThrows(JwsErrorException::class.java) { verifier.verify(tlSignature) }
+        val excpetion = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
 
         assertEquals("JWS signing/verification failed: missing required header", excpetion.message)
     }
@@ -249,7 +249,7 @@ class UsageKt {
             .path("/foo")
             .body("{}".toByteArray())
 
-        val exception = assertThrows(JwsErrorException::class.java) { verifier.verify(signature) }
+        val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(signature) }
 
         assertEquals("JWS signing/verification failed: The payload Base64URL part must be empty", exception.message)
     }
