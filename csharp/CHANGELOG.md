@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 * Add `Verifier` support for signatures without headers.
 * Fix `Verifier` allowing non-detached jws signatures.
+* Fix `Verifier` to throw `SignatureException`s when signature jws headers are missing
+  (instead of `KeyNotFoundException`).
 
 ## 0.1.1
 * Fix changelog path in PackageReleaseNotes.
