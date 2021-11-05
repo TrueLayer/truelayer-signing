@@ -38,9 +38,11 @@ func NewJwsHeaderV2(kid string, headers *orderedmap.OrderedMap) JwsHeader {
 //
 // Returns an error if "headers" is missing any of the declared "tl_headers".
 func (j *JwsHeader) FilterHeaders(headers map[string][]byte) (*orderedmap.OrderedMap, error) {
-	requiredHeaders := strings.Split(j.TlHeaders, ",")
-
 	orderedMap := orderedmap.New()
+	if j.TlHeaders == "" {
+		return orderedMap, nil
+	}
+	requiredHeaders := strings.Split(j.TlHeaders, ",")
 
 	// populate required headers in jws-header order
 	for _, headerName := range requiredHeaders {

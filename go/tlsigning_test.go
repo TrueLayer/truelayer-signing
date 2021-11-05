@@ -289,3 +289,27 @@ func TestJwsHeaderExtraction(t *testing.T) {
 	assert.Equal(jwsHeader.TlVersion, "2")
 	assert.Equal(jwsHeader.TlHeaders, "X-Custom")
 }
+
+func TestSignatureNoHeaders(t *testing.T) {
+	assert := assert.New(t)
+
+	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
+
+	body := []byte("{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}")
+	path := "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+	signature, err := SignWithPem(Kid, privateKeyBytes).
+		Method("post").
+		Path(path).
+		Body(body).
+		Sign()
+	assert.Nilf(err, "signing failed: %v", err)
+
+	err = VerifyWithPem(publicKeyBytes).
+		Method("post").
+		Path(path).
+		Header("X-Whatever", []byte("aoitbeh")).
+		Body(body).
+		Verify(signature)
+	assert.Nilf(err, "signature verification should not fail: %v", err)
+}
