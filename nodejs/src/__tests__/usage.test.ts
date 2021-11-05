@@ -79,7 +79,7 @@ describe('verify', () => {
       method: "post",
       path,
       body,
-    });
+    }as any);
 
     verify({
       publicKeyPem: PUBLIC_KEY,
@@ -90,7 +90,7 @@ describe('verify', () => {
       headers: {
         "X-Whatever-2": "foaulrsjth",
       }
-    })
+    } as any);
   });
 
   it('should throw using a mismatched signature that has an attached valid body', () => {
@@ -103,15 +103,14 @@ describe('verify', () => {
       + "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB"
       + "d2d3D17Wd9UA";
 
-    assert.throws(
-      () => verify({
-        publicKeyPem: PUBLIC_KEY,
-        signature,
-        method: "post",
-        path: "/foo", // not /bar so should fail
-        body: "{}"
-      })
-    );
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path: "/foo", // not /bar so should fail
+      body: "{}"
+    } as any);
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
   it('should throw using a signature with mismatched method', () => {
@@ -127,7 +126,7 @@ describe('verify', () => {
       headers: { "Idempotency-Key": idempotencyKey },
       body,
     } as any);
-    
+
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
