@@ -1,7 +1,7 @@
 # TrueLayer.Signing
 C# library to produce & verify TrueLayer API requests signatures.
 
-![Nuget](https://img.shields.io/nuget/v/TrueLayer.Signing)
+[![Nuget](https://img.shields.io/nuget/v/TrueLayer.Signing)](https://www.nuget.org/packages/TrueLayer.Signing)
 
 ```csharp
 using TrueLayer.Signing;
