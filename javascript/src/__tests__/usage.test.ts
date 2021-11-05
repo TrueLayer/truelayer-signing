@@ -69,6 +69,51 @@ describe('verify', () => {
     } as any);
   });
 
+  it('should not throw using a signature with no headers', () => {
+    const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
+    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    const signature = sign({
+      kid: KID,
+      privateKeyPem: PRIVATE_KEY,
+      method: "post",
+      path,
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path,
+      body,
+      headers: {
+        "X-Whatever-2": "foaulrsjth",
+      }
+    })
+  });
+
+  it('should throw using a mismatched signature that has an attached valid body', () => {
+    // signature for `/bar` but with a valid jws-body pre-attached
+    // if we run a simple jws verify on this unchanged it'll work!
+    const signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
+      + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
+      + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
+      + "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC"
+      + "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB"
+      + "d2d3D17Wd9UA";
+
+    assert.throws(
+      () => verify({
+        publicKeyPem: PUBLIC_KEY,
+        signature,
+        method: "post",
+        path: "/foo", // not /bar so should fail
+        body: "{}"
+      })
+    );
+  });
+
   it('should throw using a signature with mismatched method', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";

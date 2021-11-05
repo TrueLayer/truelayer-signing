@@ -47,6 +47,25 @@ namespace Tests
                 .Verify(tlSignature); // should not throw
         }
 
+        [Fact]
+        public void SignAndVerify_NoHeaders()
+        {
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Body(body)
+                .Sign();
+
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST") 
+                .Path(path)
+                .Body(body)
+                .Verify(tlSignature); // should not throw
+        }
+
         // Verify the a static signature used in all lang tests to ensure
         // cross-lang consistency and prevent regression.
         [Fact]
