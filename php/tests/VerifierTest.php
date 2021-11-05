@@ -25,6 +25,7 @@ it('should verify a valid signature', function () {
             'X-Idempotency-Key'
         ]);
 
+    /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
@@ -44,6 +45,7 @@ it('should verify the full request static signature', function () {
         ])
         ->body($body);
 
+    /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
@@ -119,6 +121,7 @@ it('should verify header order/casing flexibility', function () {
             'idempotency-KEY', // different case
         ]);
 
+    /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
@@ -163,6 +166,7 @@ it('should verify a signature that has no headers', function () {
         ->path("/test")
         ->body('{"random-key": "random-value"}');
 
+    /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
@@ -176,8 +180,8 @@ it('should not verify a signature that has an attached payload', function () {
 })->throws(\TrueLayer\Signing\Exceptions\SignatureMustUseDetachedPayloadException::class);
 
 it('should verify a valid signature from pem string', function () {
-    $privateKey = file_get_contents(__DIR__ . '/ec512-private.pem');
-    $publicKey = file_get_contents(__DIR__ . '/ec512-public.pem');
+    $privateKey = file_get_contents(__DIR__ . '/ec512-private.pem') ?: '';
+    $publicKey = file_get_contents(__DIR__ . '/ec512-public.pem') ?: '';
     $signer = Signer::signWithPem(Uuid::uuid4()->toString(), $privateKey, null);
     $signer->method('PUT')->path('/test');
 
@@ -197,5 +201,6 @@ it('should verify a valid signature from pem string', function () {
             'X-Idempotency-Key'
         ]);
 
+    /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
