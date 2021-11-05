@@ -131,7 +131,7 @@ type SignArguments = {
  * @returns {string} Tl-Signature header value.
  * @throws {SignatureError} Will throw if signing fails.
  */
-function sign(args: SignArguments) {
+export function sign(args: SignArguments) {
   const kid = requireArg(args.kid, "kid");
   const privateKeyPem = requireArg(args.privateKeyPem, "privateKeyPem");
   const method = (args.method || HttpMethod.Post).toUpperCase() as HttpMethod;
@@ -173,7 +173,7 @@ type VerifyParameters = {
  * be selectively taken to verify the signature based on what was actuall signed.
  * @throws {SignatureError} Will throw if signature could not be verified.
  */
-function verify(args: VerifyParameters) {
+export function verify(args: VerifyParameters) {
   const publicKeyPem = requireArg(args.publicKeyPem, "publicKeyPem");
   const signature = requireArg(args.signature, "signature");
   const method = requireArg(args.method, "method").toUpperCase() as HttpMethod;
@@ -213,13 +213,8 @@ function verify(args: VerifyParameters) {
  * @returns {string} Tl-Signature header kid.
  * @throws {SignatureError} Will throw if signature is invalid.
  */
-function extractKid(tlSignature: string) {
+export function extractKid(tlSignature: string) {
   return parseSignature(tlSignature).headerJson.kid;
 }
 
-export default {
-  sign,
-  verify,
-  extractKid,
-  SignatureError,
-};
+export { SignatureError };

@@ -24,7 +24,7 @@ const signature = tlSigning.sign({
 
 ## TypeScript usage
 ```typescript
-import tlSigning from 'truelayer-signing';
+import * as tlSigning from 'truelayer-signing';
 
 // `Tl-Signature` value to send with the request.
 const signature = tlSigning.sign({
