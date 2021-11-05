@@ -1,4 +1,4 @@
-name: Javascript
+name: Node
 
 on:
   push:
@@ -14,4 +14,4 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 'lts/*'
-    - run: cd javascript && yarn --frozen-lockfile && yarn test
+    - run: cd nodejs && yarn --frozen-lockfile && yarn test
