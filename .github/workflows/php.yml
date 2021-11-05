@@ -50,6 +50,8 @@ jobs:
       - name: "Install locked dependencies"
         if: ${{ matrix.dependencies == 'locked' }}
         run: "composer install --no-interaction --no-progress"
+      - name: "PHPStan"
+        run: "vendor/bin/phpstan analyse --memory-limit=-1"
       - name: "Tests"
         run: "vendor/bin/pest"
 
