@@ -1,11 +1,13 @@
 package truelayer.signing
 
+import com.nimbusds.jose.JOSEObject
+import com.nimbusds.jose.JWSHeader
 import java.security.interfaces.ECPublicKey
 
 /**
  * Builder to verify a request against a `Tl-Signature` header using a public key.
  */
-class Verifier private constructor (
+class Verifier private constructor(
     private val publicKey: ECPublicKey
 ) {
     private var method: String = ""
@@ -68,16 +70,20 @@ class Verifier private constructor (
      * @return Boolean true id verification succeded or false if unsuccessful
      * @throws InvalidSignatureException if Signature is invalid
      */
-    fun verify(signature: String): Boolean {
-        return verifyTlSignature(
-            signature,
-            publicKey,
-            this.requiredHeaders,
-            this.method,
-            this.path,
-            this.body,
-            this.headers
-        ).getOrThrow()
+    fun verify(signature: String) {
+        InvalidSignatureException.evaluate { JWSHeader.parse(JOSEObject.split(signature)[0]) }
+            .flatMap { header -> validateSignatureHeaders(header, requiredHeaders) }
+            .flatMap { signatureHeaderNames ->
+                validateSignature(
+                    signature,
+                    signatureHeaderNames,
+                    headers,
+                    method,
+                    path,
+                    body,
+                    publicKey
+                )
+            }.getOrThrow()
     }
 
     companion object {

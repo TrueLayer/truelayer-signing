@@ -1,5 +1,12 @@
 package truelayer.signing
 
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSObject
+import com.nimbusds.jose.Payload
+import com.nimbusds.jose.crypto.ECDSASigner
+import com.nimbusds.jose.util.Base64URL
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.security.interfaces.ECPrivateKey
 
 /**
@@ -54,9 +61,26 @@ class Signer private constructor(
      * Produce a JWS `Tl-Signature` v2 header value
      * @throws InvalidSignatureException
      */
-    fun sign(): String {
-        return signEs512(private_key, kid, headers, method, path, body).getOrThrow()
-    }
+    fun sign(): String =
+        InvalidSignatureException.evaluate {
+            val json = Json.encodeToString(
+                mapOf(
+                    "alg" to "ES512",
+                    "kid" to kid,
+                    "tl_version" to "2",
+                    "tl_headers" to headers.keys.joinToString { it.name }
+                )
+            ).toByteArray()
+
+            val jwsObject = JWSObject(
+                JWSHeader.parse(Base64URL(json.toUrlBase64())),
+                Payload(Base64URL(buildPayload(headers, method, path, body)))
+            )
+
+            jwsObject.sign(ECDSASigner(private_key))
+            jwsObject.serialize(true)
+        }.getOrThrow()
+
 
     companion object {
         /**

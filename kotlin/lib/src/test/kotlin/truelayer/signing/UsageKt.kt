@@ -1,10 +1,9 @@
 package truelayer.signing
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.io.File
-import java.security.PrivateKey
-import java.security.PublicKey
 
 
 const val KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
@@ -27,16 +26,14 @@ class UsageKt {
                 .body(body)
                 .sign()
 
-        val verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
             .method("POST")
             .path(path)
             .header("X-Whatever", "aoitbeh")
             .header("Idempotency-Key", idempotencyKey)
             .body(body)
             .requiredHeader("Idempotency-Key")
-            .verify(tlSignature)
-
-        assertTrue(verified)
+            .verify(tlSignature) // should not throw
     }
 
     @Test
@@ -47,15 +44,13 @@ class UsageKt {
         val tlSignature =
             "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi"
 
-        val verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
             .method("POST")
             .path(path)
             .header("X-Whatever-2", "t2345d")
             .header("Idempotency-Key", idempotencyKey)
             .body(body)
-            .verify(tlSignature)
-
-        assertTrue(verified)
+            .verify(tlSignature) // should not throw
     }
 
     @Test
@@ -73,15 +68,16 @@ class UsageKt {
                 .body(body)
                 .sign()
 
-        val verified = Verifier.from(publicKey)
-            .method("DELETE")
+        val verifier = Verifier.from(publicKey)
+            .method("DELETE") // different
             .path(path)
             .header("X-Whatever", "aoitbeh")
             .header("Idempotency-Key", idempotencyKey)
             .body(body)
-            .verify(tlSignature)
 
-        assertFalse(verified)
+        val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", exception.message)
     }
 
     @Test
@@ -99,15 +95,16 @@ class UsageKt {
                 .body(body)
                 .sign()
 
-        val verified = Verifier.from(publicKey)
+        val verifier = Verifier.from(publicKey)
             .method("post")
             .path("/merchant_accounts/67b5b1cf-1d0c-45d4-a2ea-61bdc044327c/sweeping")
             .header("X-Whatever", "aoitbeh")
             .header("Idempotency-Key", idempotencyKey)
             .body(body)
-            .verify(tlSignature)
 
-        assertFalse(verified)
+        val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", exception.message)
     }
 
     @Test
@@ -124,15 +121,16 @@ class UsageKt {
                 .body(body)
                 .sign()
 
-        val verified = Verifier.from(publicKey)
+        val verifier = Verifier.from(publicKey)
             .method("post")
             .path(path)
             .header("X-Whatever", "aoitbeh")
             .header("Idempotency-Key", "something-else")
             .body(body)
-            .verify(tlSignature)
 
-        assertFalse(verified)
+        val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", exception.message)
     }
 
     @Test
@@ -149,15 +147,16 @@ class UsageKt {
                 .body(body)
                 .sign()
 
-        val verified = Verifier.from(publicKey)
+        val verifier = Verifier.from(publicKey)
             .method("post")
             .path(path)
             .header("X-Whatever", "aoitbeh")
             .header("Idempotency-Key", idempotencyKey)
             .body("{\"max_amount_in_minor\":1234}".toByteArray())
-            .verify(tlSignature)
 
-        assertFalse(verified)
+        val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", exception.message)
     }
 
     @Test
@@ -174,15 +173,16 @@ class UsageKt {
                 .body(body)
                 .sign()
 
-        val verified = Verifier.from(publicKey)
+        val verifier = Verifier.from(publicKey)
             .method("post")
             .path(path)
             // missing Idempotency-Key
             .header("X-Whatever", "aoitbeh")
             .body(body)
-            .verify(tlSignature)
 
-        assertFalse(verified)
+        val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", exception.message)
     }
 
     @Test
@@ -200,15 +200,13 @@ class UsageKt {
                 .body(body)
                 .sign()
 
-        val verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
             .method("post")
             .path(path)
             .header("X-CUSTOM", "123") // different order & case, it's ok!
             .header("idempotency-key", idempotencyKey)  // different order & case, it's ok!
             .body(body)
-            .verify(tlSignature)
-
-        assertTrue(verified)
+            .verify(tlSignature) // should not throw
     }
 
     @Test
@@ -233,9 +231,9 @@ class UsageKt {
             .requiredHeader("X-required")
             .body(body)
 
-        val excpetion = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
+        val exception = assertThrows(InvalidSignatureException::class.java) { verifier.verify(tlSignature) }
 
-        assertEquals("JWS signing/verification failed: missing required header", excpetion.message)
+        assertEquals("JWS signing/verification failed: missing required header", exception.message)
     }
 
     @Test
@@ -267,12 +265,10 @@ class UsageKt {
             .body(body)
             .sign()
 
-        val verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
             .method("POST")
             .path(path)
             .body(body)
-            .verify(tlSignature)
-
-        assertTrue(verified)
+            .verify(tlSignature) // should not throw
     }
 }

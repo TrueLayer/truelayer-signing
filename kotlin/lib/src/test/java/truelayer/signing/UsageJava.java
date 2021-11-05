@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import static java.nio.file.Files.readAllBytes;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class UsageJava {
 
@@ -30,16 +31,14 @@ public class UsageJava {
                 .body(body)
                 .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
                 .method("POST")
                 .path(path)
                 .header("X-Whatever", "aoitbeh")
                 .header("Idempotency-Key", idempotencyKey)
                 .body(body)
                 .requiredHeader("Idempotency-Key")
-                .verify(tlSignature);
-
-        assertTrue(verified);
+                .verify(tlSignature); // should not throw
     }
 
     @Test
@@ -52,15 +51,13 @@ public class UsageJava {
         String tlSignature =
                 "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
                 .method("POST")
                 .path(path)
                 .header("X-Whatever-2", "t2345d")
                 .header("Idempotency-Key", idempotencyKey)
                 .body(body)
-                .verify(tlSignature);
-
-        assertTrue(verified);
+                .verify(tlSignature); // should not throw
     }
 
     @Test
@@ -81,15 +78,16 @@ public class UsageJava {
                         .body(body)
                         .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier verifier = Verifier.from(publicKey)
                 .method("DELETE")
                 .path(path)
                 .header("X-Whatever", "aoitbeh")
                 .header("Idempotency-Key", idempotencyKey)
-                .body(body)
-                .verify(tlSignature);
+                .body(body);
 
-        assertFalse(verified);
+        InvalidSignatureException invalidSignatureException = assertThrows(InvalidSignatureException.class, () -> verifier.verify(tlSignature));
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -110,15 +108,16 @@ public class UsageJava {
                         .body(body)
                         .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier verifier = Verifier.from(publicKey)
                 .method("post")
                 .path("/merchant_accounts/67b5b1cf-1d0c-45d4-a2ea-61bdc044327c/sweeping")
                 .header("X-Whatever", "aoitbeh")
                 .header("Idempotency-Key", idempotencyKey)
-                .body(body)
-                .verify(tlSignature);
+                .body(body);
 
-        assertFalse(verified);
+        InvalidSignatureException invalidSignatureException = assertThrows(InvalidSignatureException.class, () -> verifier.verify(tlSignature));
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -138,15 +137,16 @@ public class UsageJava {
                         .body(body)
                         .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier verifier = Verifier.from(publicKey)
                 .method("post")
                 .path(path)
                 .header("X-Whatever", "aoitbeh")
                 .header("Idempotency-Key", "something-else")
-                .body(body)
-                .verify(tlSignature);
+                .body(body);
 
-        assertFalse(verified);
+        InvalidSignatureException invalidSignatureException = assertThrows(InvalidSignatureException.class, () -> verifier.verify(tlSignature));
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -166,15 +166,16 @@ public class UsageJava {
                         .body(body)
                         .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier verifier  = Verifier.from(publicKey)
                 .method("post")
                 .path(path)
                 .header("X-Whatever", "aoitbeh")
                 .header("Idempotency-Key", idempotencyKey)
-                .body("{\"max_amount_in_minor\":1234}".getBytes(StandardCharsets.UTF_8))
-                .verify(tlSignature);
+                .body("{\"max_amount_in_minor\":1234}".getBytes(StandardCharsets.UTF_8));
 
-        assertFalse(verified);
+        InvalidSignatureException invalidSignatureException = assertThrows(InvalidSignatureException.class, () -> verifier.verify(tlSignature));
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -194,15 +195,16 @@ public class UsageJava {
                         .body(body)
                         .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier verifier = Verifier.from(publicKey)
                 .method("post")
                 .path(path)
                 // missing Idempotency-Key
                 .header("X-Whatever", "aoitbeh")
-                .body(body)
-                .verify(tlSignature);
+                .body(body);
 
-        assertFalse(verified);
+        InvalidSignatureException invalidSignatureException = assertThrows(InvalidSignatureException.class, () -> verifier.verify(tlSignature));
+
+        assertEquals("JWS signing/verification failed: jws body mismatch", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -223,15 +225,13 @@ public class UsageJava {
                         .body(body)
                         .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
                 .method("post")
                 .path(path)
                 .header("X-CUSTOM", "123") // different order & case, it's ok!
                 .header("idempotency-key", idempotencyKey)  // different order & case, it's ok!
                 .body(body)
-                .verify(tlSignature);
-
-        assertTrue(verified);
+                .verify(tlSignature); // should not throw
     }
 
     @Test
@@ -299,12 +299,10 @@ public class UsageJava {
                 .body(body)
                 .sign();
 
-        boolean verified = Verifier.from(publicKey)
+        Verifier.from(publicKey)
                 .method("POST")
                 .path(path)
                 .body(body)
-                .verify(tlSignature);
-
-        assertTrue(verified);
+                .verify(tlSignature); // should not throw
     }
 }
