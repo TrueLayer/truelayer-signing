@@ -1,6 +1,4 @@
-const tlSigning = require("../lib");
-
-const { sign, verify } = tlSigning;
+const { sign, verify } = require("../lib");
 
 const PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\n"
   + "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBVIVnghUzHmCEZ3HNjDmaZMJ7UwZf\n"

@@ -1,6 +1,4 @@
-import * as tlSigning from '../lib';
-
-const { sign, verify, extractKid, SignatureError } = tlSigning;
+import { sign, verify, extractKid, SignatureError } from '../lib';
 
 // Use the same values as rust tests for cross-lang consistency assurance
 const PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\n"
