@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 * Add `verify` support for signatures without headers.
+* Add support for TypeScript
 
 ## 0.1.0
 * Added `sign`, `verify`, `extractKid` methods.

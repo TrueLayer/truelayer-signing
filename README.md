@@ -6,7 +6,7 @@ They can then be verified using the associated public key.
 
 * [Rust](./rust)
 * [C#](./csharp)
-* [Javascript](./javascript)
+* [Node.js](./nodejs)
 * [Go](./go)
 
 ## Request signing specification

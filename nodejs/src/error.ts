@@ -1,13 +1,12 @@
 /** Sign/verification error */
-class SignatureError extends Error {
-  constructor(message) {
+export class SignatureError extends Error {
+  constructor (message: string) {
     super(message);
     this.name = 'SignatureError';
   }
 
-  static ensure(condition, msg) {
+  static ensure(condition: boolean, msg: string) {
     if (!condition) throw new SignatureError(msg);
   }
 }
 
-module.exports = SignatureError;
