@@ -2,7 +2,7 @@ name: Kotlin
 
 on:
   push:
-    branches: [ main, kotlin ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
