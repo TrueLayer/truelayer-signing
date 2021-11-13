@@ -35,6 +35,7 @@ final public class Signer {
      *
      * @param method - the request method must be non null
      * @return the Signer instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Signer method(String method) {
         if (method == null)
@@ -48,6 +49,7 @@ final public class Signer {
      *
      * @param path - the request absolute path must not be null
      * @return the Signer instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Signer path(String path) {
         if (path == null)
@@ -61,6 +63,7 @@ final public class Signer {
      *
      * @param body - the full request body must not be null
      * @return the Signer instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Signer body(byte[] body) {
         if (body == null)
@@ -71,12 +74,28 @@ final public class Signer {
     }
 
     /**
+     * Add the full request body. Note: This *must* be identical to what is sent with the request.
+     *
+     * @param body - the full request body must not be null
+     * @return the Signer instance
+     * @throws IllegalArgumentException if the provided param is null
+     */
+    public Signer body(String body) {
+        if (body == null)
+            throw new IllegalArgumentException("the body must not be null");
+
+        this.body = body.getBytes();
+        return this;
+    }
+
+    /**
      * Add a header name and value. May be called multiple times to add multiple different headers.
      * Warning: Only a single value per header name is supported.
      *
      * @param name  - must not be null
      * @param value - must not be null
      * @return the Signer instance
+     * @throws IllegalArgumentException if the provided params are null
      */
     public Signer header(String name, String value) {
         if (name == null || value == null)
@@ -93,13 +112,54 @@ final public class Signer {
      * @param kid           key identifier of the private key - must not be null
      * @param privateKeyPem the privateKey RFC 7468 PEM-encoded - must not be null
      * @return the Signer instance
-     * @throws InvalidKeyException if the provided key is invalid
+     * @throws KeyException             if the provided key is invalid
+     * @throws IllegalArgumentException if the provided params are null
      */
     public static Signer from(String kid, byte[] privateKeyPem) {
-        ECPrivateKey privateKey = InvalidKeyException.evaluate(() ->
+        if (kid == null || privateKeyPem == null)
+            throw new IllegalArgumentException("kid and privateKey must not be null");
+
+        ECPrivateKey privateKey = KeyException.evaluate(() ->
                 ECKey.parseFromPEMEncodedObjects(new String(privateKeyPem)).toECKey().toECPrivateKey());
 
         return new Signer(kid, privateKey);
+    }
+
+    /**
+     * Start building a request Tl-Signature header value using private key
+     * RFC 7468 PEM-encoded data and the key's kid.
+     *
+     * @param kid           key identifier of the private key - must not be null
+     * @param privateKeyPem the privateKey RFC 7468 PEM-encoded - must not be null
+     * @return the Signer instance
+     * @throws KeyException             if the provided key is invalid
+     * @throws IllegalArgumentException if the provided params are null
+     */
+    public static Signer from(String kid, String privateKeyPem) {
+        if (kid == null || privateKeyPem == null)
+            throw new IllegalArgumentException("kid and privateKey must not be null");
+
+        ECPrivateKey privateKey = KeyException.evaluate(() ->
+                ECKey.parseFromPEMEncodedObjects(privateKeyPem).toECKey().toECPrivateKey());
+
+        return new Signer(kid, privateKey);
+    }
+
+    /**
+     * Start building a request Tl-Signature header value using private key
+     * RFC 7468 PEM-encoded data and the key's kid.
+     *
+     * @param kid           key identifier of the private key - must not be null
+     * @param privateKeyPem the privateKey RFC 7468 PEM-encoded - must not be null
+     * @return the Signer instance
+     * @throws KeyException             if the provided key is invalid
+     * @throws IllegalArgumentException if the provided params are null
+     */
+    public static Signer from(String kid, ECPrivateKey privateKeyPem) {
+        if (kid == null || privateKeyPem == null)
+            throw new IllegalArgumentException("kid and privateKey must not be null");
+
+        return new Signer(kid, privateKeyPem);
     }
 
     /**

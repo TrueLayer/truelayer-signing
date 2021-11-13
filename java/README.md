@@ -4,7 +4,7 @@ Java package to produce & verify TrueLayer API requests signatures.
 ### Java usage
 ```java
 // `Tl-Signature` value to send with the request.
-Signer.from(KID, privateKey)
+Signer.from(kid, privateKey)
         .header("Idempotency-Key", idempotencyKey)
         .method("post")
         .path(path)

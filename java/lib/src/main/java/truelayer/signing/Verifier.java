@@ -4,6 +4,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
 
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.util.*;
 import java.util.function.Supplier;
@@ -36,6 +37,7 @@ final public class Verifier {
      *
      * @param method - the request method must be non null
      * @return the Verifier instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Verifier method(String method) {
         if (method == null)
@@ -50,6 +52,7 @@ final public class Verifier {
      *
      * @param path - the request absolute path must not be null
      * @return the Verifier instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Verifier path(String path) {
         if (path == null)
@@ -63,6 +66,7 @@ final public class Verifier {
      *
      * @param body - the full request body must not be null
      * @return the Verifier instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Verifier body(byte[] body) {
         if (body == null)
@@ -80,6 +84,7 @@ final public class Verifier {
      * @param name  - must not be null
      * @param value - must not be null
      * @return the Verifier instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Verifier header(String name, String value) {
         if (name == null || value == null)
@@ -94,6 +99,7 @@ final public class Verifier {
      *
      * @param name - must not be null
      * @return the Verifier instance
+     * @throws IllegalArgumentException if the provided param is null
      */
     public Verifier requiredHeader(String name) {
         if (name == null)
@@ -107,11 +113,46 @@ final public class Verifier {
      *
      * @param publicKeyPem the public key 7468 PEM-encoded data - must not be null
      * @return the Verifier instance
-     * @throws InvalidKeyException it the provided key is invalid
+     * @throws KeyException             it the provided key is invalid
+     * @throws IllegalArgumentException if the provided param is null
      */
     public static Verifier from(byte[] publicKeyPem) {
-        ECPublicKey publicKey = InvalidKeyException.evaluate(() -> ECKey.parseFromPEMEncodedObjects(new String(publicKeyPem)).toECKey().toECPublicKey());
+        if (publicKeyPem == null)
+            throw new IllegalArgumentException("the publicKey must not be null");
+
+        ECPublicKey publicKey = KeyException.evaluate(() -> ECKey.parseFromPEMEncodedObjects(new String(publicKeyPem)).toECKey().toECPublicKey());
         return new Verifier(publicKey);
+    }
+
+    /**
+     * Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
+     *
+     * @param publicKeyPem the public key 7468 PEM-encoded data - must not be null
+     * @return the Verifier instance
+     * @throws KeyException             it the provided key is invalid
+     * @throws IllegalArgumentException if the provided param is null
+     */
+    public static Verifier from(String publicKeyPem) {
+        if (publicKeyPem == null)
+            throw new IllegalArgumentException("the publicKey must not be null");
+
+        ECPublicKey publicKey = KeyException.evaluate(() -> ECKey.parseFromPEMEncodedObjects(publicKeyPem).toECKey().toECPublicKey());
+        return new Verifier(publicKey);
+    }
+
+    /**
+     * Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
+     *
+     * @param publicKeyPem the public key 7468 PEM-encoded data - must not be null
+     * @return the Verifier instance
+     * @throws KeyException             it the provided key is invalid
+     * @throws IllegalArgumentException if the provided param is null
+     */
+    public static Verifier from(ECPublicKey publicKeyPem) {
+        if (publicKeyPem == null)
+            throw new IllegalArgumentException("the publicKey must not be null");
+
+        return new Verifier(publicKeyPem);
     }
 
     /**
