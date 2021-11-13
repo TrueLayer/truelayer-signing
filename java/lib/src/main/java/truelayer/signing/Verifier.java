@@ -33,24 +33,41 @@ final public class Verifier {
 
     /**
      * Add the request method.
+     *
+     * @param method - the request method must be non null
+     * @return the Verifier instance
      */
     public Verifier method(String method) {
+        if (method == null)
+            throw new IllegalArgumentException("the method must not be null");
+
         this.method = method;
         return this;
     }
 
     /**
      * Add the request absolute path starting with a leading `/` and without any trailing slashes.
+     *
+     * @param path - the request absolute path must not be null
+     * @return the Verifier instance
      */
     public Verifier path(String path) {
+        if (path == null)
+            throw new IllegalArgumentException("the path must not be null");
         this.path = path;
         return this;
     }
 
     /**
      * Add the full unmodified request body.
+     *
+     * @param body - the full request body must not be null
+     * @return the Verifier instance
      */
     public Verifier body(byte[] body) {
+        if (body == null)
+            throw new IllegalArgumentException("the body must not be null");
+
         this.body = body;
         return this;
     }
@@ -59,8 +76,14 @@ final public class Verifier {
      * Add a header name and value.
      * May be called multiple times to add multiple different headers.
      * Warning: Only a single value per header name is supported.
+     *
+     * @param name  - must not be null
+     * @param value - must not be null
+     * @return the Verifier instance
      */
     public Verifier header(String name, String value) {
+        if (name == null || value == null)
+            throw new IllegalArgumentException("header name and value must not be null");
         this.headers.put(new HeaderName(name), value);
         return this;
     }
@@ -68,16 +91,22 @@ final public class Verifier {
     /**
      * Require a header name that must be included in the `Tl-Signature`.
      * May be called multiple times to add multiple required headers.
+     *
+     * @param name - must not be null
+     * @return the Verifier instance
      */
-    public Verifier requiredHeader(String header) {
-        this.requiredHeaders.add(header);
+    public Verifier requiredHeader(String name) {
+        if (name == null)
+            throw new IllegalArgumentException("the required header name must not be null");
+        this.requiredHeaders.add(name);
         return this;
     }
 
     /**
      * Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
      *
-     * @param publicKeyPem the public key 7468 PEM-encoded data
+     * @param publicKeyPem the public key 7468 PEM-encoded data - must not be null
+     * @return the Verifier instance
      * @throws InvalidKeyException it the provided key is invalid
      */
     public static Verifier from(byte[] publicKeyPem) {
@@ -121,7 +150,7 @@ final public class Verifier {
                 .findAny();
 
         SignatureException.ensure(
-                missingRequiredHeader.isEmpty(),
+                !missingRequiredHeader.isPresent(),
                 "missing required header: " + missingRequiredHeader.orElse("")
         );
 
