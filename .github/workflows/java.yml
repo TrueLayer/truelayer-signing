@@ -2,7 +2,7 @@ name: Java
 
 on:
   push:
-    branches: [ main, java ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
