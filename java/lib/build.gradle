@@ -4,8 +4,6 @@ plugins {
     id 'maven-publish'
 }
 
-version '0.1.0'
-
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
@@ -28,9 +26,9 @@ java {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId "com.truelayer.truelayer-signing"
-            artifactId project.getName()
-            version = rootProject.version
+            groupId "com.truelayer"
+            artifactId "truelayer-signing"
+            version = "0.1.0"
             from components.java
         }
     }
