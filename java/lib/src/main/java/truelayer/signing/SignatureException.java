@@ -1,5 +1,8 @@
 package truelayer.signing;
 
+/**
+ * Sign/verification error
+ */
 public class SignatureException extends RuntimeException {
 
     private SignatureException(String failureMessage) {

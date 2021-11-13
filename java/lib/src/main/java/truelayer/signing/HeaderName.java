@@ -1,5 +1,8 @@
 package truelayer.signing;
 
+/**
+ * Case-insensitive string header name comparison.
+ */
 class HeaderName {
     private final String name;
 

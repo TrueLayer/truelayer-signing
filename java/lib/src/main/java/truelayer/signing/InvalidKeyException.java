@@ -1,5 +1,8 @@
 package truelayer.signing;
 
+/**
+ * Invalid key error
+ */
 public class InvalidKeyException extends RuntimeException {
 
     private InvalidKeyException(String message, Exception e) {
