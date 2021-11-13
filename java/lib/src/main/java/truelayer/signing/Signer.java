@@ -6,6 +6,7 @@ import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.jwk.ECKey;
 
+import java.nio.charset.StandardCharsets;
 import java.security.interfaces.ECPrivateKey;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -84,7 +85,7 @@ final public class Signer {
         if (body == null)
             throw new IllegalArgumentException("the body must not be null");
 
-        this.body = body.getBytes();
+        this.body = body.getBytes(StandardCharsets.UTF_8);
         return this;
     }
 

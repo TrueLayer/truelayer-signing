@@ -4,6 +4,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
 
+import java.nio.charset.StandardCharsets;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.util.*;
@@ -73,6 +74,21 @@ final public class Verifier {
             throw new IllegalArgumentException("the body must not be null");
 
         this.body = body;
+        return this;
+    }
+
+    /**
+     * Add the full unmodified request body.
+     *
+     * @param body - the full request body must not be null
+     * @return the Verifier instance
+     * @throws IllegalArgumentException if the provided param is null
+     */
+    public Verifier body(String body) {
+        if (body == null)
+            throw new IllegalArgumentException("the body must not be null");
+
+        this.body = body.getBytes(StandardCharsets.UTF_8);
         return this;
     }
 
