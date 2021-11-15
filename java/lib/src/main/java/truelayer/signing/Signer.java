@@ -22,7 +22,7 @@ final public class Signer {
     private final ECPrivateKey ecPrivateKey;
 
     private String path = "";
-    private String method = "";
+    private String method = "POST";
     private byte[] body = new byte[0];
     private final Map<HeaderName, String> headers = new LinkedHashMap<>();
 

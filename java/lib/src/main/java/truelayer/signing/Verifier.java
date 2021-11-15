@@ -5,7 +5,6 @@ import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
 
 import java.nio.charset.StandardCharsets;
-import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.util.*;
 import java.util.function.Supplier;
@@ -21,7 +20,7 @@ final public class Verifier {
 
     private String method = "";
 
-    private String path = "";
+    private String path = "POST";
 
     private byte[] body = new byte[0];
 
