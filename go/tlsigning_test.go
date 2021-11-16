@@ -313,3 +313,25 @@ func TestSignatureNoHeaders(t *testing.T) {
 		Verify(signature)
 	assert.Nilf(err, "signature verification should not fail: %v", err)
 }
+
+func TestVerifierMethodDefaultValueShouldNotBeSet(t *testing.T) {
+	assert := assert.New(t)
+
+	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
+
+	body := []byte("{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}")
+	path := "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+	signature, err := SignWithPem(Kid, privateKeyBytes).
+		Path(path).
+		Body(body).
+		Sign()
+	assert.Nilf(err, "signing failed: %v", err)
+
+	err = VerifyWithPem(publicKeyBytes).
+		Path(path).
+		Body(body).
+		Verify(signature)
+	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
+}
