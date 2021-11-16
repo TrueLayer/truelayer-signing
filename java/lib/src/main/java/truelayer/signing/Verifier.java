@@ -20,7 +20,7 @@ final public class Verifier {
 
     private String method = "";
 
-    private String path = "POST";
+    private String path = "";
 
     private byte[] body = new byte[0];
 

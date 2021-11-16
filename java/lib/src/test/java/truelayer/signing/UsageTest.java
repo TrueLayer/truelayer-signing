@@ -42,7 +42,7 @@ public class UsageTest {
     }
 
     @Test
-    public void verifyBodyStaticSignature() throws IOException {
+    public void verifyStaticSignature() throws IOException {
         byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
@@ -62,7 +62,7 @@ public class UsageTest {
 
 
     @Test
-    public void fullRequestSignatureMethodMismatch() throws IOException {
+    public void fullRequestMethodMismatch() throws IOException {
         byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
         byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
@@ -93,7 +93,7 @@ public class UsageTest {
 
 
     @Test
-    public void fullRequestSignaturePathMismatch() throws IOException {
+    public void fullRequestPathMismatch() throws IOException {
         byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
         byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
@@ -124,7 +124,7 @@ public class UsageTest {
 
 
     @Test
-    public void fullRequestSignatureHeaderMismatch() throws IOException {
+    public void fullRequestHeaderMismatch() throws IOException {
         byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
         byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
@@ -153,7 +153,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestSignatureBodyMismatch() throws IOException {
+    public void fullRequestBodyMismatch() throws IOException {
         byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
         byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
@@ -182,7 +182,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestSignatureMissingSignatureHeader() throws IOException {
+    public void fullRequestMissingSignatureHeader() throws IOException {
         byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
         byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
@@ -238,7 +238,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestSignatureRequiredHeaderMissingFromSignature() throws IOException {
+    public void fullRequestRequiredHeaderMissingFromSignature() throws IOException {
         byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
         byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
 
