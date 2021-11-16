@@ -32,7 +32,7 @@ type TlSignature struct {
 func NewVerifier(publicKeyPem []byte) *Verifier {
 	verifier := Verifier{}
 	verifier.publicKey = publicKeyPem
-	verifier.method = "POST"
+	verifier.method = ""
 	verifier.path = ""
 	verifier.body = []byte("")
 	verifier.headers = make(map[string][]byte)
