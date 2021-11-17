@@ -1,3 +1,4 @@
 rootProject.name = 'truelayer-signing'
 include 'lib'
 include 'examples:scala'
+include 'examples:kotlin'

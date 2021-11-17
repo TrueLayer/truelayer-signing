@@ -36,7 +36,7 @@ object Example extends App {
   } yield tlSignature
 
   program.fold(
-    t => println(s"Failed because of: ${t}"),
+    t => println(s"Failed because of: $t"),
     signature => println(s"Verification succeded for signature; $signature")
   )
 }
