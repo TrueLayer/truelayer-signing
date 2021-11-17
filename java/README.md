@@ -12,6 +12,27 @@ Signer.from(kid, privateKey)
         .sign();
 ```
 
+### Kotlin usage
+```kotlin
+// `Tl-Signature` value to send with the request.
+Signer.from(kid, privateKey)
+    .header("Idempotency-Key", idempotencyKey)
+    .method("post")
+    .path(path)
+    .body(body)
+    .sign()
+```
+
+### Scala usage
+```scala
+// `Tl-Signature` value to send with the request.
+Signer.from(kid, privateKeyPem)
+  .header("Idempotency-Key", idempotencyKey)
+  .method("post")
+  .path(path)
+  .body(body)
+  .sign()
+```
 ## Installation
 ``` groovy
 	allprojects {
@@ -25,3 +46,7 @@ Signer.from(kid, privateKey)
 	        implementation 'com.github.truelayer:truelayer-signing:java-{last-version}'
 	}
 ```
+
+## Examples
+
+Find more examples in [Kotlin](./examples/kotlin/src/main/kotlin/truelayer/signing/Example.kt) and [Scala](./examples/scala/src/main/scala/truelayer/signing/Example.scala).
