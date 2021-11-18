@@ -27,10 +27,9 @@ jobs:
         run: cd java && ./gradlew test
       - name: Run scala and kotlin example applications
         run: cd java && ./gradlew run
-        
   publish:
-    needs: test
-    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main')
+    needs: Test
+    #if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest 
     permissions: 
       contents: read
