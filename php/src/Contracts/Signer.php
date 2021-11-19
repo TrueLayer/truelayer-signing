@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace TrueLayer\Signing\Contracts;
 
 use Jose\Component\Core\JWK;
+use Psr\Http\Message\RequestInterface;
 
 interface Signer extends Jws
 {
@@ -13,4 +14,5 @@ interface Signer extends Jws
     public static function signWithPemFile(string $kid, string $path, ?string $passphrase): self;
 
     public function sign(): string;
+    public function addSignatureHeader(RequestInterface $request): RequestInterface;
 }

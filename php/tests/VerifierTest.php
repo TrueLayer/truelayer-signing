@@ -112,13 +112,13 @@ it('should verify header order/casing flexibility', function () {
     $verifier->method('PUT')
         ->path('/test')
         ->headers([
-            'X-CUSTOM' => '123', // different order & case, it's ok!
+            'X-Custom' => '123', // different order & case, it's ok!
             'X-Whatever-2' => 'foaulrsjth',
-            'idempotency-key' => 'test', // different order & case, chill it'll work!
+            'Idempotency-Key' => 'test', // different order & case, chill it'll work!
         ])
         ->body('{"random-key": "random-value"}')
         ->requireHeaders([
-            'idempotency-KEY', // different case
+            'Idempotency-Key', // different case
         ]);
 
     /* @phpstan-ignore-next-line */
@@ -204,3 +204,26 @@ it('should verify a valid signature from pem string', function () {
     /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
+
+/*
+it('should verify a response', function () {
+
+    $keys = MockData::generateKeyPair();
+    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+
+    $signature = $signer->method('PUT')
+        ->path('/test')
+        ->header('X-Idempotency-Key', 'idempotency-test')
+        ->body('{"random-key": "random-value"}')
+        ->sign();
+
+    $mock = mock(\Psr\Http\Message\ResponseInterface::class);
+
+    $mock->shouldReceive('getHeaders')
+        ->andReturn([
+            \TrueLayer\Signing\Constants\CustomHeaders::SIGNATURE => $signature
+        ]);
+
+    $verifier = Verifier::verifyWithKey($keys['public']);
+    $verifier->response($mock)->method('PUT')->path('/test')->verify($signature);
+}); */

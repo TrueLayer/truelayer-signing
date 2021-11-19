@@ -66,7 +66,7 @@ abstract class AbstractJws implements IJws
      */
     public function header(string $key, string $value): self
     {
-        $this->requestHeaders[strtolower($key)] = $value;
+        $this->requestHeaders[$key] = $value;
         return $this;
     }
 
@@ -100,7 +100,7 @@ abstract class AbstractJws implements IJws
         // Add the request headers
         $normalisedRequestHeaders = Util::normaliseHeaders($this->requestHeaders);
         foreach ($orderOfHeaderKeys as $headerKey) {
-            $value = $normalisedRequestHeaders[strtolower($headerKey)];
+            $value = $normalisedRequestHeaders[$headerKey];
             $payload .= "{$headerKey}: {$value}\n";
         }
 

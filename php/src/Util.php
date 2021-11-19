@@ -13,15 +13,12 @@ class Util
      */
     public static function normaliseHeaders(array $headers): array
     {
-        // Lowercase all the keys
-        $headersWithLowercaseKeys = array_change_key_case($headers, CASE_LOWER);
-
         // Sort the array
-        if (!ksort($headersWithLowercaseKeys)) {
+        if (!ksort($headers)) {
             throw new Exception('Could not sort the headers array.');
         }
 
-        return $headersWithLowercaseKeys;
+        return $headers;
     }
 
     /**
@@ -31,14 +28,26 @@ class Util
      */
     public static function normaliseHeaderKeys(array $headerKeys): array
     {
-        // Lowercase all the headers
-        $lowercaseKeys = array_map('strtolower', $headerKeys);
-
         // Sort the array
-        if (!sort($lowercaseKeys)) {
+        if (!sort($headerKeys)) {
             throw new Exception('Could not sort the headers array.');
         }
 
-        return $lowercaseKeys;
+        return $headerKeys;
+    }
+
+    /**
+     * @param array $headers
+     * @return array
+     */
+    public static function flattenHeaders(array $headers): array
+    {
+        $flattened = [];
+
+        foreach($headers as $headerKey => $headerValues) {
+            $flattened[$headerKey] = implode(',', $headerValues);
+        }
+
+        return $flattened;
     }
 }

@@ -10,8 +10,11 @@ use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\ES512;
 use Jose\Component\Signature\Serializer\CompactSerializer;
+use Psr\Http\Message\RequestInterface;
+use TrueLayer\Constants\CustomHeaders;
 use TrueLayer\Signing\Constants\TrueLayerSignatures;
 use TrueLayer\Signing\Contracts\Signer as ISigner;
+use TrueLayer\Signing\Exceptions\RequiredHeaderMissingException;
 
 final class Signer extends AbstractJws implements ISigner
 {
@@ -92,6 +95,7 @@ final class Signer extends AbstractJws implements ISigner
     public function sign(): string
     {
         $tlHeaders = array_keys(Util::normaliseHeaders($this->requestHeaders));
+
         $headers = [
             'alg' => TrueLayerSignatures::ALGORITHM,
             'kid' => $this->kid,
@@ -107,5 +111,21 @@ final class Signer extends AbstractJws implements ISigner
 
         return $this->serializer
             ->serialize($jws, TrueLayerSignatures::SIGNATURE_INDEX);
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return RequestInterface
+     * @throws Exceptions\RequestPathNotFoundException
+     */
+    public function addSignatureHeader(RequestInterface $request): RequestInterface
+    {
+        $signature = $this->method($request->getMethod())
+            ->path($request->getUri()->getPath())
+            ->body((string) $request->getBody())
+            ->headers(Util::flattenHeaders($request->getHeaders()))
+            ->sign();
+
+        return $request->withHeader(CustomHeaders::SIGNATURE, $signature);
     }
 }

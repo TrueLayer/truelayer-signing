@@ -10,6 +10,9 @@ use Jose\Component\Signature\Algorithm\ES512;
 use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use Jose\Component\Signature\Serializer\JWSSerializerManager;
+use Psr\Http\Message\MessageInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use TrueLayer\Signing\Constants\TrueLayerSignatures;
 use TrueLayer\Signing\Contracts\Verifier as IVerifier;
 use TrueLayer\Signing\Exceptions\InvalidAlgorithmException;
@@ -125,7 +128,7 @@ final class Verifier extends AbstractJws implements IVerifier
         $tlHeaders = !empty($jwsHeaders['tl_headers']) ? explode(',', $jwsHeaders['tl_headers']) : [];
         $normalisedTlHeaders = Util::normaliseHeaderKeys($tlHeaders);
         foreach ($this->requiredHeaders as $header) {
-            if (!in_array(strtolower($header), $normalisedTlHeaders, true)) {
+            if (!in_array($header, $normalisedTlHeaders, true)) {
                 throw new RequiredHeaderMissingException("Signature is missing the {$header} required header");
             }
         }
@@ -133,5 +136,15 @@ final class Verifier extends AbstractJws implements IVerifier
         if (! $this->verifier->verifyWithKey($jws, $this->jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders))) {
             throw new InvalidSignatureException();
         }
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @return Verifier
+     */
+    public function response(ResponseInterface $response): Verifier
+    {
+        return $this->headers(Util::flattenHeaders($response->getHeaders()))
+            ->body((string) $response->getBody());
     }
 }
