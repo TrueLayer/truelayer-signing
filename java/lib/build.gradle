@@ -1,0 +1,37 @@
+plugins {
+    // Apply the java-library plugin for API and implementation separation.
+    id 'java-library'
+    id 'maven-publish'
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.15.2")
+    testImplementation 'junit:junit:4.13.2'
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId "com.truelayer"
+            artifactId "truelayer-signing"
+            version = "0.1.0"
+            from components.java
+        }
+    }
+}
+
+

@@ -1,0 +1,29 @@
+name: Java
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        java: [ 8, 11, 17 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'adopt'
+          cache: gradle
+      - name: Test
+        run: cd java && ./gradlew test
+      - name: Run scala and kotlin example applications
+        run: cd java && ./gradlew run
