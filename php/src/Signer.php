@@ -11,7 +11,7 @@ use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\ES512;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use Psr\Http\Message\RequestInterface;
-use TrueLayer\Constants\CustomHeaders;
+use TrueLayer\Signing\Constants\CustomHeaders;
 use TrueLayer\Signing\Constants\TrueLayerSignatures;
 use TrueLayer\Signing\Contracts\Signer as ISigner;
 use TrueLayer\Signing\Exceptions\RequiredHeaderMissingException;

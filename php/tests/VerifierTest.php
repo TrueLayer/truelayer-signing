@@ -204,26 +204,3 @@ it('should verify a valid signature from pem string', function () {
     /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
-
-/*
-it('should verify a response', function () {
-
-    $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
-
-    $signature = $signer->method('PUT')
-        ->path('/test')
-        ->header('X-Idempotency-Key', 'idempotency-test')
-        ->body('{"random-key": "random-value"}')
-        ->sign();
-
-    $mock = mock(\Psr\Http\Message\ResponseInterface::class);
-
-    $mock->shouldReceive('getHeaders')
-        ->andReturn([
-            \TrueLayer\Signing\Constants\CustomHeaders::SIGNATURE => $signature
-        ]);
-
-    $verifier = Verifier::verifyWithKey($keys['public']);
-    $verifier->response($mock)->method('PUT')->path('/test')->verify($signature);
-}); */

@@ -31,33 +31,43 @@ it('should allow signing a request with no headers', function () {
     expect($signer->sign())->not->toThrow(Exception::class);
 });
 
-/*
-it('some service', function () {
+it('should allow signing classes implementing PSR7 interfaces', function () {
     $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $kid = Uuid::uuid4()->toString();
+    $path = '/test';
+    $method = 'POST';
+    $body = '{"random-key": "random-value"}';
 
-    $signature = $signer
-        ->method('POST')
-        ->header('X-CUSTOM', '123')
-        ->path('/test')
-        ->sign();
+    $uriMock = \Mockery::mock(\Psr\Http\Message\UriInterface::class);
+    $uriMock->shouldReceive('getPath')->andReturn($path);
 
-    $mock = mock(\Psr\Http\Message\RequestInterface::class);
+    $requestMock = \Mockery::mock(\Psr\Http\Message\RequestInterface::class);
+    $requestMock->shouldReceive('getUri')->andReturn($uriMock);
+    $requestMock->shouldReceive('getMethod')->andReturn($method);
+    $requestMock->shouldReceive('getBody')->andReturn($body);
+    $requestMock->shouldReceive('getHeaders')->andReturn([
+        'X-CUSTOM' => [ '123' ],
+    ]);
 
-    $mock->shouldReceive('getMethod')
-        ->andReturn('POST');
+    $requestMock->shouldReceive('withHeader')
+        ->with(
+            \TrueLayer\Signing\Constants\CustomHeaders::SIGNATURE,
+            \Mockery::on(function ($signature) use ($keys, $path, $method, $body) {
+                $verifier = \TrueLayer\Signing\Verifier::verifyWithKey($keys['public']);
 
-    $mock->shouldReceive('getHeader')
-        ->withArgs([
-            'name' => 'X-CUSTOM',
-        ])
-        ->andReturn('123');
+                $verifier
+                    ->path($path)
+                    ->method($method)
+                    ->body($body)
+                    ->headers([
+                        'X-CUSTOM' => '123',
+                    ])
+                    ->verify($signature);
 
-    $mock->shouldReceive('withHeader')
-        ->withArgs([
-            'key' => \TrueLayer\Signing\Constants\CustomHeaders::SIGNATURE,
-            'value' => $signature
-        ]);
+                return true;
+            })
+        )
+        ->andReturn($requestMock);
 
-    $signer->addSignatureHeader($mock);
-}); */
+    Signer::signWithKey($kid, $keys['private'])->addSignatureHeader($requestMock);
+});

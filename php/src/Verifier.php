@@ -137,14 +137,4 @@ final class Verifier extends AbstractJws implements IVerifier
             throw new InvalidSignatureException();
         }
     }
-
-    /**
-     * @param ResponseInterface $response
-     * @return Verifier
-     */
-    public function response(ResponseInterface $response): Verifier
-    {
-        return $this->headers(Util::flattenHeaders($response->getHeaders()))
-            ->body((string) $response->getBody());
-    }
 }
