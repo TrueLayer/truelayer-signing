@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace TrueLayer\Signing\Tests;
@@ -6,7 +7,8 @@ namespace TrueLayer\Signing\Tests;
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
 
-class MockData {
+class MockData
+{
     /**
      * @return array<string, JWK>
      */

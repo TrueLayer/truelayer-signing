@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace TrueLayer\Signing;
@@ -10,9 +11,6 @@ use Jose\Component\Signature\Algorithm\ES512;
 use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use Jose\Component\Signature\Serializer\JWSSerializerManager;
-use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use TrueLayer\Signing\Constants\TrueLayerSignatures;
 use TrueLayer\Signing\Contracts\Verifier as IVerifier;
 use TrueLayer\Signing\Exceptions\InvalidAlgorithmException;
@@ -35,6 +33,7 @@ final class Verifier extends AbstractJws implements IVerifier
 
     /**
      * @param JWK $jwk
+     *
      * @return Verifier
      */
     public static function verifyWithKey(JWK $jwk): Verifier
@@ -44,12 +43,13 @@ final class Verifier extends AbstractJws implements IVerifier
 
     /**
      * @param string $pem
+     *
      * @return Verifier
      */
     public static function verifyWithPem(string $pem): Verifier
     {
         $jwk = JWKFactory::createFromKey($pem, null, [
-            'use' => 'sig'
+            'use' => 'sig',
         ]);
 
         return new self($jwk);
@@ -57,15 +57,17 @@ final class Verifier extends AbstractJws implements IVerifier
 
     /**
      * @param string $pemBase64
+     *
      * @return Verifier
      */
     public static function verifyWithPemBase64(string $pemBase64): Verifier
     {
-        return self::verifyWithPem(base64_decode($pemBase64));
+        return self::verifyWithPem(\base64_decode($pemBase64));
     }
 
     /**
      * @param string $path
+     *
      * @return Verifier
      */
     public static function verifyWithPemFile(string $path): Verifier
@@ -83,22 +85,25 @@ final class Verifier extends AbstractJws implements IVerifier
     private function __construct(JWK $jwk)
     {
         $this->jwk = $jwk;
-        $this->serializerManager = new JWSSerializerManager([ new CompactSerializer() ]);
-        $this->verifier = new JWSVerifier(new AlgorithmManager([ new ES512() ]));
+        $this->serializerManager = new JWSSerializerManager([new CompactSerializer()]);
+        $this->verifier = new JWSVerifier(new AlgorithmManager([new ES512()]));
     }
 
     /**
      * @param string[] $headers
+     *
      * @return $this
      */
     public function requireHeaders(array $headers): Verifier
     {
-        array_push($this->requiredHeaders, ...$headers);
+        \array_push($this->requiredHeaders, ...$headers);
+
         return $this;
     }
 
     /**
      * @param string $signature
+     *
      * @throws InvalidAlgorithmException
      * @throws InvalidSignatureException
      * @throws InvalidTrueLayerSignatureVersionException
@@ -111,7 +116,7 @@ final class Verifier extends AbstractJws implements IVerifier
         $jws = $this->serializerManager
             ->unserialize($signature);
 
-        if (!is_null($jws->getPayload())) {
+        if (!\is_null($jws->getPayload())) {
             throw new SignatureMustUseDetachedPayloadException();
         }
 
@@ -125,15 +130,15 @@ final class Verifier extends AbstractJws implements IVerifier
             throw new InvalidTrueLayerSignatureVersionException();
         }
 
-        $tlHeaders = !empty($jwsHeaders['tl_headers']) ? explode(',', $jwsHeaders['tl_headers']) : [];
+        $tlHeaders = !empty($jwsHeaders['tl_headers']) ? \explode(',', $jwsHeaders['tl_headers']) : [];
         $normalisedTlHeaders = Util::normaliseHeaderKeys($tlHeaders);
         foreach ($this->requiredHeaders as $header) {
-            if (!in_array($header, $normalisedTlHeaders, true)) {
+            if (!\in_array($header, $normalisedTlHeaders, true)) {
                 throw new RequiredHeaderMissingException("Signature is missing the {$header} required header");
             }
         }
 
-        if (! $this->verifier->verifyWithKey($jws, $this->jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders))) {
+        if (!$this->verifier->verifyWithKey($jws, $this->jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders))) {
             throw new InvalidSignatureException();
         }
     }
