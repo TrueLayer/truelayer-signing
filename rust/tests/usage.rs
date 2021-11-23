@@ -317,6 +317,7 @@ fn extract_jws_header() {
         .method("delete")
         .path("/foo")
         .header("X-Custom", b"123")
+        .jku("https://webhooks.truelayer.com/.well-known/jwks")
         .sign()
         .expect("sign");
 
@@ -327,4 +328,8 @@ fn extract_jws_header() {
     assert_eq!(jws_header.kid, KID);
     assert_eq!(jws_header.tl_version, "2");
     assert_eq!(jws_header.tl_headers, "X-Custom");
+    assert_eq!(
+        jws_header.jku.as_deref(),
+        Some("https://webhooks.truelayer.com/.well-known/jwks")
+    );
 }
