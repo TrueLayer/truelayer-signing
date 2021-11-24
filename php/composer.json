@@ -41,7 +41,7 @@
         "ramsey/uuid": "^4.2",
         "phpstan/phpstan": "^1.0",
         "roave/security-advisories": "dev-latest",
-        "pestphp/pest-plugin-mock": "^1.0",
-        "friendsofphp/php-cs-fixer": "^3.3"
+        "friendsofphp/php-cs-fixer": "^3.3",
+        "mockery/mockery": "^1.4"
     }
 }
