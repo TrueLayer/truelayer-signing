@@ -41,9 +41,9 @@ class Util
     }
 
     /**
-     * @param array $headers
+     * @param array<array<string>> $headers
      *
-     * @return array
+     * @return array<string, string>
      */
     public static function flattenHeaders(array $headers): array
     {

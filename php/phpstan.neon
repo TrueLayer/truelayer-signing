@@ -6,3 +6,7 @@ parameters:
     ignoreErrors:
         - message: '#Call to an undefined method Pest\\Expectation|Pest\\Support\\Extendable::#'
           path: tests/*
+        - message: '#Call to an undefined method Mockery\\ExpectationInterface|Mockery\\HigherOrderMessage::#'
+          path: tests/*
+        - message: '#Parameter \#1 \$request of method TrueLayer\\Signing\\Signer::addSignatureHeader\(\) expects Psr\\Http\\Message\\RequestInterface, Mockery\\LegacyMockInterface given#'
+          path: tests/*
