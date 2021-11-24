@@ -34,7 +34,7 @@
         "web-token/jwt-signature": "^2.2",
         "web-token/jwt-signature-algorithm-ecdsa": "^2.2",
         "web-token/jwt-key-mgmt": "^2.2",
-        "psr/http-message": "^1.0"
+        "psr/http-message": "^1.0.1"
     },
     "require-dev": {
         "pestphp/pest": "^1.20",
