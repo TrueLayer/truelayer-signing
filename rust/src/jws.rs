@@ -18,10 +18,17 @@ pub struct JwsHeader {
     /// Comma separated ordered headers used in the signature.
     #[serde(default)]
     pub tl_headers: String,
+    /// JSON Web Key URL. Used in webhook signatures providing the public key jwk url.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jku: Option<String>,
 }
 
 impl JwsHeader {
-    pub(crate) fn new_v2(kid: &str, headers: &IndexMap<HeaderName<'_>, &[u8]>) -> Self {
+    pub(crate) fn new_v2(
+        kid: &str,
+        headers: &IndexMap<HeaderName<'_>, &[u8]>,
+        jku: Option<String>,
+    ) -> Self {
         let header_keys = headers.keys().fold(String::new(), |mut all, next| {
             if !all.is_empty() {
                 all.push(',');
@@ -34,6 +41,7 @@ impl JwsHeader {
             kid: kid.into(),
             tl_version: "2".into(),
             tl_headers: header_keys,
+            jku,
         }
     }
 

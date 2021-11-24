@@ -5,7 +5,7 @@ set -eu
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$dir"
 
-rm -rf src/bin/Release/*nuget 2>/dev/null || true
+rm -rf src/bin/Release/*nupkg 2>/dev/null || true
 
 dotnet pack src/truelayer-signing.csproj \
   -c Release \

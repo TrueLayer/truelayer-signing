@@ -12,6 +12,7 @@ pub struct Signer<'a> {
     method: &'a str,
     path: &'a str,
     headers: IndexMap<HeaderName<'a>, &'a [u8]>,
+    jws_jku: Option<&'a str>,
 }
 
 /// Debug does not display key info.
@@ -30,6 +31,7 @@ impl<'a> Signer<'a> {
             method: "POST",
             path: "",
             headers: <_>::default(),
+            jws_jku: <_>::default(),
         }
     }
 
@@ -121,6 +123,15 @@ impl<'a> Signer<'a> {
         self
     }
 
+    /// Sets the jws header `jku` JSON Web Key URL.
+    ///
+    /// Note: This is not generally required when calling APIs,
+    /// but is set on webhook signatures.
+    pub fn jku(mut self, jku: &'a str) -> Self {
+        self.jws_jku = Some(jku);
+        self
+    }
+
     /// Produce a JWS `Tl-Signature` v1 header value, signing just the request body.
     ///
     /// Any specified method, path & headers will be ignored.
@@ -130,7 +141,18 @@ impl<'a> Signer<'a> {
         let private_key =
             openssl::parse_ec_private_key(self.private_key).map_err(Error::InvalidKey)?;
 
-        let jws_header = format!(r#"{{"alg":"ES512","kid":"{}"}}"#, self.kid).to_url_safe_base64();
+        let jws_header = {
+            let mut header = serde_json::json!({
+                "alg": "ES512",
+                "kid": self.kid,
+            });
+            if let Some(jku) = self.jws_jku {
+                header["jku"] = jku.into();
+            }
+            serde_json::to_string(&header)
+                .map_err(|e| Error::JwsError(e.into()))?
+                .to_url_safe_base64()
+        };
         let jws_header_and_payload = format!("{}.{}", jws_header, self.body.to_url_safe_base64());
 
         let signature = openssl::sign_es512(&private_key, jws_header_and_payload.as_bytes())
@@ -149,7 +171,7 @@ impl<'a> Signer<'a> {
         let private_key =
             openssl::parse_ec_private_key(self.private_key).map_err(Error::InvalidKey)?;
 
-        let jws_header = JwsHeader::new_v2(self.kid, &self.headers);
+        let jws_header = JwsHeader::new_v2(self.kid, &self.headers, self.jws_jku.map(|u| u.into()));
         let jws_header_b64 = serde_json::to_string(&jws_header)
             .map_err(|e| Error::JwsError(e.into()))?
             .to_url_safe_base64();
