@@ -10,3 +10,5 @@ parameters:
           path: tests/*
         - message: '#Parameter \#1 \$request of method TrueLayer\\Signing\\Signer::addSignatureHeader\(\) expects Psr\\Http\\Message\\RequestInterface, Mockery\\LegacyMockInterface given#'
           path: tests/*
+        - message: '#Method TrueLayer\\Signing\\Signer::addSignatureHeader\(\) should return Psr\\Http\\Message\\RequestInterface but returns Psr\\Http\\Message\\MessageInterface#'
+          path: tests/*
