@@ -51,7 +51,7 @@ jobs:
         if: ${{ matrix.dependencies == 'locked' }}
         run: "composer install --no-interaction --no-progress"
       - name: "PHPStan"
-        run: "vendor/bin/phpstan analyse --memory-limit=-1"
+        run: "vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=-1"
       - name: "Tests"
         run: "vendor/bin/pest"
 
