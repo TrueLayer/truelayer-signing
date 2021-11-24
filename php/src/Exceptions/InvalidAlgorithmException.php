@@ -6,5 +6,4 @@ use Exception;
 
 class InvalidAlgorithmException extends Exception
 {
-
 }

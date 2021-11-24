@@ -1,33 +1,33 @@
 <?php
 
-it('should normalise associative arrays of headers', function () {
+\it('should normalise associative arrays of headers', function () {
     $headers = [
-        'X-header' => 'foo',
-        'aNother-head' => 'bAr',
+        'X-Header' => 'foo',
+        'Another-Head' => 'bAr',
     ];
 
     $normalised = \TrueLayer\Signing\Util::normaliseHeaders($headers);
 
-    expect($normalised)->toBeArray();
-    expect($normalised)->toEqual([
-        'another-head' => 'bAr',
-        'x-header' => 'foo',
+    \expect($normalised)->toBeArray();
+    \expect($normalised)->toEqual([
+        'Another-Head' => 'bAr',
+        'X-Header' => 'foo',
     ]);
 });
 
-it('should normalise arrays of header keys', function () {
+\it('should normalise arrays of header keys', function () {
     $headers = [
         'X-Header',
-        'fOOO-header',
-        'another-hEader'
+        'Foo-Header',
+        'Another-Header',
     ];
 
     $normalised = \TrueLayer\Signing\Util::normaliseHeaderKeys($headers);
 
-    expect($normalised)->toBeArray();
-    expect($normalised)->toEqual([
-        'another-header',
-        'fooo-header',
-        'x-header',
+    \expect($normalised)->toBeArray();
+    \expect($normalised)->toEqual([
+        'Another-Header',
+        'Foo-Header',
+        'X-Header',
     ]);
 });

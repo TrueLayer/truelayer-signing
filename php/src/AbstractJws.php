@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace TrueLayer\Signing;
@@ -31,47 +32,56 @@ abstract class AbstractJws implements IJws
 
     /**
      * @param string $method
+     *
      * @return $this
      */
     public function method(string $method): self
     {
-        $this->requestMethod = strtoupper($method);
+        $this->requestMethod = \strtoupper($method);
+
         return $this;
     }
 
     /**
      * @param string $path
+     *
      * @return $this
      */
     public function path(string $path): self
     {
         $this->requestPath = $path;
+
         return $this;
     }
 
     /**
      * @param string $body
+     *
      * @return $this
      */
     public function body(string $body): self
     {
         $this->requestBody = $body;
+
         return $this;
     }
 
     /**
      * @param string $key
      * @param string $value
+     *
      * @return $this
      */
     public function header(string $key, string $value): self
     {
-        $this->requestHeaders[strtolower($key)] = $value;
+        $this->requestHeaders[$key] = $value;
+
         return $this;
     }
 
     /**
      * @param array<string, string> $headers
+     *
      * @return $this
      */
     public function headers(array $headers): self
@@ -79,14 +89,17 @@ abstract class AbstractJws implements IJws
         foreach ($headers as $key => $value) {
             $this->header($key, $value);
         }
+
         return $this;
     }
 
     /**
      * @param string[] $orderOfHeaderKeys
-     * @return string
+     *
      * @throws RequestPathNotFoundException
      * @throws Exception
+     *
+     * @return string
      */
     public function buildPayload(array $orderOfHeaderKeys): string
     {
@@ -100,7 +113,7 @@ abstract class AbstractJws implements IJws
         // Add the request headers
         $normalisedRequestHeaders = Util::normaliseHeaders($this->requestHeaders);
         foreach ($orderOfHeaderKeys as $headerKey) {
-            $value = $normalisedRequestHeaders[strtolower($headerKey)];
+            $value = $normalisedRequestHeaders[$headerKey];
             $payload .= "{$headerKey}: {$value}\n";
         }
 
