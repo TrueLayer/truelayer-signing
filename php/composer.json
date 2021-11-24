@@ -22,6 +22,10 @@
         {
             "name": "Stefan Adrian Danaita",
             "email": "me@dsa.io"
+        },
+        {
+            "name": "Alexandru Lighezan",
+            "email": "alex.lighezan@truelayer.com"
         }
     ],
     "require": {
