@@ -42,7 +42,7 @@ final class Signer extends AbstractJws implements ISigner
      *
      * @return Signer
      */
-    public static function signWithPem(string $kid, string $pem, ?string $passphrase): Signer
+    public static function signWithPem(string $kid, string $pem, ?string $passphrase = null): Signer
     {
         $jwk = JWKFactory::createFromKey($pem, $passphrase, [
             'use' => 'sig',
