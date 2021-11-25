@@ -35,7 +35,7 @@ declare(strict_types=1);
 use TrueLayer\Signing\Signer;
 
 $signer = Signer::signWithPemFile('kid-value', '/path/to/privatekey');
-$signer->addSignatureHeader($request)
+$request = $signer->addSignatureHeader($request)
 ```
 
 ### Verifying
