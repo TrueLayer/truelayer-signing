@@ -1,6 +1,5 @@
-const PUBLIC_KEY: &[u8] = include_bytes!("ec512-public.pem");
-const PRIVATE_KEY: &[u8] = include_bytes!("ec512-private.pem");
-// we already know the public key, so the kid can be anything in these tests.
+const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem");
+const PRIVATE_KEY: &[u8] = include_bytes!("../../test-resources/ec512-private.pem");
 const KID: &str = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
 /// Sign a request body only and verify.
@@ -130,7 +129,7 @@ fn verify_full_request_static_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
+    let tl_signature = include_str!("../../test-resources/tl-signature.txt").trim();
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
         .method("POST")
@@ -311,12 +310,11 @@ fn flexible_header_case_order_verify() {
         .expect("verify");
 }
 
+/// Note: Setting jku is only required for webhooks, so not a feature
+/// needed by clients directly, or necessary in all langs.
 #[test]
-fn extract_jws_header() {
+fn set_jku() {
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("delete")
-        .path("/foo")
-        .header("X-Custom", b"123")
         .jku("https://webhooks.truelayer.com/.well-known/jwks")
         .sign()
         .expect("sign");
@@ -324,12 +322,40 @@ fn extract_jws_header() {
     let jws_header =
         truelayer_signing::extract_jws_header(&tl_signature).expect("extract_jws_header");
 
-    assert_eq!(jws_header.alg, "ES512");
-    assert_eq!(jws_header.kid, KID);
-    assert_eq!(jws_header.tl_version, "2");
-    assert_eq!(jws_header.tl_headers, "X-Custom");
     assert_eq!(
         jws_header.jku.as_deref(),
         Some("https://webhooks.truelayer.com/.well-known/jwks")
     );
+}
+
+#[test]
+fn extract_jws_header() {
+    let tl_signature = include_str!("../../test-resources/webhook-signature.txt").trim();
+
+    let jws_header =
+        truelayer_signing::extract_jws_header(tl_signature).expect("extract_jws_header");
+
+    assert_eq!(jws_header.alg, "ES512");
+    assert_eq!(jws_header.kid, KID);
+    assert_eq!(jws_header.tl_version, "2");
+    assert_eq!(jws_header.tl_headers, "X-Tl-Webhook-Timestamp,Content-Type");
+    assert_eq!(
+        jws_header.jku.as_deref(),
+        Some("https://webhooks.truelayer.com/.well-known/jwks")
+    );
+}
+
+#[test]
+fn verify_with_jwks() {
+    let hook_signature = include_str!("../../test-resources/webhook-signature.txt").trim();
+    let jwks = include_bytes!("../../test-resources/jwks.json");
+
+    truelayer_signing::verify_with_jwks(jwks)
+        .method("POST")
+        .path("/tl-webhook")
+        .header("x-tl-webhook-timestamp", b"2021-11-29T11:42:55Z")
+        .header("content-type", b"application/json")
+        .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
+        .verify(hook_signature)
+        .expect("verify");
 }

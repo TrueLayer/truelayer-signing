@@ -14,13 +14,22 @@ use std::fmt;
 ///
 /// See [`crate::verify_with_pem`] for examples.
 pub struct Verifier<'a> {
-    public_key: &'a [u8],
+    public_key: PublicKey<'a>,
     body: &'a [u8],
     method: &'a str,
     path: &'a str,
     headers: IndexMap<HeaderName<'a>, &'a [u8]>,
     required_headers: IndexSet<HeaderName<'a>>,
     allow_v1: bool,
+}
+
+/// Public key for verification.
+#[derive(Clone, Copy)]
+pub(crate) enum PublicKey<'a> {
+    /// Public key PEM.
+    Pem(&'a [u8]),
+    /// JWKs JSON response.
+    Jwks(&'a [u8]),
 }
 
 /// Debug does not display key info.
@@ -31,7 +40,7 @@ impl fmt::Debug for Verifier<'_> {
 }
 
 impl<'a> Verifier<'a> {
-    pub(crate) fn new(public_key: &'a [u8]) -> Self {
+    pub(crate) fn new(public_key: PublicKey<'a>) -> Self {
         Self {
             public_key,
             body: &[],
@@ -124,10 +133,13 @@ impl<'a> Verifier<'a> {
     ///
     /// Returns `Err(_)` if verification fails.
     pub fn verify(&self, tl_signature: &str) -> Result<(), Error> {
-        let public_key =
-            openssl::parse_ec_public_key(self.public_key).map_err(Error::InvalidKey)?;
-
         let (jws_header, header_b64, signature) = parse_tl_signature(tl_signature)?;
+
+        let public_key = match self.public_key {
+            PublicKey::Pem(pem) => openssl::parse_ec_public_key(pem),
+            PublicKey::Jwks(jwks) => openssl::find_and_parse_ec_jwk(&jws_header.kid, jwks),
+        }
+        .map_err(Error::InvalidKey)?;
 
         if jws_header.alg != "ES512" {
             return Err(Error::JwsError(anyhow!("unexpected header alg")));
