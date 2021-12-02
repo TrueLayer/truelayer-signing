@@ -20,6 +20,11 @@ func VerifyWithPem(publicKeyPem []byte) *verify.Verifier {
 	return verify.NewVerifier(publicKeyPem)
 }
 
+// VerifyWithJwks start building a `Tl-Signature` header verifier using public key JWKs JSON response data.
+func VerifyWithJwks(jwks []byte) *verify.Verifier {
+	return verify.NewVerifierWithJwks(jwks)
+}
+
 // ExtractJwsHeader extracts "JwsHeader" info from a "Tl-Signature" header value.
 //
 // This can then be used to pick a verification key using the "kid" etc.

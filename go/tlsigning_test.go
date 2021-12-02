@@ -32,6 +32,12 @@ func getWebhookSignature(assert *assert.Assertions) string {
 	return string(signature)
 }
 
+func getJwksJson(assert *assert.Assertions) []byte {
+	jwks, err := ioutil.ReadFile("../test-resources/jwks.json")
+	assert.Nilf(err, "jwks json read failed: %v", err)
+	return jwks
+}
+
 func TestVerifyV1StaticSignatureShouldFail(t *testing.T) {
 	assert := assert.New(t)
 
@@ -332,13 +338,41 @@ func TestVerifyWithoutMethodShouldFail(t *testing.T) {
 func TestJwsHeaderExtraction(t *testing.T) {
 	assert := assert.New(t)
 
-	signature := getWebhookSignature(assert)
+	hookSignature := getWebhookSignature(assert)
 
-	jwsHeader, _ := ExtractJwsHeader(signature)
+	jwsHeader, _ := ExtractJwsHeader(hookSignature)
 
 	assert.Equal(jwsHeader.Alg, "ES512")
 	assert.Equal(jwsHeader.Kid, Kid)
 	assert.Equal(jwsHeader.TlVersion, "2")
 	assert.Equal(jwsHeader.TlHeaders, "X-Tl-Webhook-Timestamp,Content-Type")
 	assert.Equal(jwsHeader.Jku, "https://webhooks.truelayer.com/.well-known/jwks")
+}
+
+func TestVerifyWithJwks(t *testing.T) {
+	assert := assert.New(t)
+
+	hookSignature := getWebhookSignature(assert)
+	jwks := getJwksJson(assert)
+
+	err := VerifyWithJwks(jwks).
+		Method("POST").
+		Path("/tl-webhook").
+		Header("x-tl-webhook-timestamp", []byte("2021-11-29T11:42:55Z")).
+		Header("content-type", []byte("application/json")).
+		Body([]byte("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")).
+		Verify(hookSignature)
+
+	assert.Nilf(err, "signature verification should not fail: %v", err)
+
+	err = VerifyWithJwks(jwks).
+		Method("POST").
+		Path("/tl-webhook").
+		Header("x-tl-webhook-timestamp", []byte("2021-12-02T14:18:00Z")).
+		Header("content-type", []byte("application/json")).
+		Body([]byte("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")).
+		Verify(hookSignature)
+
+	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
