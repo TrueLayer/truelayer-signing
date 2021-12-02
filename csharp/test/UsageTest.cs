@@ -2,6 +2,7 @@ using Xunit;
 using TrueLayer.Signing;
 using System;
 using FluentAssertions;
+using System.IO;
 
 namespace Tests
 {
@@ -60,7 +61,7 @@ namespace Tests
                 .Sign();
 
             Verifier.VerifyWithPem(PublicKey)
-                .Method("POST") 
+                .Method("POST")
                 .Path(path)
                 .Body(body)
                 .Verify(tlSignature); // should not throw
@@ -265,5 +266,16 @@ namespace Tests
 
             Verifier.ExtractKid(tlSignature).Should().Be(Kid);
         }
+
+        [Fact]
+        public void Verifier_ExtractJku()
+        {
+            var tlSignature = File.ReadAllText(TestResourcePath("webhook-signature.txt")).Trim();
+            Verifier.ExtractJku(tlSignature).Should().Be("https://webhooks.truelayer.com/.well-known/jwks");
+        }
+
+        /// <summary>Return working path to /test-resources/$subpath</summary>
+        private static string TestResourcePath(string subpath)
+            => Path.Combine("../../../../../test-resources", subpath);
     }
 }

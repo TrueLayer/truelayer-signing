@@ -31,12 +31,27 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public static string ExtractKid(string tlSignature)
         {
-            var kid = Jose.JWT.Headers(tlSignature)["kid"] as string;
+            var kid = Jose.JWT.Headers(tlSignature).GetString("kid");
             if (kid == null)
             {
                 throw new SignatureException("missing kid");
             }
             return kid;
+        }
+
+        /// <summary>
+        /// Extract jku (JSON Web Key URL) from unverified jws Tl-Signature.
+        /// Used in webhook signatures providing the public key jwk url.
+        /// </summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        public static string ExtractJku(string tlSignature)
+        {
+            var jku = Jose.JWT.Headers(tlSignature).GetString("jku");
+            if (jku == null)
+            {
+                throw new SignatureException("missing jku");
+            }
+            return jku;
         }
 
         private ECDsa key;
