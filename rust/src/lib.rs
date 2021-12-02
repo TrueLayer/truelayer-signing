@@ -59,7 +59,29 @@ pub fn sign_with_pem<'a>(kid: &'a str, private_key_pem: &'a [u8]) -> Signer<'a> 
 /// # Ok(()) }
 /// ```
 pub fn verify_with_pem(public_key_pem: &[u8]) -> Verifier<'_> {
-    Verifier::new(public_key_pem)
+    Verifier::new(verify::PublicKey::Pem(public_key_pem))
+}
+
+/// Start building a `Tl-Signature` header verifier using public key JWKs JSON response data.
+///
+/// See <https://datatracker.ietf.org/doc/html/rfc7517>.
+///
+/// # Example
+/// ```no_run
+/// # fn main() -> Result<(), truelayer_signing::Error> {
+/// # let (jwks, body, tl_signature) = unimplemented!();
+/// # let headers: Vec<(&str, &[u8])> = unimplemented!();
+/// // jwks json of form: {"keys":[...]}
+/// truelayer_signing::verify_with_jwks(jwks)
+///     .method("POST")
+///     .path("/webhook")
+///     .headers(headers)
+///     .body(body)
+///     .verify(tl_signature)?;
+/// # Ok(()) }
+/// ```
+pub fn verify_with_jwks(jwks: &[u8]) -> Verifier<'_> {
+    Verifier::new(verify::PublicKey::Jwks(jwks))
 }
 
 /// Extract [`JwsHeader`] info from a `Tl-Signature` header value.

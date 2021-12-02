@@ -1,0 +1,19 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "alg": "RS512",
+      "kid": "db2e0bb4-e33d-4fc6-a8c5-645e70331127",
+      "n": "piC9AfXk1FyhocC77L42j8zWhy-jOeuxdvZCRYACPbU5DB-4zd5JLpTFuYPY5LweqT8tmBbqgXMN_35EQifHrLbBB5a5p-0z3QlVhqMP_K4nu65uIVzC-wjKBcTctqY_jFzSotFZnDNCZEUXcGrTzQifOCy1OD7zT0jm7-1ceWs375joA-KnyJj5rVKBmYrLWa6E2ukLhNBHFzO2N7Aai2w6UFmwfG27viV3_aNkDVC6vkEtZx4oZuCtQ6DKmbiQBTiS1-41wU7QN5PTuA9YUlhOU9yiwnCAG9MDWuJHT7691iLvIIgRctuSQ4HDDg49M39Un4DBt51KCoZsAwxtNw",
+      "e": "AQAB"
+    },
+    {
+      "kty": "EC",
+      "alg": "EC",
+      "kid": "45fc75cf-5649-4134-84b3-192c2c78e990",
+      "crv": "P-521",
+      "x": "AVSFZ4IVMx5ghGdxzYw5mmTCe1MGX2r9kmHBLWw0HOLj4YhMFqGGTMc4L7M9b1RpLrH0yI3F3gnw2fsbvYK0WLeJ",
+      "y": "AaN_c8NItI9a2ruE-wYvrYXP1WaQsrsLet5mVnEbOT5UM6S9-GwUly-S-hvV1LV5_KV8FBjITQ6ecVRm7JUak1PL"
+    }
+  ]
+}
