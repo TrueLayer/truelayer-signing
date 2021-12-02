@@ -36,6 +36,18 @@ namespace TrueLayer.Signing
             }
         }
 
+        /// <summary>
+        /// Run the action converting any thrown exception into a SignatureException.
+        /// </summary>
+        internal static void TryAction(Action f, string? message = null)
+        {
+            Try(() =>
+            {
+                f();
+                return (object?) null;
+            }, message);
+        }
+
         internal SignatureException(string message) : base(message) { }
         internal SignatureException(string message, Exception? innerException) : base(message, innerException) { }
     }
@@ -136,5 +148,21 @@ namespace TrueLayer.Signing
             => string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
         public int GetHashCode(string x) => x.ToLowerInvariant().GetHashCode();
+    }
+
+    /// <summary>JWKs json object.</summary>
+    internal class Jwks
+    {
+        public List<Jwk> Keys { get; set; } = new List<Jwk>();
+    }
+
+    internal class Jwk
+    {
+        public string Kid { get; set; } = "";
+        public string Kty { get; set; } = "";
+        public string Alg { get; set; } = "";
+        public string Crv { get; set; } = "";
+        public string X { get; set; } = "";
+        public string Y { get; set; } = "";
     }
 }

@@ -11,9 +11,9 @@ namespace Tests
 {
     public class ErrorTest
     {
-        private const string PublicKey = UsageTest.PublicKey;
-        private const string PrivateKey = UsageTest.PrivateKey;
         private const string Kid = UsageTest.Kid;
+        private static string PublicKey = UsageTest.PublicKey;
+        private static string PrivateKey = UsageTest.PrivateKey;
 
         [Fact]
         public void BadKey()

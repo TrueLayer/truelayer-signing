@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 * Add `Verifier.ExtractJku` to extract `jku` jws header from webhook signatures.
+* Add `Verifier.VerifyWithJwks` to aid verifying webhook signatures.
 
 ## 0.1.2
 * Add `Verifier` support for signatures without headers.
