@@ -358,4 +358,13 @@ fn verify_with_jwks() {
         .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
         .verify(hook_signature)
         .expect("verify");
+
+    truelayer_signing::verify_with_jwks(jwks)
+        .method("POST")
+        .path("/tl-webhook")
+        .header("x-tl-webhook-timestamp", b"2021-12-02T14:18:00Z") // different
+        .header("content-type", b"application/json")
+        .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
+        .verify(hook_signature)
+        .expect_err("verify should fail as header is different");
 }
