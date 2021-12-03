@@ -13,7 +13,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import java.security.interfaces.ECPublicKey;
 import java.util.Map;
 
-public class VerifierFromJwks extends Verifier {
+class VerifierFromJwks extends Verifier {
 
     private final JWKSet jwkSet;
 

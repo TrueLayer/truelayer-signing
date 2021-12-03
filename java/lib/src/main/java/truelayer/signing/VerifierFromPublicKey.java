@@ -6,7 +6,7 @@ import com.nimbusds.jose.crypto.ECDSAVerifier;
 import java.security.interfaces.ECPublicKey;
 import java.util.*;
 
-public class VerifierFromPublicKey extends Verifier{
+class VerifierFromPublicKey extends Verifier{
 
     private final ECPublicKey publicKey;
 
