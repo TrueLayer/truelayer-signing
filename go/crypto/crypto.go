@@ -46,9 +46,9 @@ func ParseEcPublicKey(publicKeyData []byte) (*ecdsa.PublicKey, error) {
 }
 
 // Read JWKs json then find & parse the JWK for the given signatureKid
-func FindAndParseEcJwk(signatureKid []byte, jwks []byte) (*ecdsa.PublicKey, error) {
-	var jwksStruct Jwks
-	err := json.Unmarshal(jwks, &jwksStruct)
+func FindAndParseEcJwk(signatureKid []byte, jwksData []byte) (*ecdsa.PublicKey, error) {
+	var jwksStruct jwks
+	err := json.Unmarshal(jwksData, &jwksStruct)
 	if err != nil {
 		return nil, fmt.Errorf("jwks parsing failed: %v", err)
 	}
@@ -119,11 +119,11 @@ func VerifyES512(key *ecdsa.PublicKey, payload []byte, signature []byte) error {
 }
 
 // JWKs json response.
-type Jwks struct {
-	Keys []Jwk `json:"keys"`
+type jwks struct {
+	Keys []jwk `json:"keys"`
 }
 
-type Jwk struct {
+type jwk struct {
 	Kid string `json:"kid"`
 	Kty string `json:"kty"`
 	Alg string `json:"alg"`
@@ -132,7 +132,7 @@ type Jwk struct {
 	Y   string `json:"y"`
 }
 
-func (jwk Jwk) parseP521() (*ecdsa.PublicKey, error) {
+func (jwk jwk) parseP521() (*ecdsa.PublicKey, error) {
 	if jwk.Kty != "EC" {
 		return nil, fmt.Errorf("unsupported jwk kty")
 	}
