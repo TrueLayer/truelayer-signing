@@ -338,9 +338,9 @@ func TestVerifyWithoutMethodShouldFail(t *testing.T) {
 func TestJwsHeaderExtraction(t *testing.T) {
 	assert := assert.New(t)
 
-	hookSignature := getWebhookSignature(assert)
+	webhookSignature := getWebhookSignature(assert)
 
-	jwsHeader, _ := ExtractJwsHeader(hookSignature)
+	jwsHeader, _ := ExtractJwsHeader(webhookSignature)
 
 	assert.Equal(jwsHeader.Alg, "ES512")
 	assert.Equal(jwsHeader.Kid, Kid)
@@ -352,7 +352,7 @@ func TestJwsHeaderExtraction(t *testing.T) {
 func TestVerifyWithJwks(t *testing.T) {
 	assert := assert.New(t)
 
-	hookSignature := getWebhookSignature(assert)
+	webhookSignature := getWebhookSignature(assert)
 	jwks := getJwksJson(assert)
 
 	err := VerifyWithJwks(jwks).
@@ -361,7 +361,7 @@ func TestVerifyWithJwks(t *testing.T) {
 		Header("x-tl-webhook-timestamp", []byte("2021-11-29T11:42:55Z")).
 		Header("content-type", []byte("application/json")).
 		Body([]byte("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")).
-		Verify(hookSignature)
+		Verify(webhookSignature)
 
 	assert.Nilf(err, "signature verification should not fail: %v", err)
 
@@ -371,7 +371,7 @@ func TestVerifyWithJwks(t *testing.T) {
 		Header("x-tl-webhook-timestamp", []byte("2021-12-02T14:18:00Z")).
 		Header("content-type", []byte("application/json")).
 		Body([]byte("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")).
-		Verify(hookSignature)
+		Verify(webhookSignature)
 
 	assert.NotNilf(err, "signature verification should fail: %v", err)
 	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
