@@ -1,8 +1,10 @@
 package truelayer.signing;
 
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.ECDSAVerifier;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWKSet;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -15,23 +17,17 @@ import java.util.stream.Stream;
 /**
  * Builder to verify a request against a `Tl-Signature` header using a public key.
  */
-final public class Verifier {
+public abstract class Verifier {
 
-    private final ECPublicKey publicKey;
+    protected String method = "";
 
-    private String method = "";
+    protected String path = "";
 
-    private String path = "";
+    protected byte[] body = new byte[0];
 
-    private byte[] body = new byte[0];
+    protected final LinkedHashMap<HeaderName, String> headers = new LinkedHashMap<>();
 
-    private final LinkedHashMap<HeaderName, String> headers = new LinkedHashMap<>();
-
-    private final HashSet<String> requiredHeaders = new HashSet<>();
-
-    private Verifier(ECPublicKey publicKey) {
-        this.publicKey = publicKey;
-    }
+    protected final HashSet<String> requiredHeaders = new HashSet<>();
 
 
     /**
@@ -154,7 +150,7 @@ final public class Verifier {
             throw new IllegalArgumentException("the publicKey must not be null");
 
         ECPublicKey publicKey = KeyException.evaluate(() -> ECKey.parseFromPEMEncodedObjects(new String(publicKeyPem)).toECKey().toECPublicKey());
-        return new Verifier(publicKey);
+        return new VerifierFromPublicKey(publicKey);
     }
 
     /**
@@ -170,7 +166,7 @@ final public class Verifier {
             throw new IllegalArgumentException("the publicKey must not be null");
 
         ECPublicKey publicKey = KeyException.evaluate(() -> ECKey.parseFromPEMEncodedObjects(publicKeyPem).toECKey().toECPublicKey());
-        return new Verifier(publicKey);
+        return new VerifierFromPublicKey(publicKey);
     }
 
     /**
@@ -185,7 +181,19 @@ final public class Verifier {
         if (publicKeyPem == null)
             throw new IllegalArgumentException("the publicKey must not be null");
 
-        return new Verifier(publicKeyPem);
+        return new VerifierFromPublicKey(publicKeyPem);
+    }
+
+    /**
+     * Start building a `Tl-Signature` header verifier using public key JWKs JSON response data.
+     *
+     * @param jwks public key JWKs JSON response data
+     * @return the Verifier instance
+     * @throws SignatureException if the provided jwks is invalid
+     */
+    public static Verifier verifyWithJwks(String jwks) {
+        JWKSet jwkSet = SignatureException.evaluate(() -> JWKSet.parse(jwks));
+        return new VerifierFromJwks(jwkSet);
     }
 
     /**
@@ -194,8 +202,10 @@ final public class Verifier {
      * @param signature the given `TL-signature`
      * @throws SignatureException if Signature is invalid
      */
-    public void verify(String signature) {
-        JWSHeader jwsHeader = SignatureException.evaluate(() -> JWSHeader.parse(JOSEObject.split(signature)[0]));
+    public abstract void verify(String signature);
+
+    protected Map<HeaderName, String> validateSignatureHeader(JWSHeader jwsHeader) {
+
         List<String> validSignatureHeaders = validateSignatureHeaders(jwsHeader, requiredHeaders);
 
         LinkedHashMap<HeaderName, String> orderedHeaders = new LinkedHashMap<>();
@@ -205,11 +215,7 @@ final public class Verifier {
                 orderedHeaders.put(new HeaderName(h), value);
         });
 
-        Boolean verifiedResult = SignatureException.evaluate(() ->
-                JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
-                        .verify(new ECDSAVerifier(publicKey)));
-
-        SignatureException.ensure(verifiedResult, "invalid signature");
+        return orderedHeaders;
     }
 
     private List<String> validateSignatureHeaders(JWSHeader jwsHeader, HashSet<String> requiredHeaders) {
@@ -230,4 +236,6 @@ final public class Verifier {
 
         return tl_headers.get().collect(Collectors.toList());
     }
+
+
 }

@@ -3,7 +3,6 @@ package truelayer.signing;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -19,11 +18,17 @@ public class UsageTest {
 
     static byte[] privateKey;
     static byte[] publicKey;
+    static String webhookSignature;
+    static String tlSignature;
+    static String jwks;
 
     @BeforeClass
     public static void testData() throws IOException {
         privateKey = readAllBytes(testResourcePath("ec512-private.pem"));
         publicKey = readAllBytes(testResourcePath("ec512-public.pem"));
+        webhookSignature = new String(readAllBytes(testResourcePath("webhook-signature.txt"))).trim();
+        tlSignature = new String(readAllBytes(testResourcePath("tl-signature.txt")));
+        jwks = new String(readAllBytes(testResourcePath("jwks.json")));
     }
 
     @Test
@@ -55,8 +60,6 @@ public class UsageTest {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-        String tlSignature =
-                "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
 
         Verifier.from(publicKey)
                 .method("POST")
@@ -291,10 +294,31 @@ public class UsageTest {
     }
 
     @Test
-    public void verifierExtractJku() throws IOException {
-        String tlSignature = new String(readAllBytes(testResourcePath("webhook-signature.txt")));
-        String jku = Verifier.extractJku(tlSignature);
+    public void verifierExtractJku() {
+        String jku = Verifier.extractJku(webhookSignature);
         assertEquals("https://webhooks.truelayer.com/.well-known/jwks", jku);
+    }
+
+    @Test
+    public void verifierJwks() {
+        Verifier.verifyWithJwks(jwks)
+                .method("POST")
+                .path("/tl-webhook")
+                .header("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z")
+                .header("content-type", "application/json")
+                .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")
+                .verify(webhookSignature); // should not throw
+
+        Verifier verifier = Verifier.verifyWithJwks(jwks)
+                .method("POST")
+                .path("/tl-webhook")
+                .header("x-tl-webhook-timestamp", "2021-12-02T14:18:00Z") // different
+                .header("content-type", "application/json")
+                .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}");
+
+        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(webhookSignature));
+
+        assertEquals("invalid signature", invalidSignatureException.getMessage());
     }
 
     private static Path testResourcePath(String subPath) {
