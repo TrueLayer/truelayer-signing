@@ -52,6 +52,8 @@ func FindAndParseEcJwk(signatureKid []byte, jwks []byte) (*ecdsa.PublicKey, erro
 	if err != nil {
 		return nil, fmt.Errorf("jwks parsing failed: %v", err)
 	}
+
+	// Find key with specified kid
 	for _, v := range jwksStruct.Keys {
 		if v.Kid == string(signatureKid) {
 			return v.parseP521()
@@ -144,17 +146,20 @@ func (jwk Jwk) parseP521() (*ecdsa.PublicKey, error) {
 	x := new(big.Int)
 	y := new(big.Int)
 
+	// Deserialize x into BigInt
 	xBytes, err := base64.RawURLEncoding.DecodeString(jwk.X)
 	if err != nil {
 		return nil, fmt.Errorf("x base64 decoding failed: %v", err)
 	}
 	x = x.SetBytes(xBytes)
 
+	// Deserialize y into BigInt
 	yBytes, err := base64.RawURLEncoding.DecodeString(jwk.Y)
 	if err != nil {
 		return nil, fmt.Errorf("y base64 decoding failed: %v", err)
 	}
 	y = y.SetBytes(yBytes)
 
+	// Rebuild public key from x and y
 	return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P521()}, nil
 }
