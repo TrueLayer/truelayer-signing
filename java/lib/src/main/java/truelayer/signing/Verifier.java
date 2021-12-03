@@ -4,6 +4,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.interfaces.ECPublicKey;
 import java.util.*;
@@ -30,6 +31,23 @@ final public class Verifier {
 
     private Verifier(ECPublicKey publicKey) {
         this.publicKey = publicKey;
+    }
+
+
+    /**
+     * Extract jku (JSON Web Key URL) from unverified jws Tl-Signature.
+     * Used in webhook signatures providing the public key jwk url.
+     *
+     * @param tlSignature unverified jws Tl-Signature
+     * @return jku (JSON Web Key URL)
+     * @throws SignatureException if the signature is invalid
+     */
+    public static String extractJku(String tlSignature) {
+        return SignatureException.evaluate(() -> {
+                    URI uri = JWSObject.parse(tlSignature).getHeader().getJWKURL();
+                    return uri.toString();
+                }
+        );
     }
 
     /**
