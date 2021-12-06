@@ -306,7 +306,7 @@ public class UsageTest {
 
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
 
-        assertEquals("The payload Base64URL part must be empty", invalidSignatureException.getMessage());
+        assertEquals("Invalid serialized unsecured/JWS/JWE object: Too many part delimiters", invalidSignatureException.getMessage());
     }
 
     @Test
