@@ -205,7 +205,8 @@ namespace TrueLayer.Signing
 
             SignatureException.Ensure(jwsHeaders.GetString("alg") == "ES512", "unsupported jws alg");
             SignatureException.Ensure(jwsHeaders.GetString("tl_version") == "2", "unsupported jws tl_version");
-            SignatureException.Ensure(tlSignature.Contains(".."), "signature must have a detached payload");
+            var signatureParts = tlSignature.Split(".");
+            SignatureException.Ensure(signatureParts.Length >= 3, "invalid signature format");
 
             var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? "")
                 .Split(",")
@@ -219,7 +220,7 @@ namespace TrueLayer.Signing
             var signedHeaders = FilterOrderHeaders(signatureHeaderNames);
 
             var signingPayload = Util.BuildV2SigningPayload(method, path, signedHeaders, body);
-            var jws = tlSignature.Replace("..", $".{Base64Url.Encode(signingPayload)}.");
+            var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
 
             SignatureException.Try(() => Jose.JWT.Decode(jws, key), "Invalid signature");
         }
