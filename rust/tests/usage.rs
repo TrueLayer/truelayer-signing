@@ -125,6 +125,25 @@ fn mismatched_signature_with_attached_valid_body() {
 }
 
 #[test]
+fn mismatched_signature_with_attached_valid_body_trailing_dots() {
+    // signature for `/bar` but with a valid jws-body pre-attached
+    // if we run a simple jws verify on this unchanged it'll work!
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND\
+      ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV\
+      hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD\
+      z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC\
+      QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB\
+      d2d3D17Wd9UA....";
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method("POST")
+        .path("/foo") // not bar so should fail
+        .body("{}".as_bytes())
+        .verify(tl_signature)
+        .expect_err("verify should fail");
+}
+
+#[test]
 fn verify_full_request_static_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";

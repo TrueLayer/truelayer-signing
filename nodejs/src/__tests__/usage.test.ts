@@ -76,7 +76,7 @@ describe('verify', () => {
       method: "post",
       path,
       body,
-    }as any);
+    } as any);
 
     verify({
       publicKeyPem: PUBLIC_KEY,
@@ -99,6 +99,26 @@ describe('verify', () => {
       + "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC"
       + "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB"
       + "d2d3D17Wd9UA";
+
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "post",
+      path: "/foo", // not /bar so should fail
+      body: "{}"
+    } as any);
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
+  });
+
+  it('should throw using a mismatched signature that has an attached valid body with trailing dots', () => {
+    // signature for `/bar` but with a valid jws-body pre-attached
+    // if we run a simple jws verify on this unchanged it'll work!
+    const signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
+      + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
+      + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
+      + "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC"
+      + "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB"
+      + "d2d3D17Wd9UA....";
 
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
@@ -240,7 +260,7 @@ describe('verify', () => {
       body,
     } as any);
 
-    const fn  = () => verify({
+    const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
       method: "post",

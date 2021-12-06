@@ -276,10 +276,29 @@ func TestEnforceDetached(t *testing.T) {
 	_, publicKeyBytes := getTestKeys(assert)
 
 	// signature for `/bar` but with a valid jws-body pre-attached
-	tlSignature := getTlSignature(assert)
+	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRDz7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oCQHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUBd2d3D17Wd9UA"
 
 	body := []byte("{}")
 	path := "/foo"
+	err := VerifyWithPem(publicKeyBytes).
+		Method("post").
+		Path(path).
+		Body(body).
+		Verify(tlSignature)
+	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
+}
+
+func TestEnforceDetachedTrailingDots(t *testing.T) {
+	assert := assert.New(t)
+
+	_, publicKeyBytes := getTestKeys(assert)
+
+	// signature for `/bar` but with a valid jws-body pre-attached
+	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRDz7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oCQHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUBd2d3D17Wd9UA...."
+
+	body := []byte("{}")
+	path := "/bar"
 	err := VerifyWithPem(publicKeyBytes).
 		Method("post").
 		Path(path).
