@@ -1,9 +1,10 @@
-import jws, { Header } from "jws";
+import jws from "jws";
+import jwkToPem from "jwk-to-pem";
 import { Base64 } from "js-base64";
 import { SignatureError } from "./error";
 import { Headers } from "./headers";
 
-const requireArg = <R>(arg: R, name: string) => {
+const requireArg = <R>(arg: R | undefined, name: string): R => {
   if (!arg) throw new Error(`missing argument ${name}`);
   return arg;
 };
@@ -83,6 +84,7 @@ type JOSEHeader = {
   tl_version: string;
   tl_headers: string;
   kid: string;
+  jku: string | undefined;
 }
 
 const parseSignature = (signature: string) => {
@@ -111,10 +113,10 @@ const parseSignature = (signature: string) => {
 type SignArguments = {
   kid: string;
   privateKeyPem: string;
-  method: HttpMethod;
+  method?: HttpMethod;
   path: string;
-  headers: Record<string, string>;
-  body: string;
+  headers?: Record<string, string>;
+  body?: string;
 };
 
 /** Sign/verification error
@@ -150,19 +152,21 @@ export function sign(args: SignArguments) {
 }
 
 type VerifyParameters = {
-  publicKeyPem: string;
+  jwks?: string;
+  publicKeyPem?: string;
   signature: string;
   method: HttpMethod;
   path: string;
-  body: string;
-  requiredHeaders: string[];
-  headers: Record<string, string>;
+  body?: string;
+  requiredHeaders?: string[];
+  headers?: Record<string, string>;
 };
 
 /**
  * Verify the given `Tl-Signature` header value.
  * @param {Object} args - Arguments.
- * @param {string} args.publicKeyPem - Public key pem.
+ * @param {string} [args.publicKeyPem] - Public key pem, must be provided unless providing `jwks`.
+ * @param {string} [args.jwks] - Public key JWKs JSON response data, alternative to `publicKeyPem`.
  * @param {string} args.signature - Tl-Signature header value.
  * @param {string} args.method - Request method, e.g. "POST".
  * @param {string} args.path - Request path, e.g. "/payouts".
@@ -174,15 +178,29 @@ type VerifyParameters = {
  * @throws {SignatureError} Will throw if signature could not be verified.
  */
 export function verify(args: VerifyParameters) {
-  const publicKeyPem = requireArg(args.publicKeyPem, "publicKeyPem");
   const signature = requireArg(args.signature, "signature");
+  const { headerJson, header, footer } = parseSignature(signature);
+
+  let publicKeyPem;
+  if (args.jwks) {
+    // find jwk by kid and use as public key
+    type Jwks = { keys: Array<Jwk>; }
+    type Jwk = jwkToPem.JWK & { kid: string; }
+
+    let jwks: Jwks = JSON.parse(args.jwks);
+    let jwk = jwks.keys.find(k => k.kid === headerJson.kid);
+    SignatureError.ensure(!!jwk, "no jwk found for signature kid");
+    publicKeyPem = jwkToPem(jwk as jwkToPem.JWK);
+  } else {
+    publicKeyPem = requireArg(args.publicKeyPem, "publicKeyPem");
+  }
+  
   const method = requireArg(args.method, "method").toUpperCase() as HttpMethod;
   const path = requireArg(args.path, "path");
   const body = args.body || "";
   const requiredHeaders = args.requiredHeaders || [];
   const headers = new Headers(args.headers || {}).validated();
 
-  const { headerJson, header, footer } = parseSignature(signature);
   const tlHeaders = (headerJson.tl_headers || "").split(",").filter(h => !!h);
 
   // fail if signature is missing a required header
@@ -213,8 +231,18 @@ export function verify(args: VerifyParameters) {
  * @returns {string} Tl-Signature header kid.
  * @throws {SignatureError} Will throw if signature is invalid.
  */
-export function extractKid(tlSignature: string) {
+export function extractKid(tlSignature: string): string {
   return parseSignature(tlSignature).headerJson.kid;
+}
+
+/**
+ * Extract jku from unverified jws Tl-Signature.
+ * @param {string} tlSignature - Tl-Signature header value.
+ * @returns {string?} Tl-Signature header jku.
+ * @throws {SignatureError} Will throw if signature is invalid.
+ */
+export function extractJku(tlSignature: string): string | undefined {
+  return parseSignature(tlSignature).headerJson.jku;
 }
 
 export { SignatureError };

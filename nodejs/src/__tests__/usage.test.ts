@@ -1,19 +1,12 @@
-import { sign, verify, extractKid, SignatureError } from '../lib';
+import { sign, verify, extractJku, extractKid, SignatureError } from '../lib';
+import { readFileSync } from 'fs';
 
 // Use the same values as rust tests for cross-lang consistency assurance
-const PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\n"
-  + "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBVIVnghUzHmCEZ3HNjDmaZMJ7UwZf\n"
-  + "av2SYcEtbDQc4uPhiEwWoYZMxzgvsz1vVGkusfTIjcXeCfDZ+xu9grRYt4kBo39z\n"
-  + "w0i0j1rau4T7Bi+thc/VZpCyuwt63mZWcRs5PlQzpL34bBSXL5L6G9XUtXn8pXwU\n"
-  + "GMhNDp5xVGbslRqTU8s=\n"
-  + "-----END PUBLIC KEY-----\n"
-const PRIVATE_KEY = "-----BEGIN EC PRIVATE KEY-----\n"
-  + "MIHcAgEBBEIAVItA/A9H8WA0rOmDO5kq774be6noZ73xWJkbmzihkhtnYJ+eCQl4\n"
-  + "G68ZFKildLuR2DElMBrNgJHY1TkL9hr7U9GgBwYFK4EEACOhgYkDgYYABAFUhWeC\n"
-  + "FTMeYIRncc2MOZpkwntTBl9q/ZJhwS1sNBzi4+GITBahhkzHOC+zPW9UaS6x9MiN\n"
-  + "xd4J8Nn7G72CtFi3iQGjf3PDSLSPWtq7hPsGL62Fz9VmkLK7C3reZlZxGzk+VDOk\n"
-  + "vfhsFJcvkvob1dS1efylfBQYyE0OnnFUZuyVGpNTyw==\n"
-  + "-----END EC PRIVATE KEY-----\n";
+const PUBLIC_KEY = readFileSync("../test-resources/ec512-public.pem", "utf8");
+const PRIVATE_KEY = readFileSync("../test-resources/ec512-private.pem", "utf8");
+const TL_SIGNATURE = readFileSync("../test-resources/tl-signature.txt", "utf8").trim();
+const WEBHOOK_SIGNATURE = readFileSync("../test-resources/webhook-signature.txt", "utf8").trim();
+const JWKS_JSON = readFileSync("../test-resources/jwks.json", "utf8");
 const KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
 describe('sign', () => {
@@ -51,11 +44,10 @@ describe('verify', () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-    const signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
 
     verify({
       publicKeyPem: PUBLIC_KEY,
-      signature,
+      signature: TL_SIGNATURE,
       method: "POST",
       path,
       body,
@@ -333,24 +325,46 @@ describe('verify', () => {
 
     expect(fn).toThrow(new SignatureError("signature is missing required header X-Required"));
   });
+
+  it('should allow using jwks json instead of publicKeyPem', () => {
+    verify({
+      jwks: JWKS_JSON,
+      signature: WEBHOOK_SIGNATURE,
+      method: "post",
+      path: "/tl-webhook",
+      body: '{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}',
+      headers: {
+        "x-tl-webhook-timestamp": "2021-11-29T11:42:55Z",
+        "content-type": "application/json"
+      },
+    } as any)
+
+    const fn = () => verify({
+      jwks: JWKS_JSON,
+      signature: WEBHOOK_SIGNATURE,
+      method: "post",
+      path: "/tl-webhook",
+      body: '{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}',
+      headers: {
+        "x-tl-webhook-timestamp": "2021-12-02T14:18:00Z", // different
+        "content-type": "application/json"
+      },
+    } as any);
+
+    expect(fn).toThrow(new SignatureError("Invalid signature"));
+  });
 });
 
 describe('extractKid', () => {
   it('should produce a kid from a valid tl signature', () => {
-    const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
-    const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
-    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-
-    const signature = sign({
-      kid: KID,
-      privateKeyPem: PRIVATE_KEY,
-      method: "post",
-      path,
-      headers: { "Idempotency-Key": idempotencyKey },
-      body,
-    } as any);
-
-    const kid = extractKid(signature);
+    const kid = extractKid(TL_SIGNATURE);
     expect(kid).toEqual(KID);
+  });
+});
+
+describe('extractJku', () => {
+  it('should produce a jku from a valid tl signature', () => {
+    const jku = extractJku(WEBHOOK_SIGNATURE);
+    expect(jku).toEqual('https://webhooks.truelayer.com/.well-known/jwks');
   });
 });
