@@ -30,7 +30,7 @@ import * as tlSigning from 'truelayer-signing';
 const signature = tlSigning.sign({
   kid,
   privateKeyPem,
-  method: "POST",
+  method: tlSigning.HttpMethod.Post,
   path: "/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,

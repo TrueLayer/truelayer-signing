@@ -187,7 +187,6 @@ export type JwkVerifyParameters = BaseParameters & {
  * included in the signature, or else verification will fail.
  * @property {Object} [args.headers={}] - Request headers from which values will
  */
-
 export type PublicKeyParameters = BaseParameters & {
   publicKeyPem: string;
 }

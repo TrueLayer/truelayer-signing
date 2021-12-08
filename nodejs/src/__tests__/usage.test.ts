@@ -1,4 +1,4 @@
-import { sign, verify, extractJku, extractKid, SignatureError } from '../lib';
+import { sign, verify, extractJku, extractKid, SignatureError, HttpMethod } from '../lib';
 import { readFileSync } from 'fs';
 
 // Use the same values as rust tests for cross-lang consistency assurance
@@ -18,16 +18,16 @@ describe('sign', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    } as any);
+    });
 
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "POST",
+      method: HttpMethod.Post,
       path,
       body,
       requiredHeaders: ["Idempotency-Key"],
@@ -35,7 +35,7 @@ describe('sign', () => {
         "X-Whatever-2": "yarshtarst",
         "Idempotency-Key": idempotencyKey,
       }
-    } as any);
+    });
   });
 });
 
@@ -48,14 +48,14 @@ describe('verify', () => {
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature: TL_SIGNATURE,
-      method: "POST",
+      method: HttpMethod.Post,
       path,
       body,
       headers: {
         "X-Whatever-2": "foaulrsjth",
         "Idempotency-Key": idempotencyKey,
       }
-    } as any);
+    });
   });
 
   it('should not throw using a signature with no headers', () => {
@@ -65,21 +65,21 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       body,
-    } as any);
+    });
 
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       body,
       headers: {
         "X-Whatever-2": "foaulrsjth",
       }
-    } as any);
+    });
   });
 
   it('should throw using a mismatched signature that has an attached valid body', () => {
@@ -95,10 +95,10 @@ describe('verify', () => {
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path: "/foo", // not /bar so should fail
       body: "{}"
-    } as any);
+    });
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
@@ -115,10 +115,10 @@ describe('verify', () => {
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path: "/foo", // not /bar so should fail
       body: "{}"
-    } as any);
+    });
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
 
@@ -130,23 +130,23 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post" as any,
+      method: HttpMethod.Post,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    } as any);
+    });
 
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "DELETE", // different
+      method: HttpMethod.Delete, // different
       path,
       body,
       headers: {
         "X-Whatever-2": "foaulrsjth",
         "Idempotency-Key": idempotencyKey,
       }
-    } as any)
+    })
 
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
@@ -159,23 +159,23 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    } as any);
+    });
 
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path: "/merchant_accounts/123/sweeping", // different
       body,
       headers: {
         "X-Whatever-2": "foaulrsjth",
         "Idempotency-Key": idempotencyKey,
       }
-    } as any)
+    })
 
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
@@ -188,23 +188,23 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    } as any);
+    });
 
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       body,
       headers: {
         "X-Whatever-2": "foaulrsjth",
         "Idempotency-Key": "37fa5dc5", // different
       }
-    } as any);
+    });
 
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
@@ -217,23 +217,23 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    } as any);
+    });
 
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       body: '{"max_amount_in_minor":5000000}', // different
       headers: {
         "X-Whatever-2": "foaulrsjth",
         "Idempotency-Key": idempotencyKey,
       }
-    } as any);
+    });
 
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
@@ -246,23 +246,23 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    } as any);
+    });
 
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       body,
       headers: {
         "X-Whatever-2": "foaulrsjth",
         // missing Idempotency-Key
       }
-    } as any);
+    });
 
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
@@ -275,19 +275,19 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       headers: {
         "Idempotency-Key": idempotencyKey,
         "X-Custom": "123",
       },
       body,
-    } as any);
+    });
 
     verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       body,
       requiredHeaders: ["idempotency-KEY"], // different case, no worries!
@@ -296,7 +296,7 @@ describe('verify', () => {
         "X-Whatever-2": "foaulrsjth",
         "idempotency-key": idempotencyKey, // different order & case, chill it'll work!
       }
-    } as any);
+    });
   });
 
   it('should allow requiring that a given header is included in the signature', () => {
@@ -307,21 +307,21 @@ describe('verify', () => {
     const signature = sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       headers: { "Idempotency-Key": idempotencyKey },
       body,
-    } as any);
+    });
 
     const fn = () => verify({
       publicKeyPem: PUBLIC_KEY,
       signature,
-      method: "post",
+      method: HttpMethod.Post,
       path,
       body,
       requiredHeaders: ["X-Required"], // missing from signature
       headers: { "Idempotency-Key": idempotencyKey },
-    } as any);
+    });
 
     expect(fn).toThrow(new SignatureError("signature is missing required header X-Required"));
   });
@@ -330,26 +330,26 @@ describe('verify', () => {
     verify({
       jwks: JWKS_JSON,
       signature: WEBHOOK_SIGNATURE,
-      method: "post",
+      method: HttpMethod.Post,
       path: "/tl-webhook",
       body: '{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}',
       headers: {
         "x-tl-webhook-timestamp": "2021-11-29T11:42:55Z",
         "content-type": "application/json"
       },
-    } as any)
+    })
 
     const fn = () => verify({
       jwks: JWKS_JSON,
       signature: WEBHOOK_SIGNATURE,
-      method: "post",
+      method: HttpMethod.Post,
       path: "/tl-webhook",
       body: '{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}',
       headers: {
         "x-tl-webhook-timestamp": "2021-12-02T14:18:00Z", // different
         "content-type": "application/json"
       },
-    } as any);
+    });
 
     expect(fn).toThrow(new SignatureError("Invalid signature"));
   });
