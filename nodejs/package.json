@@ -26,7 +26,9 @@
   },
   "homepage": "https://github.com/TrueLayer/truelayer-signing/tree/main/javascript#readme",
   "dependencies": {
+    "@types/jwk-to-pem": "^2.0.1",
     "js-base64": "^3.7.2",
+    "jwk-to-pem": "^2.0.5",
     "jws": "^4.0.0"
   },
   "devDependencies": {

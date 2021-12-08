@@ -7,7 +7,7 @@ npm install --save truelayer-signing
 yarn add truelayer-signing
 ```
 
-## Usage
+### Usage
 ```javascript
 const tlSigning = require('truelayer-signing');
 
@@ -22,7 +22,7 @@ const signature = tlSigning.sign({
 });
 ```
 
-## TypeScript usage
+### TypeScript usage
 ```typescript
 import * as tlSigning from 'truelayer-signing';
 
@@ -30,9 +30,32 @@ import * as tlSigning from 'truelayer-signing';
 const signature = tlSigning.sign({
   kid,
   privateKeyPem,
-  method: "POST",
+  method: tlSigning.HttpMethod.Post,
   path: "/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
+});
+```
+
+## Verifying webhooks
+The `verify` function may be used to verify webhook `Tl-Signature` header signatures.
+ 
+```javascript
+const tlSigning = require('truelayer-signing');
+
+let jku = tlSigning.extractJku(webhookSignature);
+
+// fetch jwks JSON from the `jku` url.
+let jwks = fetch_jwks(jku);
+
+// jwks may be used directly to verify a signature
+// a SignatureError is thrown is verification fails
+tlSigning.verify({
+  jwks,
+  signature: webhookSignature,
+  method: "post",
+  path,
+  body,
+  headers,
 });
 ```
