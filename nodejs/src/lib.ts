@@ -151,9 +151,8 @@ export function sign(args: SignArguments) {
   });
 }
 
-type VerifyParameters = {
-  jwks?: string;
-  publicKeyPem?: string;
+
+type BaseParameters = {
   signature: string;
   method: HttpMethod;
   path: string;
@@ -163,26 +162,65 @@ type VerifyParameters = {
 };
 
 /**
- * Verify the given `Tl-Signature` header value.
- * @param {Object} args - Arguments.
- * @param {string} [args.publicKeyPem] - Public key pem, must be provided unless providing `jwks`.
- * @param {string} [args.jwks] - Public key JWKs JSON response data, alternative to `publicKeyPem`.
- * @param {string} args.signature - Tl-Signature header value.
- * @param {string} args.method - Request method, e.g. "POST".
- * @param {string} args.path - Request path, e.g. "/payouts".
- * @param {string} [args.body=""] - Request body.
- * @param {string[]} [args.requiredHeaders=[]] - List of headers that must be
+ * @typedef {Object} JwkVerifyParameters
+ * @property {string} [args.jwks] - Public key JWKs JSON response data, alternative to `publicKeyPem`.
+ * @property {string} args.signature - Tl-Signature header value.
+ * @property {string} args.method - Request method, e.g. "POST".
+ * @property {string} args.path - Request path, e.g. "/payouts".
+ * @property {string} [args.body=""] - Request body.
+ * @property {string[]} [args.requiredHeaders=[]] - List of headers that must be
  * included in the signature, or else verification will fail.
- * @param {Object} [args.headers={}] - Request headers from which values will
- * be selectively taken to verify the signature based on what was actuall signed.
+ * @property {Object} [args.headers={}] - Request headers from which values will
+ */
+export type JwkVerifyParameters = BaseParameters & {
+  jwks: string;
+}
+
+/**
+ * @typedef {Object} PublicKeyParameters
+ * @param {string} [args.publicKeyPem] - Public key pem, must be provided unless providing `jwks`.
+ * @property {string} args.signature - Tl-Signature header value.
+ * @property {string} args.method - Request method, e.g. "POST".
+ * @property {string} args.path - Request path, e.g. "/payouts".
+ * @property {string} [args.body=""] - Request body.
+ * @property {string[]} [args.requiredHeaders=[]] - List of headers that must be
+ * included in the signature, or else verification will fail.
+ * @property {Object} [args.headers={}] - Request headers from which values will
+ */
+
+export type PublicKeyParameters = BaseParameters & {
+  publicKeyPem: string;
+}
+
+/**
+* Parameters to verify a given `TL-signature` header value
+* @typedef {(JwkVerifyParameters | PublicKeyParameters)} VerifyParameters
+*/ 
+export type VerifyParameters = JwkVerifyParameters | PublicKeyParameters;
+
+
+/**
+ * Determine if these parameters contain jwks
+ * @param args 
+ * @returns 
+ */
+function isJwkParameters(args: VerifyParameters): args is JwkVerifyParameters {
+  return 'jwks' in (args as JwkVerifyParameters);
+}
+
+/**
+ * Verify the given `Tl-Signature` header value.
+ * @param {VerifyParameters} args
  * @throws {SignatureError} Will throw if signature could not be verified.
  */
-export function verify(args: VerifyParameters) {
+export function verify(args: JwkVerifyParameters): any
+export function verify(args: PublicKeyParameters): any 
+export function verify(args: VerifyParameters): any {
   const signature = requireArg(args.signature, "signature");
   const { headerJson, header, footer } = parseSignature(signature);
 
   let publicKeyPem;
-  if (args.jwks) {
+  if (isJwkParameters(args)) {
     // find jwk by kid and use as public key
     type Jwks = { keys: Array<Jwk>; }
     type Jwk = jwkToPem.JWK & { kid: string; }
