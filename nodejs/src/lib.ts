@@ -163,14 +163,15 @@ type BaseParameters = {
 
 /**
  * @typedef {Object} JwkVerifyParameters
- * @property {string} [args.jwks] - Public key JWKs JSON response data, alternative to `publicKeyPem`.
+ * @property {string} args.jwks - Public key JWKs JSON response data, alternative to `publicKeyPem`.
  * @property {string} args.signature - Tl-Signature header value.
  * @property {string} args.method - Request method, e.g. "POST".
  * @property {string} args.path - Request path, e.g. "/payouts".
  * @property {string} [args.body=""] - Request body.
  * @property {string[]} [args.requiredHeaders=[]] - List of headers that must be
- * included in the signature, or else verification will fail.
+ *   included in the signature, or else verification will fail.
  * @property {Object} [args.headers={}] - Request headers from which values will
+ *   be selectively taken to verify the signature based on what was actually signed.
  */
 export type JwkVerifyParameters = BaseParameters & {
   jwks: string;
@@ -178,14 +179,15 @@ export type JwkVerifyParameters = BaseParameters & {
 
 /**
  * @typedef {Object} PublicKeyParameters
- * @param {string} [args.publicKeyPem] - Public key pem, must be provided unless providing `jwks`.
+ * @param {string} args.publicKeyPem - Public key pem, must be provided unless providing `jwks`.
  * @property {string} args.signature - Tl-Signature header value.
  * @property {string} args.method - Request method, e.g. "POST".
  * @property {string} args.path - Request path, e.g. "/payouts".
  * @property {string} [args.body=""] - Request body.
  * @property {string[]} [args.requiredHeaders=[]] - List of headers that must be
- * included in the signature, or else verification will fail.
+ *   included in the signature, or else verification will fail.
  * @property {Object} [args.headers={}] - Request headers from which values will
+ *   be selectively taken to verify the signature based on what was actually signed.
  */
 export type PublicKeyParameters = BaseParameters & {
   publicKeyPem: string;
