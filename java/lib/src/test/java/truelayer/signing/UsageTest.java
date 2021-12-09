@@ -276,9 +276,7 @@ public class UsageTest {
     }
 
     @Test
-    public void invalidButPreAttachedBodyTrailingDots() throws IOException {
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void invalidButPreAttachedBodyTrailingDots() {
         String signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
                 + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
                 + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
