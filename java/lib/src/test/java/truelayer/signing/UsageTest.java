@@ -1,10 +1,12 @@
 package truelayer.signing;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static java.nio.file.Files.readAllBytes;
 import static org.junit.Assert.assertEquals;
@@ -14,12 +16,23 @@ public class UsageTest {
 
     static String kid = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
+    static byte[] privateKey;
+    static byte[] publicKey;
+    static String webhookSignature;
+    static String tlSignature;
+    static String jwks;
+
+    @BeforeClass
+    public static void testData() throws IOException {
+        privateKey = readAllBytes(testResourcePath("ec512-private.pem"));
+        publicKey = readAllBytes(testResourcePath("ec512-public.pem"));
+        webhookSignature = new String(readAllBytes(testResourcePath("webhook-signature.txt"))).trim();
+        tlSignature = new String(readAllBytes(testResourcePath("tl-signature.txt")));
+        jwks = new String(readAllBytes(testResourcePath("jwks.json")));
+    }
+
     @Test
-    public void fullSignature() throws IOException {
-
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void fullSignature() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -42,14 +55,11 @@ public class UsageTest {
     }
 
     @Test
-    public void verifyStaticSignature() throws IOException {
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
+    public void verifyStaticSignature() {
 
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-        String tlSignature =
-                "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi";
 
         Verifier.from(publicKey)
                 .method("POST")
@@ -62,10 +72,7 @@ public class UsageTest {
 
 
     @Test
-    public void fullRequestMethodMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void fullRequestMethodMismatch() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -93,10 +100,7 @@ public class UsageTest {
 
 
     @Test
-    public void fullRequestPathMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void fullRequestPathMismatch() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -124,10 +128,7 @@ public class UsageTest {
 
 
     @Test
-    public void fullRequestHeaderMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void fullRequestHeaderMismatch() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -153,10 +154,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestBodyMismatch() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void fullRequestBodyMismatch(){
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -169,7 +167,7 @@ public class UsageTest {
                         .body(body)
                         .sign();
 
-        Verifier verifier  = Verifier.from(publicKey)
+        Verifier verifier = Verifier.from(publicKey)
                 .method("post")
                 .path(path)
                 .header("X-Whatever", "aoitbeh")
@@ -182,10 +180,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestMissingSignatureHeader() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void fullRequestMissingSignatureHeader() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -211,10 +206,7 @@ public class UsageTest {
     }
 
     @Test
-    public void flexibleHeaderCaseOrderVerify() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void flexibleHeaderCaseOrderVerify() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -238,10 +230,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestRequiredHeaderMissingFromSignature() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void fullRequestRequiredHeaderMissingFromSignature() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -268,9 +257,7 @@ public class UsageTest {
     }
 
     @Test
-    public void invalidButPreAttachedBody() throws IOException {
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void invalidButPreAttachedBody() {
         String signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
                 + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
                 + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
@@ -289,9 +276,7 @@ public class UsageTest {
     }
 
     @Test
-    public void invalidButPreAttachedBodyTrailingDots() throws IOException {
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void invalidButPreAttachedBodyTrailingDots() {
         String signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
                 + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
                 + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
@@ -310,10 +295,7 @@ public class UsageTest {
     }
 
     @Test
-    public void signAndVerifyNoHeaders() throws IOException {
-        byte[] privateKey = readAllBytes(new File("src/test/resources/ec512-private.pem").toPath());
-        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
-
+    public void signAndVerifyNoHeaders()  {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes();
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
@@ -328,5 +310,37 @@ public class UsageTest {
                 .path(path)
                 .body(body)
                 .verify(tlSignature); // should not throw
+    }
+
+    @Test
+    public void verifierExtractJku() {
+        String jku = Verifier.extractJku(webhookSignature);
+        assertEquals("https://webhooks.truelayer.com/.well-known/jwks", jku);
+    }
+
+    @Test
+    public void verifierJwks() {
+        Verifier.verifyWithJwks(jwks)
+                .method("POST")
+                .path("/tl-webhook")
+                .header("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z")
+                .header("content-type", "application/json")
+                .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")
+                .verify(webhookSignature); // should not throw
+
+        Verifier verifier = Verifier.verifyWithJwks(jwks)
+                .method("POST")
+                .path("/tl-webhook")
+                .header("x-tl-webhook-timestamp", "2021-12-02T14:18:00Z") // different
+                .header("content-type", "application/json")
+                .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}");
+
+        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(webhookSignature));
+
+        assertEquals("invalid signature", invalidSignatureException.getMessage());
+    }
+
+    private static Path testResourcePath(String subPath) {
+        return Paths.get("../../test-resources/" + subPath);
     }
 }
