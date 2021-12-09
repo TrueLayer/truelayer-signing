@@ -3,6 +3,8 @@ name: PHP
 on:
   push:
     branches: [ main ]
+    tags:
+      - "php/v**"
   pull_request:
     branches: [ main ]
 
@@ -50,4 +52,24 @@ jobs:
         run: "vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=-1"
       - name: "Tests"
         run: "vendor/bin/pest"
-
+  sync:
+    runs-on: ubuntu-latest
+    name: Sync changes to the read-only repository
+    needs: test
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Remove "php/" from tag name
+        id: tag-replacer
+        run: |
+          TAG=${GITHUB_REF//tags\/php\//tags\/}
+          echo "::set-output name=NEW_TAG::$TAG"
+      - uses: stefandanaita/git-subtree-action@1.2.0
+        with:
+          repo: "truelayer/truelayer-signing-php"
+          path: "php"
+          deploy_key: ${{ secrets.DOWNSTREAM_GITHUB_DEPLOY_KEY }}
+          branch: ${{ steps.tag-replacer.outputs.NEW_TAG }}
+          force: true
