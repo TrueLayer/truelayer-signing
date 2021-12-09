@@ -1,0 +1,75 @@
+name: PHP
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - "php/v**"
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "php"
+    strategy:
+      matrix:
+        dependencies:
+          - "lowest"
+          - "highest"
+        php-version:
+          - "7.4"
+          - "8.0"
+          - "8.1"
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "pcov"
+          php-version: "${{ matrix.php-version }}"
+          ini-values: memory_limit=-1
+        env:
+          update: true
+      - name: "Cache dependencies"
+        uses: "actions/cache@v2"
+        with:
+          path: |
+            ~/.composer/cache
+            php/vendor
+          key: "php-${{ matrix.php-version }}-${{ matrix.dependencies }}"
+          restore-keys: "php-${{ matrix.php-version }}-${{ matrix.dependencies }}"
+      - name: "Install lowest dependencies"
+        if: ${{ matrix.dependencies == 'lowest' }}
+        run: "composer update --prefer-lowest --no-interaction --no-progress"
+      - name: "Install highest dependencies"
+        if: ${{ matrix.dependencies == 'highest' }}
+        run: "composer update --no-interaction --no-progress"
+      - name: "PHPStan"
+        run: "vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=-1"
+      - name: "Tests"
+        run: "vendor/bin/pest"
+  sync:
+    runs-on: ubuntu-latest
+    name: Sync changes to the read-only repository
+    needs: test
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Remove "php/" from tag name
+        id: tag-replacer
+        run: |
+          TAG=${GITHUB_REF//tags\/php\//tags\/}
+          echo "::set-output name=NEW_TAG::$TAG"
+      - uses: stefandanaita/git-subtree-action@1.2.0
+        with:
+          repo: "truelayer/truelayer-signing-php"
+          path: "php"
+          deploy_key: ${{ secrets.DOWNSTREAM_GITHUB_DEPLOY_KEY }}
+          branch: ${{ steps.tag-replacer.outputs.NEW_TAG }}
+          force: true

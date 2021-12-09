@@ -9,6 +9,7 @@ They can then be verified using the associated public key.
 * [Node.js](./nodejs)
 * [Go](./go)
 * [Java](./java)
+* [PHP](./php)
 
 ## Request signing specification
 See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how request signing is implemented.
