@@ -3,8 +3,11 @@ package crypto
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -42,19 +45,37 @@ func ParseEcPublicKey(publicKeyData []byte) (*ecdsa.PublicKey, error) {
 	return publicKey, nil
 }
 
+// Read JWKs json then find & parse the JWK for the given signatureKid
+func FindAndParseEcJwk(signatureKid []byte, jwksData []byte) (*ecdsa.PublicKey, error) {
+	var jwksStruct jwks
+	err := json.Unmarshal(jwksData, &jwksStruct)
+	if err != nil {
+		return nil, fmt.Errorf("jwks parsing failed: %v", err)
+	}
+
+	// Find key with specified kid
+	for _, v := range jwksStruct.Keys {
+		if v.Kid == string(signatureKid) {
+			return v.parseP521()
+		}
+	}
+
+	return nil, fmt.Errorf("no jwk found for signature kid")
+}
+
 // SignES512 signs a payload using the provided private key and return the signature
 // Check section A.4 of RFC7515 for the details <https://www.rfc-editor.org/rfc/rfc7515.txt>
 func SignES512(key *ecdsa.PrivateKey, payload []byte) ([]byte, error) {
 	sha512 := crypto.SHA512.New()
 	_, err := sha512.Write(payload)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("hashing failed: %v", err))
+		return nil, fmt.Errorf("hashing failed: %v", err)
 	}
 	hash := sha512.Sum(nil)
 
 	r, s, err := ecdsa.Sign(rand.Reader, key, hash)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("signing failed: %v", err))
+		return nil, fmt.Errorf("signing failed: %v", err)
 	}
 
 	// Padding to fixed length provided by FillBytes, as a zero-extended big-endian byte slice
@@ -95,4 +116,50 @@ func VerifyES512(key *ecdsa.PublicKey, payload []byte, signature []byte) error {
 		return fmt.Errorf("signature not valid")
 	}
 	return nil
+}
+
+// JWKs json response.
+type jwks struct {
+	Keys []jwk `json:"keys"`
+}
+
+type jwk struct {
+	Kid string `json:"kid"`
+	Kty string `json:"kty"`
+	Alg string `json:"alg"`
+	Crv string `json:"crv"`
+	X   string `json:"x"`
+	Y   string `json:"y"`
+}
+
+func (jwk jwk) parseP521() (*ecdsa.PublicKey, error) {
+	if jwk.Kty != "EC" {
+		return nil, fmt.Errorf("unsupported jwk kty")
+	}
+	if jwk.Alg != "EC" {
+		return nil, fmt.Errorf("unsupported jwk alg")
+	}
+	if jwk.Crv != "P-521" {
+		return nil, fmt.Errorf("unsupported jwk crv")
+	}
+
+	x := new(big.Int)
+	y := new(big.Int)
+
+	// Deserialize x into BigInt
+	xBytes, err := base64.RawURLEncoding.DecodeString(jwk.X)
+	if err != nil {
+		return nil, fmt.Errorf("x base64 decoding failed: %v", err)
+	}
+	x = x.SetBytes(xBytes)
+
+	// Deserialize y into BigInt
+	yBytes, err := base64.RawURLEncoding.DecodeString(jwk.Y)
+	if err != nil {
+		return nil, fmt.Errorf("y base64 decoding failed: %v", err)
+	}
+	y = y.SetBytes(yBytes)
+
+	// Rebuild public key from x and y
+	return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P521()}, nil
 }

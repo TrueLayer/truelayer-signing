@@ -1,18 +1,11 @@
 const { sign, verify } = require("../lib");
+const { readFileSync } = require("fs");
 
-const PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\n"
-  + "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBVIVnghUzHmCEZ3HNjDmaZMJ7UwZf\n"
-  + "av2SYcEtbDQc4uPhiEwWoYZMxzgvsz1vVGkusfTIjcXeCfDZ+xu9grRYt4kBo39z\n"
-  + "w0i0j1rau4T7Bi+thc/VZpCyuwt63mZWcRs5PlQzpL34bBSXL5L6G9XUtXn8pXwU\n"
-  + "GMhNDp5xVGbslRqTU8s=\n"
-  + "-----END PUBLIC KEY-----\n"
-const PRIVATE_KEY = "-----BEGIN EC PRIVATE KEY-----\n"
-  + "MIHcAgEBBEIAVItA/A9H8WA0rOmDO5kq774be6noZ73xWJkbmzihkhtnYJ+eCQl4\n"
-  + "G68ZFKildLuR2DElMBrNgJHY1TkL9hr7U9GgBwYFK4EEACOhgYkDgYYABAFUhWeC\n"
-  + "FTMeYIRncc2MOZpkwntTBl9q/ZJhwS1sNBzi4+GITBahhkzHOC+zPW9UaS6x9MiN\n"
-  + "xd4J8Nn7G72CtFi3iQGjf3PDSLSPWtq7hPsGL62Fz9VmkLK7C3reZlZxGzk+VDOk\n"
-  + "vfhsFJcvkvob1dS1efylfBQYyE0OnnFUZuyVGpNTyw==\n"
-  + "-----END EC PRIVATE KEY-----\n";
+// Use the same values as rust tests for cross-lang consistency assurance
+const PUBLIC_KEY = readFileSync("../test-resources/ec512-public.pem", "utf8");
+const PRIVATE_KEY = readFileSync("../test-resources/ec512-private.pem", "utf8");
+const WEBHOOK_SIGNATURE = readFileSync("../test-resources/webhook-signature.txt", "utf8").trim();
+const JWKS_JSON = readFileSync("../test-resources/jwks.json", "utf8");
 const KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
 describe('sign', () => {
@@ -44,3 +37,19 @@ describe('sign', () => {
     });
   });
 });
+
+describe("verify", () => {
+  it('should allow using jwks json instead of publicKeyPem', () => {
+    verify({
+      jwks: JWKS_JSON,
+      signature: WEBHOOK_SIGNATURE,
+      method: "post",
+      path: "/tl-webhook",
+      body: '{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}',
+      headers: {
+        "x-tl-webhook-timestamp": "2021-11-29T11:42:55Z",
+        "content-type": "application/json"
+      },
+    });
+  });
+})

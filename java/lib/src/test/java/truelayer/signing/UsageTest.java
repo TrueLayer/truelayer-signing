@@ -276,6 +276,27 @@ public class UsageTest {
     }
 
     @Test
+    public void invalidButPreAttachedBodyTrailingDots() throws IOException {
+        byte[] publicKey = readAllBytes(new File("src/test/resources/ec512-public.pem").toPath());
+
+        String signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
+                + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
+                + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
+                + "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC"
+                + "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB"
+                + "d2d3D17Wd9UA....";
+
+        Verifier verifier = Verifier.from(publicKey)
+                .method("post")
+                .path("/foo")
+                .body("{}".getBytes());
+
+        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
+
+        assertEquals("Invalid serialized unsecured/JWS/JWE object: Too many part delimiters", invalidSignatureException.getMessage());
+    }
+
+    @Test
     public void signAndVerifyNoHeaders()  {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes();
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";

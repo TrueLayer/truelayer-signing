@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"crypto/ecdsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 // Build to verify a request against a "Tl-Signature" header.
 type Verifier struct {
 	publicKey       []byte
+	jwks            []byte
 	body            []byte
 	method          string
 	path            string
@@ -32,6 +34,16 @@ type TlSignature struct {
 func NewVerifier(publicKeyPem []byte) *Verifier {
 	verifier := Verifier{}
 	verifier.publicKey = publicKeyPem
+	verifier.method = ""
+	verifier.path = ""
+	verifier.body = []byte("")
+	verifier.headers = make(map[string][]byte)
+	return &verifier
+}
+
+func NewVerifierWithJwks(jwks []byte) *Verifier {
+	verifier := Verifier{}
+	verifier.jwks = jwks
 	verifier.method = ""
 	verifier.path = ""
 	verifier.body = []byte("")
@@ -83,15 +95,28 @@ func (v *Verifier) RequireHeader(name string) *Verifier {
 //
 // Returns error if verification fails.
 func (v *Verifier) Verify(tlSignature string) error {
-	publicKey, err := crypto.ParseEcPublicKey(v.publicKey)
-	if err != nil {
-		return errors.NewInvalidKeyError(fmt.Sprintf("public key parsing failed: %v", err))
-	}
 	tlSignatureData, err := ParseTlSignature(tlSignature)
 	if err != nil {
 		return errors.NewJwsError(fmt.Sprintf("signature parsing failed: %v", err))
 	}
 	jwsHeader := tlSignatureData.JwsHeader
+
+	var publicKey *ecdsa.PublicKey
+	if v.publicKey == nil {
+		if v.jwks == nil {
+			return errors.NewInvalidKeyError("no public key nor jwks supplied: verification is not possible")
+		} else {
+			publicKey, err = crypto.FindAndParseEcJwk([]byte(jwsHeader.Kid), v.jwks)
+			if err != nil {
+				return errors.NewInvalidKeyError(fmt.Sprintf("jwk find and parse failed: %v", err))
+			}
+		}
+	} else {
+		publicKey, err = crypto.ParseEcPublicKey(v.publicKey)
+		if err != nil {
+			return errors.NewInvalidKeyError(fmt.Sprintf("public key parsing failed: %v", err))
+		}
+	}
 
 	if jwsHeader.Alg != "ES512" {
 		return errors.NewJwsError(fmt.Sprintf("unexpected header alg: %s", jwsHeader.Alg))
