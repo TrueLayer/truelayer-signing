@@ -14,3 +14,23 @@ var tlSignature = Signer.SignWithPem(kid, privateKey)
     .Body(body)
     .Sign();
 ```
+
+## Verifying webhooks
+The `VerifyWithJwks` function may be used to verify webhook `Tl-Signature` header signatures.
+ 
+```csharp
+// `jku` field is included in webhook signatures
+var jku = Verifier.ExtractJku(webhookSignature);
+
+// fetch jwks JSON from the `jku` url (not provided by this lib)
+var jwks = fetchJwks(jku);
+
+// jwks may be used directly to verify a signature
+// a SignatureException is thrown is verification fails
+Verifier.VerifyWithJwks(jwks)
+    .Method("POST")
+    .Path(path)
+    .Headers(headers)
+    .Body(body)
+    .Verify(webhookSignature);
+```

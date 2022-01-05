@@ -16,3 +16,22 @@ let tl_signature = truelayer_signing::sign_with_pem(kid, private_key)
 
 ## Prerequisites
 - OpenSSL (see [here](https://www.openssl.org/) for instructions).
+
+## Verifying webhooks
+The `verify_with_jwks` function may be used to verify webhook `Tl-Signature` header signatures.
+ 
+```rust
+// `jku` field is included in webhook signatures
+let jku = truelayer_signing::extract_jws_header(webhook_signature)?.jku?;
+
+// fetch jwks JSON from the `jku` url (not provided by this lib)
+let jwks = fetch_jwks(jku);
+
+// jwks may be used directly to verify a signature
+truelayer_signing::verify_with_jwks(jwks)
+    .method("POST")
+    .path(path)
+    .headers(headers)
+    .body(body)
+    .verify(webhook_signature)?;
+```
