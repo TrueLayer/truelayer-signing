@@ -43,10 +43,11 @@ The `verify` function may be used to verify webhook `Tl-Signature` header signat
 ```javascript
 const tlSigning = require('truelayer-signing');
 
+// `jku` field is included in webhook signatures
 let jku = tlSigning.extractJku(webhookSignature);
 
-// fetch jwks JSON from the `jku` url.
-let jwks = fetch_jwks(jku);
+// fetch jwks JSON from the `jku` url (not provided by this lib)
+let jwks = fetchJwks(jku);
 
 // jwks may be used directly to verify a signature
 // a SignatureError is thrown is verification fails
