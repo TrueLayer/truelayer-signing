@@ -22,7 +22,7 @@ jku := tlsigning.ExtractJwsHeader(webhookSignature)
 jwks := fetchJwks(jku)
 
 // jwks may be used directly to verify a signature
-err := VerifyWithJwks(jwks).
+err := tlsigning.VerifyWithJwks(jwks).
 		Method("POST").
 		Path(path).
 		Header("Idempotency-Key", []byte(idempotencyKey)).
