@@ -11,6 +11,25 @@ signature, err := tlsigning.SignWithPem(Kid, privateKeyBytes).
     Sign()
 ```
 
+## Verifying webhooks
+The `VerifyWithJwks` function can be used to verify webhook `Tl-Signature` header signatures.
+
+```go
+// `jku` field is included in webhook signatures
+jku := tlsigning.ExtractJwsHeader(webhookSignature)
+
+// fetch jwks JSON from the `jku` url (not provided by this lib)
+jwks := fetchJwks(jku)
+
+// jwks may be used directly to verify a signature
+err := VerifyWithJwks(jwks).
+		Method("POST").
+		Path(path).
+		Header("Idempotency-Key", []byte(idempotencyKey)).
+		Body(body).
+		Verify(webhookSignature)
+```
+
 ## Installation
 
 Install the package with:
