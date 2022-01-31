@@ -21,7 +21,7 @@ The `Verifier.verifyWithJwks` function may be used to verify `Tl-Signature` head
 String jku = Verifier.extractJku(webhookSignature);
 
 // fetch jwks JSON from the `jku` url (not provided by this lib)
-String jwks - fetchJwks(jku):
+String jwks = fetchJwks(jku):
 
 Verifier.verifyWithJwks(jwks)
         .method("POST")
