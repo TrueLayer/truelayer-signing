@@ -3,7 +3,6 @@
 
 Java package to produce & verify TrueLayer API requests signatures.
 
-### Java usage
 ```java
 // `Tl-Signature` value to send with the request.
 Signer.from(kid, privateKey)
@@ -12,6 +11,24 @@ Signer.from(kid, privateKey)
         .path(path)
         .body(body)
         .sign();
+```
+
+### Verifying webhooks
+The `Verifier.verifyWithJwks` function may be used to verify `Tl-Signature` header signatures.
+
+```java
+// `jku` field is included in webhook signatures
+String jku = Verifier.extractJku(webhookSignature);
+
+// fetch jwks JSON from the `jku` url (not provided by this lib)
+String jwks = fetchJwks(jku):
+
+Verifier.verifyWithJwks(jwks)
+        .method("POST")
+        .path(path)
+        .headers(headers)
+        .body(body)
+        .verify(webhookSignature);
 ```
 
 ### Kotlin usage
