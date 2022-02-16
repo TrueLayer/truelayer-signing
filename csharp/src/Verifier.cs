@@ -231,7 +231,6 @@ namespace TrueLayer.Signing
             var jwk = SignatureException.Try(() => jwks.Keys.First(key => key.Kid == kid), "no jwk found with kid");
 
             SignatureException.Ensure(jwk.Kty == "EC", "unsupported jwk.kty");
-            SignatureException.Ensure(jwk.Alg == "EC", "unsupported jwk.alg");
             SignatureException.Ensure(jwk.Crv == "P-521", "unsupported jwk.crv");
 
             SignatureException.TryAction(() => key.ImportParameters(new ECParameters

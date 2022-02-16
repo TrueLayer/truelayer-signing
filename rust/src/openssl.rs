@@ -94,8 +94,6 @@ struct Jwk {
     #[serde(default)]
     kty: String,
     #[serde(default)]
-    alg: String,
-    #[serde(default)]
     crv: String,
     #[serde(default)]
     x: String,
@@ -106,7 +104,6 @@ struct Jwk {
 impl Jwk {
     fn parse_p521(self) -> anyhow::Result<EcKey<Public>> {
         ensure!(self.kty == "EC", "unsupported jwk kty");
-        ensure!(self.alg == "EC", "unsupported jwk alg");
         ensure!(self.crv == "P-521", "unsupported jwk crv");
 
         let x = base64::decode_config(self.x, base64::URL_SAFE_NO_PAD)?;
