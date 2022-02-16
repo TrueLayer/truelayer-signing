@@ -46,7 +46,6 @@ class VerifierFromJwks extends Verifier {
         return SignatureException.evaluate(() -> {
             ECKey ecKey = keyByKeyId.toECKey();
             SignatureException.ensure(ecKey.getKeyType().getValue().equals("EC"), "unsupported jwk.kty");
-            SignatureException.ensure(ecKey.getAlgorithm().getName().equals("EC"), "unsupported jwk.alg");
             SignatureException.ensure(ecKey.getCurve().equals(Curve.P_521), "unsupported jwk.crv");
 
             return ecKey.toECPublicKey();

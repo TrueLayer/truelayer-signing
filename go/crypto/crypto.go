@@ -136,9 +136,6 @@ func (jwk jwk) parseP521() (*ecdsa.PublicKey, error) {
 	if jwk.Kty != "EC" {
 		return nil, fmt.Errorf("unsupported jwk kty")
 	}
-	if jwk.Alg != "EC" {
-		return nil, fmt.Errorf("unsupported jwk alg")
-	}
 	if jwk.Crv != "P-521" {
 		return nil, fmt.Errorf("unsupported jwk crv")
 	}
