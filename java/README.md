@@ -13,24 +13,6 @@ Signer.from(kid, privateKey)
         .sign();
 ```
 
-### Verifying webhooks
-The `Verifier.verifyWithJwks` function may be used to verify `Tl-Signature` header signatures.
-
-```java
-// `jku` field is included in webhook signatures
-String jku = Verifier.extractJku(webhookSignature);
-
-// fetch jwks JSON from the `jku` url (not provided by this lib)
-String jwks = fetchJwks(jku):
-
-Verifier.verifyWithJwks(jwks)
-        .method("POST")
-        .path(path)
-        .headers(headers)
-        .body(body)
-        .verify(webhookSignature);
-```
-
 ### Kotlin usage
 ```kotlin
 // `Tl-Signature` value to send with the request.
@@ -52,6 +34,25 @@ Signer.from(kid, privateKeyPem)
   .body(body)
   .sign()
 ```
+
+## Verifying webhooks
+The `Verifier.verifyWithJwks` function may be used to verify `Tl-Signature` header signatures.
+
+```java
+// `jku` field is included in webhook signatures
+String jku = Verifier.extractJku(webhookSignature);
+
+// fetch jwks JSON from the `jku` url (not provided by this lib)
+String jwks = fetchJwks(jku):
+
+Verifier.verifyWithJwks(jwks)
+        .method("POST")
+        .path(path)
+        .headers(allWebhookHeaders)
+        .body(body)
+        .verify(webhookSignature);
+```
+
 ## Installation
 ``` groovy
 	allprojects {
@@ -65,7 +66,3 @@ Signer.from(kid, privateKeyPem)
 	        implementation 'com.github.truelayer:truelayer-signing:java-{last-version}'
 	}
 ```
-
-## Examples
-
-Find more examples in [Kotlin](./examples/kotlin/src/main/kotlin/truelayer/signing/Example.kt) and [Scala](./examples/scala/src/main/scala/truelayer/signing/Example.scala).
