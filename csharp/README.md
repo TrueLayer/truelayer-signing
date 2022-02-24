@@ -30,7 +30,7 @@ var jwks = fetchJwks(jku);
 Verifier.VerifyWithJwks(jwks)
     .Method("POST")
     .Path(path)
-    .Headers(headers)
+    .Headers(allWebhookHeaders)
     .Body(body)
     .Verify(webhookSignature);
 ```

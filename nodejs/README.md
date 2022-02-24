@@ -57,6 +57,6 @@ tlSigning.verify({
   method: "post",
   path,
   body,
-  headers,
+  headers: allWebhookHeaders,
 });
 ```

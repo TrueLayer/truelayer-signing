@@ -31,7 +31,7 @@ let jwks = fetch_jwks(jku);
 truelayer_signing::verify_with_jwks(jwks)
     .method("POST")
     .path(path)
-    .headers(headers)
+    .headers(all_webhook_headers)
     .body(body)
     .verify(webhook_signature)?;
 ```
