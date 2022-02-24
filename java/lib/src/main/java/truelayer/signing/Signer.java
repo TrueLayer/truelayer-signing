@@ -105,6 +105,22 @@ final public class Signer {
         return this;
     }
 
+    /**
+     * Add a Map of headers.
+     * Warning: Only a single value per header name is supported.
+     *
+     * @param headers  - must not be null
+     * @return the Signer instance
+     * @throws IllegalArgumentException if the provided params are null
+     */
+    public Signer headers(Map<String, String> headers) {
+        if (headers == null)
+            throw new IllegalArgumentException("headers must not be null");
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            this.headers.put(new HeaderName(entry.getKey()), entry.getValue());
+        }
+        return this;
+    }
 
     /**
      * Start building a request Tl-Signature header value using private key

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 import static java.nio.file.Files.readAllBytes;
 import static org.junit.Assert.assertEquals;
@@ -38,7 +39,9 @@ public class UsageTest {
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
         String tlSignature = Signer.from(kid, privateKey)
-                .header("Idempotency-Key", idempotencyKey)
+                .headers(new HashMap<String, String>() {{
+                    put("Idempotency-Key", idempotencyKey);
+                }})
                 .method("post")
                 .path(path)
                 .body(body)
@@ -154,7 +157,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestBodyMismatch(){
+    public void fullRequestBodyMismatch() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -295,7 +298,7 @@ public class UsageTest {
     }
 
     @Test
-    public void signAndVerifyNoHeaders()  {
+    public void signAndVerifyNoHeaders() {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes();
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
@@ -323,16 +326,20 @@ public class UsageTest {
         Verifier.verifyWithJwks(jwks)
                 .method("POST")
                 .path("/tl-webhook")
-                .header("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z")
-                .header("content-type", "application/json")
+                .headers(new HashMap<String, String>() {{
+                    put("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z");
+                    put("content-type", "application/json");
+                }})
                 .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")
                 .verify(webhookSignature); // should not throw
 
         Verifier verifier = Verifier.verifyWithJwks(jwks)
                 .method("POST")
                 .path("/tl-webhook")
-                .header("x-tl-webhook-timestamp", "2021-12-02T14:18:00Z") // different
-                .header("content-type", "application/json")
+                .headers(new HashMap<String, String>() {{
+                    put("x-tl-webhook-timestamp", "2021-12-02T14:18:00Z"); // different
+                    put("content-type", "application/json");
+                }})
                 .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}");
 
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(webhookSignature));

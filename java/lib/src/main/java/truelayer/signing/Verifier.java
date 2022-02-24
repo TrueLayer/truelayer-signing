@@ -106,6 +106,23 @@ public abstract class Verifier {
     }
 
     /**
+     * Add a Map of headers.
+     * Warning: Only a single value per header name is supported.
+     *
+     * @param headers  - must not be null
+     * @return the Verifier instance
+     * @throws IllegalArgumentException if the provided params are null
+     */
+    public Verifier headers(Map<String, String> headers) {
+        if (headers == null)
+            throw new IllegalArgumentException("headers must not be null");
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            this.headers.put(new HeaderName(entry.getKey()), entry.getValue());
+        }
+        return this;
+    }
+
+    /**
      * Add a header name and value.
      * May be called multiple times to add multiple different headers.
      * Warning: Only a single value per header name is supported.

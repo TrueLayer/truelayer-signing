@@ -25,5 +25,3 @@ jobs:
           cache: gradle
       - name: Test
         run: cd java && ./gradlew test
-      - name: Run scala and kotlin example applications
-        run: cd java && ./gradlew run
