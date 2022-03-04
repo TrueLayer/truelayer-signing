@@ -80,6 +80,16 @@ func (v *Verifier) Header(name string, value []byte) *Verifier {
 	return v
 }
 
+// Headers appends multiple header name & value.
+//
+// Warning: Only a single value per header name is supported.
+func (v *Verifier) Headers(headers map[string][]byte) *Verifier {
+	for name, value := range headers {
+		v.Header(name, value)
+	}
+	return v
+}
+
 // RequireHeader specifies a header name that must be included in the "Tl-Signature".
 // May be called multiple times to add multiple required headers.
 //
