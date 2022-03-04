@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Updated README
 
 ## 0.1.3
-* Add support for verifying jwks with alg: `ES512`.
+* Added support for verifying jwks with alg: `ES512`.
 * Added verifying webhooks readme examples.
 
 ## 0.1.2
