@@ -395,3 +395,32 @@ func TestVerifyWithJwks(t *testing.T) {
 	assert.NotNilf(err, "signature verification should fail: %v", err)
 	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
 }
+
+func TestHeadersMethod(t *testing.T) {
+	assert := assert.New(t)
+
+	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
+
+	body := []byte("{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}")
+	idempotencyKey := []byte("idemp-2076717c-9005-4811-a321-9e0787fa0382")
+	path := "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+	headers := make(map[string][]byte)
+	headers["Idempotency-Key"] = idempotencyKey
+	headers["X-Custom"] = []byte("123")
+	signature, err := SignWithPem(Kid, privateKeyBytes).
+		Method("post").
+		Path(path).
+		Headers(headers).
+		Body(body).
+		Sign()
+	assert.Nilf(err, "signing failed: %v", err)
+
+	err = VerifyWithPem(publicKeyBytes).
+		Method("POST").
+		Path(path).
+		Headers(headers).
+		Body(body).
+		Verify(signature)
+	assert.Nilf(err, "signature verification should not fail: %v", err)
+}

@@ -63,6 +63,16 @@ func (s *Signer) Header(name string, value []byte) *Signer {
 	return s
 }
 
+// Headers appends multiple header name & value.
+//
+// Warning: Only a single value per header name is supported.
+func (s *Signer) Headers(headers map[string][]byte) *Signer {
+	for name, value := range headers {
+		s.AddHeader(name, value)
+	}
+	return s
+}
+
 // AddHeader adds a header name & value.
 // May be called multiple times to add multiple different headers.
 //
