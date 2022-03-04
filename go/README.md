@@ -25,7 +25,7 @@ jwks := fetchJwks(jku)
 err := tlsigning.VerifyWithJwks(jwks).
         Method("POST").
         Path(path).
-        Headers(allWebhooksHeaders).
+        Headers(allWebhookHeaders).
         Body(body).
         Verify(webhookSignature)
 ```
