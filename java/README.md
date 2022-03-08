@@ -1,6 +1,4 @@
 # truelayer-signing
-[![](https://jitpack.io/v/truelayer/truelayer-signing.svg)](https://jitpack.io/#truelayer/truelayer-signing)
-
 Java package to produce & verify TrueLayer API requests signatures.
 
 ```java
@@ -54,15 +52,16 @@ Verifier.verifyWithJwks(jwks)
 ```
 
 ## Installation
+Stable releases are hosted on [Maven Central](https://search.maven.org/search?q=a:truelayer-signing)
+
 ``` groovy
 	allprojects {
 		repositories {
 			...
-			maven { url 'https://jitpack.io' }
 		}
 	}
 	
 	dependencies {
-	        implementation 'com.github.truelayer:truelayer-signing:java-{last-version}'
+	        implementation 'com.truelayer:truelayer-signing:$version'
 	}
 ```
