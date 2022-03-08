@@ -1,4 +1,4 @@
-package truelayer.signing;
+package com.truelayer.signing;
 
 /**
  * Sign/verification error

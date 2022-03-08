@@ -1,4 +1,4 @@
-package truelayer.signing;
+package com.truelayer.signing;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;

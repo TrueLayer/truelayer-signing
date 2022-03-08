@@ -1,4 +1,4 @@
-package truelayer.signing;
+package com.truelayer.signing;
 
 import com.nimbusds.jose.util.Base64URL;
 

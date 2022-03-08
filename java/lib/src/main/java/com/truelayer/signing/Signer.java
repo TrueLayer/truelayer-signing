@@ -1,4 +1,4 @@
-package truelayer.signing;
+package com.truelayer.signing;
 
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
@@ -11,7 +11,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static truelayer.signing.Utils.jwsHeaderMap;
+import static com.truelayer.signing.Utils.jwsHeaderMap;
 
 /**
  * Builder to generate a Tl-Signature header value using a private key.

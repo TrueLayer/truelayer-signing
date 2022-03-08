@@ -1,0 +1,17 @@
+tasks.named('test') {
+    testLogging {
+        events "passed", "skipped", "failed" //, "standardOut", "standardError"
+        showExceptions true
+        exceptionFormat "full"
+        showCauses true
+        showStackTraces true
+
+        showStandardStreams = false
+    }
+}
+
+// Configure test dependencies
+dependencies {
+    // JUnit test framework.
+    testImplementation 'junit:junit:4.13.2'
+}

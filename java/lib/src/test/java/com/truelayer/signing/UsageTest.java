@@ -1,5 +1,8 @@
-package truelayer.signing;
+package com.truelayer.signing;
 
+import com.truelayer.signing.SignatureException;
+import com.truelayer.signing.Signer;
+import com.truelayer.signing.Verifier;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -39,9 +42,7 @@ public class UsageTest {
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
         String tlSignature = Signer.from(kid, privateKey)
-                .headers(new HashMap<String, String>() {{
-                    put("Idempotency-Key", idempotencyKey);
-                }})
+                .header("Idempotency-Key", idempotencyKey)
                 .method("post")
                 .path(path)
                 .body(body)

@@ -1,4 +1,0 @@
-install:
-  - echo "publish trulayer-signing"
-  - cd java
-  - ./gradlew clean build publishToMavenLocal
