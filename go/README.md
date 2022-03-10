@@ -16,13 +16,16 @@ The `VerifyWithJwks` function can be used to verify webhook `Tl-Signature` heade
 
 ```go
 // `jku` field is included in webhook signatures
-jku := tlsigning.ExtractJwsHeader(webhookSignature).Jku
+jwsHeader, err := tlsigning.ExtractJwsHeader(webhookSignature)
+if err != nil {
+  // Handle error
+}
 
 // fetch jwks JSON from the `jku` url (not provided by this lib)
-jwks := fetchJwks(jku)
+jwks := fetchJwks(jwsHeader.Jku)
 
 // jwks may be used directly to verify a signature
-err := tlsigning.VerifyWithJwks(jwks).
+err = tlsigning.VerifyWithJwks(jwks).
         Method("POST").
         Path(path).
         Headers(allWebhookHeaders).
