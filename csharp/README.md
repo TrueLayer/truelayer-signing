@@ -35,3 +35,5 @@ Verifier.VerifyWithJwks(jwks)
     .Body(body)
     .Verify(webhookSignature);
 ```
+
+See [webhook server example](./examples/webhook-server/).
