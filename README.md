@@ -14,6 +14,10 @@ They can then be verified using the associated public key.
 ## Request signing specification
 See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how request signing is implemented.
 
+## Webhook signature verification
+TrueLayer webhooks include a `Tl-Signature` similarl to request signatures. 
+See per-language examples on how to properly verify webhooks.
+
 #### License
 <sup>
 Licensed under either of <a href="LICENSE-APACHE">Apache License, Version

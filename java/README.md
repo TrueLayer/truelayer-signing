@@ -40,8 +40,9 @@ The `Verifier.verifyWithJwks` function may be used to verify `Tl-Signature` head
 // `jku` field is included in webhook signatures
 String jku = Verifier.extractJku(webhookSignature);
 
-// fetch jwks JSON from the `jku` url (not provided by this lib)
-String jwks = fetchJwks(jku):
+// check `jku` is an allowed TrueLayer url & fetch jwks JSON (not provided by this lib)
+ensureJkuAllowed(jku);
+String jwks = fetchJwks(jku);
 
 Verifier.verifyWithJwks(jwks)
         .method("POST")
