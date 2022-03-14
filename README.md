@@ -15,7 +15,7 @@ They can then be verified using the associated public key.
 See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how request signing is implemented.
 
 ## Webhook signature verification
-TrueLayer webhooks include a `Tl-Signature` similarl to request signatures. 
+TrueLayer webhooks include a `Tl-Signature` header similar to request signatures but signed by a TrueLayer private key.
 See per-language examples on how to properly verify webhooks.
 
 #### License
