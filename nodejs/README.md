@@ -46,7 +46,8 @@ const tlSigning = require('truelayer-signing');
 // `jku` field is included in webhook signatures
 let jku = tlSigning.extractJku(webhookSignature);
 
-// fetch jwks JSON from the `jku` url (not provided by this lib)
+// check `jku` is an allowed TrueLayer url & fetch jwks JSON (not provided by this lib)
+ensureJkuAllowed(jku);
 let jwks = fetchJwks(jku);
 
 // jwks may be used directly to verify a signature

@@ -21,7 +21,10 @@ if err != nil {
   // Handle error
 }
 
-// fetch jwks JSON from the `jku` url (not provided by this lib)
+// check `jku` is an allowed TrueLayer url & fetch jwks JSON (not provided by this lib)
+if !jkuAllowed(jwsHeader.Jku) {
+  // Handle error
+}
 jwks := fetchJwks(jwsHeader.Jku)
 
 // jwks may be used directly to verify a signature
