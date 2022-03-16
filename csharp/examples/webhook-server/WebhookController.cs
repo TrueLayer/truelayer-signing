@@ -15,6 +15,8 @@ namespace TrueLayer.ExampleWebhookServer
 
         public WebhookController(HttpClient httpClient) => _http = httpClient;
 
+        // Note: Webhook path can be whatever is configured, here a unique path 
+        // is used matching the README example signature.
         [HttpPost("/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b")]
         public async Task<StatusCodeResult> PostHook()
         {
