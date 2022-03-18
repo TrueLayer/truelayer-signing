@@ -19,11 +19,12 @@ jobs:
     steps:
     - run: rustup update stable
     - uses: actions/checkout@v2
-    - run: cd rust && cargo fmt -- --check
+    - run: cargo fmt --manifest-path=rust/Cargo.toml -- --check
+    - run: cargo fmt --manifest-path=rust/examples/webhook-server/Cargo.toml -- --check
 
   examples:
     runs-on: ubuntu-latest
     steps:
     - run: rustup update stable
     - uses: actions/checkout@v2
-    - run: cd rust/examples/webhook-server && cargo check
+    - run: cargo check --manifest-path=rust/examples/webhook-server/Cargo.toml
