@@ -20,3 +20,10 @@ jobs:
     - run: rustup update stable
     - uses: actions/checkout@v2
     - run: cd rust && cargo fmt -- --check
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+    - run: rustup update stable
+    - uses: actions/checkout@v2
+    - run: cd rust/examples/webhook-server && cargo check
