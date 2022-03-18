@@ -79,7 +79,7 @@ async fn verify_hook(
         "Unpermitted jku {jku}"
     );
 
-    // fetch jwks (should cache this according to cache-control headers)
+    // fetch jwks (cached according to cache-control headers)
     let jwks = client
         .get(jku)
         .send()
