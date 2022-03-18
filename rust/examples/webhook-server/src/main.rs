@@ -6,14 +6,22 @@ use axum::{
     routing::post,
     Router,
 };
-use std::net::SocketAddr;
+use reqwest_middleware::ClientWithMiddleware;
+use std::{net::SocketAddr, sync::Arc};
 use tracing::{info, warn};
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    let client = reqwest::Client::new();
+    // Setup a http client that will cache jwks responses according to cache-control headers
+    let client = reqwest_middleware::ClientBuilder::new(reqwest::Client::new())
+        .with(http_cache_reqwest::Cache(http_cache_reqwest::HttpCache {
+            mode: http_cache_reqwest::CacheMode::Default,
+            manager: Arc::new(http_cache_reqwest::MokaManager::default()),
+            options: None,
+        }))
+        .build();
 
     let app = Router::new()
         .route(
@@ -33,7 +41,7 @@ async fn main() {
 }
 
 async fn receive_hook(
-    Extension(client): Extension<reqwest::Client>,
+    Extension(client): Extension<ClientWithMiddleware>,
     parts: request::Parts,
     body: Bytes,
 ) -> StatusCode {
@@ -49,7 +57,7 @@ async fn receive_hook(
 
 /// Returns `Ok(())` if the webhook `Tl-Signature` is valid.
 async fn verify_hook(
-    client: &reqwest::Client,
+    client: &ClientWithMiddleware,
     parts: &request::Parts,
     body: &Bytes,
 ) -> anyhow::Result<()> {
