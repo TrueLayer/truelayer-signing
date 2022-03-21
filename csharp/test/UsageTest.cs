@@ -3,7 +3,6 @@ using TrueLayer.Signing;
 using System;
 using FluentAssertions;
 using System.IO;
-using System.Text;
 
 namespace Tests
 {

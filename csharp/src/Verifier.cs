@@ -238,8 +238,10 @@ namespace TrueLayer.Signing
                 Curve = ECCurve.CreateFromFriendlyName("secp521r1"),
                 Q = new ECPoint
                 {
-                    X = Base64Url.Decode(jwk.X),
-                    Y = Base64Url.Decode(jwk.Y),
+                    // Note: A CryptographicException will be thrown if the coord byte
+                    // representations have uneven length, so must be zero padded to 66
+                    X = Base64Url.Decode(jwk.X).PrependZeroPad(66),
+                    Y = Base64Url.Decode(jwk.Y).PrependZeroPad(66),
                 }
             }), "invalid jwk data");
         }

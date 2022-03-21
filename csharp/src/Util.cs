@@ -139,6 +139,20 @@ namespace TrueLayer.Signing
             }
             return null;
         }
+
+        /// <summary>
+        /// Returns a new byte array prepended with zeros up to the given length.
+        /// Returns the input array unchanged if already at, or above, the length.
+        /// </summary>
+        public static byte[] PrependZeroPad(this byte[] bytes, int length)
+        {
+            if (bytes.Length >= length) {
+                return bytes;
+            }
+            var padded = new byte[length];
+            Array.Copy(bytes, 0, padded, 1, bytes.Length);
+            return padded;
+        }
     }
 
     /// <summary>Case-insensitive string header name comparison.</summary>

@@ -6,6 +6,7 @@ using Jose;
 using System.Text;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Linq;
 
 namespace Tests
 {
@@ -85,16 +86,19 @@ namespace Tests
         [InlineData("tl_version")]
         public void MissingJwsHeaders(string sansHeader)
         {
-            // creates a (POST /bar {}) signature
+            // creates a (POST /bar {}) signature with custom jwsHeaderMap
             string CreateSignature(Dictionary<string, string> jwsHeaderMap)
             {
+                var signature = Signer.SignWithPem(Kid, PrivateKey)
+                    .Method("POST")
+                    .Path("/bar")
+                    .Body("{}")
+                    .Sign();
+
                 var jwsEncoded = Base64Url.Encode(
                     Encoding.UTF8.GetBytes(JsonSerializer.Serialize(jwsHeaderMap)));
 
-                return $"{jwsEncoded}..ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
-                    + "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC"
-                    + "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB"
-                    + "d2d3D17Wd9UA";
+                return $"{jwsEncoded}..{signature.Split(".").Last()}";
             }
 
             var jwsHeaderMap = new Dictionary<string, string>()
