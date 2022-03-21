@@ -12,6 +12,9 @@ fn body_signature() {
         .sign_body_only()
         .expect("sign_body");
 
+    // Note: Can be used as new static body signature
+    eprintln!("signature: {tl_signature}");
+
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
         .allow_v1(true)
         .body(body)
@@ -36,7 +39,7 @@ fn body_signature_mismatch() {
 #[test]
 fn verify_body_static_signature() {
     let body = br#"{"abc":123}"#;
-    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AdDESSiHQVQSRFrD8QO6V8m0CWIfsDGyMOlipOt9LQhyG1lKjDR17crBgy_7TYi4ZQH--dyNtN9Nab3P7yFQzgqOALl8S-beevWYpnIMXHQCgrv-XpfNtenJTckCH2UAQIwR-pjV8XiTM1be1RMYpMl8qYTbCL5Bf8t_dME-1E6yZQEH";
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
         .allow_v1(true)
@@ -48,7 +51,7 @@ fn verify_body_static_signature() {
 #[test]
 fn verify_body_static_signature_not_allowed() {
     let body = br#"{"abc":123}"#;
-    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AdDESSiHQVQSRFrD8QO6V8m0CWIfsDGyMOlipOt9LQhyG1lKjDR17crBgy_7TYi4ZQH--dyNtN9Nab3P7yFQzgqOALl8S-beevWYpnIMXHQCgrv-XpfNtenJTckCH2UAQIwR-pjV8XiTM1be1RMYpMl8qYTbCL5Bf8t_dME-1E6yZQEH";
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
         // v1 not allowed by default
@@ -58,6 +61,10 @@ fn verify_body_static_signature_not_allowed() {
 }
 
 /// Sign method, path, headers & body and verify.
+/// * method `POST`
+/// * path `/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping`
+/// * header `Idempotency-Key: idemp-2076717c-9005-4811-a321-9e0787fa0382`
+/// * body `{"currency":"GBP","max_amount_in_minor":5000000}`
 #[test]
 fn full_request_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
@@ -71,6 +78,9 @@ fn full_request_signature() {
         .body(body)
         .sign()
         .expect("sign");
+
+    // Note: Can be used as new `test-resources/tl-signature.txt`
+    eprintln!("signature: {tl_signature}");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
         .method("POST")
@@ -329,14 +339,22 @@ fn flexible_header_case_order_verify() {
         .expect("verify");
 }
 
-/// Note: Setting jku is only required for webhooks, so not a feature
-/// needed by clients directly, or necessary in all langs.
+/// Note: Setting jku is only required for webhooks, so not a feature needed by clients
+/// directly, or necessary in all langs.
 #[test]
 fn set_jku() {
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
         .jku("https://webhooks.truelayer.com/.well-known/jwks")
+        .method("POST")
+        .path("/tl-webhook")
+        .header("X-Tl-Webhook-Timestamp", b"2021-11-29T11:42:55Z")
+        .header("Content-Type", b"application/json")
+        .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
         .sign()
         .expect("sign");
+
+    // Note: Can be used as new `test-resources/webhook-signature.txt`
+    eprintln!("signature: {tl_signature}");
 
     let jws_header =
         truelayer_signing::extract_jws_header(&tl_signature).expect("extract_jws_header");
