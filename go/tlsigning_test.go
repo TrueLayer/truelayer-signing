@@ -90,7 +90,7 @@ func TestVerifyStaticSignature(t *testing.T) {
 	body := []byte("{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}")
 	idempotencyKey := []byte("idemp-2076717c-9005-4811-a321-9e0787fa0382")
 	path := "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
-	tlSignature := "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IklkZW1wb3RlbmN5LUtleSJ9..AfhpFccUCUKEmotnztM28SUYgMnzPNfDhbxXUSc-NByYc1g-rxMN6HS5g5ehiN5yOwb0WnXPXjTCuZIVqRvXIJ9WAPr0P9R68ro2rsHs5HG7IrSufePXvms75f6kfaeIfYKjQTuWAAfGPAeAQ52PNQSd5AZxkiFuCMDvsrnF5r0UQsGi"
+	tlSignature := getTlSignature(assert)
 
 	err := VerifyWithPem(publicKeyBytes).
 		Method("POST").
