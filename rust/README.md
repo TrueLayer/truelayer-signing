@@ -36,3 +36,5 @@ truelayer_signing::verify_with_jwks(jwks)
     .body(body)
     .verify(webhook_signature)?;
 ```
+
+See [webhook server example](./examples/webhook-server/).
