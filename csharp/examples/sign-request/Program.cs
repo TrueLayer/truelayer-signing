@@ -17,8 +17,8 @@ namespace TrueLayer.ExampleWebhookServer
             var privateKeyPem = System.Environment.GetEnvironmentVariable("PRIVATE_KEY")
                 ?? throw new System.Exception("Missing env var PRIVATE_KEY");
 
-            // We use a random body string for our request as `/test-signature` endpoint does not 
-            // require any schema, it simply checks the signature is valid.
+            // A random body string is enough for this request as `/test-signature` endpoint does not 
+            // require any schema, it simply checks the signature is valid against what's received.
             var body = $"msg-{new Random().Next()}";
             var idempotencyKey = Guid.NewGuid().ToString();
 
