@@ -18,3 +18,12 @@ jobs:
       with:
         dotnet-version: '3.1.x'
     - run: cd csharp && dotnet build && dotnet test
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+    - run: cd csharp/examples/webhook-server && dotnet build

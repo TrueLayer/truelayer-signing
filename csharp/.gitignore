@@ -1,5 +1,7 @@
 obj
 bin
+examples/**/obj
+examples/**/bin
 NuGet.Config
 .DS_Store
 
