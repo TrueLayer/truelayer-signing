@@ -10,12 +10,12 @@ namespace TrueLayer.ExampleWebhookServer
         public static void Main(string[] args)
         {
             // Read required env vars
-            var accessToken = System.Environment.GetEnvironmentVariable("ACCESS_TOKEN")
-                ?? throw new System.Exception("Missing env var ACCESS_TOKEN");
-            var kid = System.Environment.GetEnvironmentVariable("KID")
-                ?? throw new System.Exception("Missing env var KID");
-            var privateKeyPem = System.Environment.GetEnvironmentVariable("PRIVATE_KEY")
-                ?? throw new System.Exception("Missing env var PRIVATE_KEY");
+            var accessToken = Environment.GetEnvironmentVariable("ACCESS_TOKEN")
+                ?? throw new Exception("Missing env var ACCESS_TOKEN");
+            var kid = Environment.GetEnvironmentVariable("KID")
+                ?? throw new Exception("Missing env var KID");
+            var privateKeyPem = Environment.GetEnvironmentVariable("PRIVATE_KEY")
+                ?? throw new Exception("Missing env var PRIVATE_KEY");
 
             // A random body string is enough for this request as `/test-signature` endpoint does not 
             // require any schema, it simply checks the signature is valid against what's received.
