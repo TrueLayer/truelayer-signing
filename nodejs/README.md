@@ -22,6 +22,8 @@ const signature = tlSigning.sign({
 });
 ```
 
+See [full example](./examples/sign-request/).
+
 ### TypeScript usage
 ```typescript
 import * as tlSigning from 'truelayer-signing';
