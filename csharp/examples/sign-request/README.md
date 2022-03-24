@@ -10,5 +10,7 @@ Set environment variables:
 
 ```sh
 $ dotnet run
+Sending ...
+
 204 ✓
 ```
