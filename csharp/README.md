@@ -15,6 +15,8 @@ var tlSignature = Signer.SignWithPem(kid, privateKey)
     .Sign();
 ```
 
+See [full example](./examples/sign-request/).
+
 ## Verifying webhooks
 The `VerifyWithJwks` function may be used to verify webhook `Tl-Signature` header signatures.
  

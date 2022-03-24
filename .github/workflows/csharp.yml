@@ -27,3 +27,4 @@ jobs:
       with:
         dotnet-version: '6.0.x'
     - run: cd csharp/examples/webhook-server && dotnet build
+    - run: cd csharp/examples/sign-request && dotnet build
