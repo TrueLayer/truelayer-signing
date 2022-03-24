@@ -11,9 +11,9 @@ const URL: &str = "https://api.truelayer-sandbox.com/test-signature";
 #[tokio::main]
 async fn main() {
     // load env vars
-    let kid = env::var(KID).expect("Missing env var KID");
-    let access_token = env::var(ACCESS_TOKEN).expect("Missing env var ACCESS_TOKEN");
-    let private_key = env::var(PRIVATE_KEY).expect("Missing env var PRIVATE_KEY");
+    let kid = env::var("KID").expect("Missing env var KID");
+    let access_token = env::var("ACCESS_TOKEN").expect("Missing env var ACCESS_TOKEN");
+    let private_key = env::var("PRIVATE_KEY").expect("Missing env var PRIVATE_KEY");
 
     // create idemoptency key and body
     let idempotency_key = Uuid::new_v4().to_string();
