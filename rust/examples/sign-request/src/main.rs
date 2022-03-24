@@ -2,11 +2,8 @@ use rand;
 use std::env;
 use uuid::Uuid;
 
-const KID: &str = "KID";
-const ACCESS_TOKEN: &str = "ACCESS_TOKEN";
-const PRIVATE_KEY: &str = "PRIVATE_KEY";
-
-const URL: &str = "https://api.truelayer-sandbox.com/test-signature";
+// the base url to use
+const TL_BASE_URL: &str = "https://api.truelayer-sandbox.com";
 
 #[tokio::main]
 async fn main() {
@@ -32,7 +29,7 @@ async fn main() {
     // call `/test-signature` endpoint
     let client = reqwest::Client::new();
     let response = client
-        .post(URL)
+        .post(format!("{}/test-signature", TL_BASE_URL))
         .header("Authorization", format!("Bearer {access_token}"))
         .header("Idempotency-Key", idempotency_key)
         .header("X-Bar-Header", "abc123")
@@ -45,6 +42,10 @@ async fn main() {
     // print result
     match response.error_for_status_ref() {
         Ok(res) => println!("{} ✓", res.status()),
-        Err(err) => println!("{}", err.status().unwrap()),
+        Err(err) => println!(
+            "{}: {}",
+            err.status().unwrap(),
+            response.text().await.unwrap()
+        ),
     }
 }
