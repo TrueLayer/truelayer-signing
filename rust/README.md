@@ -14,6 +14,8 @@ let tl_signature = truelayer_signing::sign_with_pem(kid, private_key)
     .sign()?;
 ```
 
+See [full example](./examples/sign-request/).
+
 ## Prerequisites
 - OpenSSL (see [here](https://www.openssl.org/) for instructions).
 
