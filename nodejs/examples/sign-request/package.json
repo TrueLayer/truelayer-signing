@@ -5,6 +5,6 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.26.1",
-    "truelayer-signing": "file:../../"
+    "truelayer-signing": "file:../.."
   }
 }
