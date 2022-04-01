@@ -1,3 +1,4 @@
+using CacheCow.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,10 @@ namespace TrueLayer.ExampleWebhookServer
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddHttpClient().AddControllers();
+            services
+                // Setup a http client that will cache jwks responses according to cache-control headers
+                .AddSingleton(s => ClientExtensions.CreateClient())
+                .AddControllers();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
