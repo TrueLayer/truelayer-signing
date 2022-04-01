@@ -56,12 +56,6 @@ Verifier.verifyWithJwks(jwks)
 Stable releases are hosted on [Maven Central](https://search.maven.org/search?q=a:truelayer-signing)
 
 ``` groovy
-	allprojects {
-		repositories {
-			...
-		}
-	}
-	
 	dependencies {
 	        implementation 'com.truelayer:truelayer-signing:$version'
 	}
