@@ -1,0 +1,22 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+dependencies {
+    implementation project(':lib')
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.9.3'
+}
+
+application {
+    mainClass = 'com.truelayer.examples.sign_request.Program'
+}

@@ -6,3 +6,7 @@ build
 
 # Ignore .idea
 .idea
+
+# Ignore cache
+/examples/webhook-server/.cache/
+.cache/
