@@ -1,6 +1,7 @@
 # truelayer-signing
 Java package to produce & verify TrueLayer API requests signatures.
 
+Usage in java/scala/kotlin code.
 ```java
 // `Tl-Signature` value to send with the request.
 Signer.from(kid, privateKey)
@@ -12,28 +13,6 @@ Signer.from(kid, privateKey)
 ```
 
 See [full example](./examples/sign-request/).
-
-### Kotlin usage
-```kotlin
-// `Tl-Signature` value to send with the request.
-Signer.from(kid, privateKey)
-    .header("Idempotency-Key", idempotencyKey)
-    .method("post")
-    .path(path)
-    .body(body)
-    .sign()
-```
-
-### Scala usage
-```scala
-// `Tl-Signature` value to send with the request.
-Signer.from(kid, privateKeyPem)
-  .header("Idempotency-Key", idempotencyKey)
-  .method("post")
-  .path(path)
-  .body(body)
-  .sign()
-```
 
 ## Verifying webhooks
 The `Verifier.verifyWithJwks` function may be used to verify `Tl-Signature` header signatures.
