@@ -24,9 +24,8 @@ public class Program {
 
         // A random body string is enough for this request as `/test-signature` endpoint does not
         // require any schema, it simply checks the signature is valid against what's received.
-        byte[] bytes = new byte[7];
-        new Random().nextBytes(bytes);
-        String body = "msg-" + new String(bytes, Charset.defaultCharset());
+        String body = "msg-" + Math.random();
+
         String idempotencyKey = UUID.randomUUID().toString();
 
         String tlSignature = Signer.from(kid, privateKeyPem)
