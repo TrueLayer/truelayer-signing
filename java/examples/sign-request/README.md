@@ -13,5 +13,5 @@ Set environment variables:
   as [this example private key](../../../test-resources/ec512-private.pem).
 
 ```sh
-$ ./gradlew run
+$ ../../gradlew run
 ```

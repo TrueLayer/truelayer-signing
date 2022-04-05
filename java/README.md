@@ -11,6 +11,8 @@ Signer.from(kid, privateKey)
         .sign();
 ```
 
+See [full example](./examples/sign-request/).
+
 ### Kotlin usage
 ```kotlin
 // `Tl-Signature` value to send with the request.
@@ -51,6 +53,8 @@ Verifier.verifyWithJwks(jwks)
         .body(body)
         .verify(webhookSignature);
 ```
+
+See [webhook server example](./examples/webhook-server/).
 
 ## Installation
 Stable releases are hosted on [Maven Central](https://search.maven.org/search?q=a:truelayer-signing)
