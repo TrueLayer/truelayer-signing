@@ -11,62 +11,6 @@ namespace TrueLayer.Signing
 {
     internal static class BouncyCastleUtil
     {
-        internal static ECDsa BouncyCastleParsePem(this ReadOnlySpan<char> pem)
-        {
-            var pemReader = new PemReader(new StringReader(pem.ToString()));
-
-            var obj = pemReader.ReadObject();
-
-            switch (obj)
-            {
-                case AsymmetricCipherKeyPair ecKeyPair:
-                {
-                    var privateKey = (ECPrivateKeyParameters) ecKeyPair.Private;
-                    var normalizedPoint = privateKey.Parameters.G.Multiply(privateKey.D).Normalize();
-
-                    return ECDsa.Create(new ECParameters
-                    {
-                        Curve = ECCurve.CreateFromValue(privateKey.PublicKeyParamSet.Id),
-                        D = privateKey.D.ToByteArrayUnsigned(),
-                        Q =
-                        {
-                            X = normalizedPoint.XCoord.GetEncoded(),
-                            Y = normalizedPoint.YCoord.GetEncoded()
-                        }
-                    });
-                }
-                case ECPrivateKeyParameters privateKey:
-                {
-                    var normalizedPoint = privateKey.Parameters.G.Multiply(privateKey.D).Normalize();
-
-                    return ECDsa.Create(new ECParameters
-                    {
-                        Curve = ECCurve.CreateFromValue(privateKey.PublicKeyParamSet.Id),
-                        D = privateKey.D.ToByteArrayUnsigned(),
-                        Q =
-                        {
-                            X = normalizedPoint.XCoord.GetEncoded(),
-                            Y = normalizedPoint.YCoord.GetEncoded()
-                        }
-                    });
-                }
-                case ECPublicKeyParameters publicKey:
-                {
-                    return ECDsa.Create(new ECParameters
-                    {
-                        Curve = ECCurve.CreateFromValue(publicKey.PublicKeyParamSet.Id),
-                        Q =
-                        {
-                            X = publicKey.Q.XCoord.GetEncoded(),
-                            Y = publicKey.Q.YCoord.GetEncoded(),
-                        }
-                    });
-                }
-                default:
-                    throw new Exception($"Unexpected pem object {obj?.GetType().Name}");
-            }
-        }
-        
         internal static void BouncyCastleImportPem(this ECDsa key, ReadOnlySpan<char> pem)
         {
             var parameters = pem.ParseEcParameters();
