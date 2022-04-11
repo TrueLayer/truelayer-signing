@@ -101,6 +101,9 @@ namespace TrueLayer.Signing
         {
             try
             {
+#if (NETSTANDARD2_0)
+                key.BouncyCastleImportPem(pem);
+#else
                 var sb = new StringBuilder();
                 using (var reader = new StringReader(pem.ToString()))
                 {
@@ -122,6 +125,7 @@ namespace TrueLayer.Signing
                 {
                     key.ImportSubjectPublicKeyInfo(decodedPem, out _);
                 }
+#endif
             }
             catch (Exception e)
             {

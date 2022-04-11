@@ -23,7 +23,11 @@ namespace TrueLayer.Signing
         /// Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
         /// </summary>
         public static Verifier VerifyWithPem(ReadOnlySpan<byte> publicKeyPem)
+#if (NETSTANDARD2_0)
+            => VerifyWithPem(Encoding.UTF8.GetString(publicKeyPem.ToArray()).AsSpan());
+#else
             => VerifyWithPem(Encoding.UTF8.GetString(publicKeyPem));
+#endif
 
         /// <summary>
         /// Start building a `Tl-Signature` header verifier using public key JWKs JSON response data.
@@ -164,7 +168,7 @@ namespace TrueLayer.Signing
         public Verifier Headers(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
             => Headers(headers
                 .Where(e => e.Value.Any())
-                .Select(e => KeyValuePair.Create(e.Key, e.Value.First())));
+                .Select(e => new KeyValuePair<string, string>(e.Key, e.Value.First())));
 
         /// <summary>
         /// Require a header name that must be included in the `Tl-Signature`.
@@ -205,11 +209,11 @@ namespace TrueLayer.Signing
 
             SignatureException.Ensure(jwsHeaders.GetString("alg") == "ES512", "unsupported jws alg");
             SignatureException.Ensure(jwsHeaders.GetString("tl_version") == "2", "unsupported jws tl_version");
-            var signatureParts = tlSignature.Split(".");
+            var signatureParts = tlSignature.Split('.');
             SignatureException.Ensure(signatureParts.Length >= 3, "invalid signature format");
 
             var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? "")
-                .Split(",")
+                .Split(',')
                 .Select(h => h.Trim())
                 .Where(h => !string.IsNullOrEmpty(h))
                 .ToList();
