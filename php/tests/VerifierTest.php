@@ -215,8 +215,10 @@ it('should verify a valid signature from decoded json', function () {
     $signature = file_get_contents('../test-resources/tl-signature.txt');
     $jwksJson = file_get_contents('../test-resources/jwks.json');
 
-    $jwks = json_decode($jwksJson, true);
-    var_dump(...$jwks['keys']);
+    /**
+     * @var array<string, array<array<string, string>>> $jwks
+     */
+    $jwks = json_decode((string) $jwksJson, true);
     $verifier = Verifier::verifyWithJsonKeys(...$jwks['keys']);
 
     $verifier->method('POST')

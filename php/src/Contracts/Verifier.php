@@ -55,7 +55,7 @@ interface Verifier extends Jws
     public static function verifyWithPemFile(string ...$paths): self;
 
     /**
-     * @param array<string, string> $headers
+     * @param string[] $headers
      *
      * @return $this
      */
