@@ -239,7 +239,7 @@ namespace TrueLayer.Signing
 
             SignatureException.TryAction(() => key.ImportParameters(new ECParameters
             {
-                Curve = ECCurve.CreateFromFriendlyName("secp521r1"),
+                Curve = ECCurve.NamedCurves.nistP521,
                 Q = new ECPoint
                 {
                     // Note: A CryptographicException will be thrown if the coord byte
