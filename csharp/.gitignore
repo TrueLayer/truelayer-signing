@@ -4,6 +4,7 @@ examples/**/obj
 examples/**/bin
 NuGet.Config
 .DS_Store
+*.DotSettings.user
 
 # NuGet Packages
 *.nupkg

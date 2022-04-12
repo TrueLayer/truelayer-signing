@@ -24,7 +24,11 @@ namespace TrueLayer.Signing
         /// RFC 7468 PEM-encoded data and the key's kid.
         /// </summary>
         public static Signer SignWithPem(string kid, ReadOnlySpan<byte> privateKeyPem)
+#if (NETSTANDARD2_0)
+            => SignWithPem(kid, Encoding.UTF8.GetString(privateKeyPem.ToArray()).AsSpan());
+#else
             => SignWithPem(kid, Encoding.UTF8.GetString(privateKeyPem));
+#endif
 
         /// <summary>
         /// Start building a request Tl-Signature header value using private key and the key's kid.
