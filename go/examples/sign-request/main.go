@@ -75,7 +75,7 @@ func main() {
 	statusCode := -1
 	var responseBody string
 	if err == nil {
-		statusCode := resp.StatusCode
+		statusCode = resp.StatusCode
 		if statusCode == 204 {
 			responseBody = "✓"
 		} else {
