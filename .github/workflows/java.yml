@@ -2,10 +2,13 @@ name: Java
 
 on:
   push:
+    branches: [ main ]
     paths:
       - 'java/**'
-    tags-ignore:
-      - '**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'java/**'
 
 jobs:
   build-and-test:

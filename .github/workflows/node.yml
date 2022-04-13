@@ -2,9 +2,11 @@ name: Node
 
 on:
   push:
+    branches: [ main ]
     paths:
     - 'nodejs/**'
   pull_request:
+    branches: [ main ]
     paths:
     - 'nodejs/**'
 

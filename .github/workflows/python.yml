@@ -5,10 +5,12 @@ name: Python package
 
 on:
   push:
+    branches: [ main ]
     paths:
       - 'python/**/*.py'
       - 'python/setup.cfg'
   pull_request:
+    branches: [ main ]
     paths:
       - 'python/**/*.py'
       - 'python/setup.cfg'

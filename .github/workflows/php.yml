@@ -2,11 +2,11 @@ name: PHP
 
 on:
   push:
+    branches: [ main ]
     paths:
       - 'php/**'
-    tags:
-      - "php/v**"
   pull_request:
+    branches: [ main ]
     paths:
       - 'php/**'
 
