@@ -2,15 +2,14 @@ from __future__ import annotations
 
 # std imports
 import json
-from typing import Dict, Mapping, Tuple
 from dataclasses import dataclass
+from typing import Dict, Mapping, Tuple
 
 # third party imports
-from cryptography.hazmat.primitives import serialization
 from jwt.algorithms import ECAlgorithm
 
 # local imports
-from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, base64url_decode
+from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, decode_url_safe_base64
 
 
 class TlVerifier(TlJwsBase):
@@ -28,7 +27,7 @@ class TlVerifier(TlJwsBase):
             self.path,
             self.headers,
             self.body,
-            self.method
+            self.http_method
         ))
 
 
@@ -46,18 +45,22 @@ def tl_verify(args: VerifyArguments) -> bool:
     (jws_header, signature) = _parse_tl_signature(args.tl_signature)
     _verify_header(jws_header)
 
+    # order headers
+    ordered_headers = {k: args.headers[k]
+                       for k in jws_header["tl_headers"].split(',')}
+
     # build the jws paintext
     _, jws_b64 = build_v2_jws_b64(
         jws_header,
         args.method,
         args.path,
-        args.headers,
+        ordered_headers,
         args.body
     )
 
     # verify the signature
-    key = serialization.load_pem_public_key(args.pkey.encode('utf-8'))
     verifier = ECAlgorithm(ECAlgorithm.SHA512)
+    key = verifier.prepare_key(args.pkey)
     return verifier.verify(jws_b64, key, signature)
 
 
@@ -65,12 +68,12 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[Dict[str, str], bytes]:
     header_b64, signature_b64 = tl_signature.split("..")
 
     # decode header
-    header_b64 = header_b64.encode('utf-8')
-    headers = json.loads(base64url_decode(header_b64).decode("utf-8"))
+    header_b64 = header_b64.encode()
+    headers = json.loads(decode_url_safe_base64(header_b64).decode())
 
     # decode signature
-    signature_b64 = signature_b64.encode('utf-8')
-    signature = base64url_decode(signature_b64)
+    signature_b64 = signature_b64.encode()
+    signature = decode_url_safe_base64(signature_b64)
 
     return (headers, signature)
 
