@@ -5,11 +5,10 @@ from dataclasses import dataclass
 from typing import Dict, Mapping, Optional
 
 # third party imports
-from cryptography.hazmat.primitives import serialization
 from jwt.algorithms import ECAlgorithm
 
 # local imports
-from .utils import HttpMethod, TlJwsBase, base64url_encode, build_v2_jws_b64
+from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, to_url_safe_base64
 
 
 class TlSigner(TlJwsBase):
@@ -40,7 +39,7 @@ class TlSigner(TlJwsBase):
             self.path,
             self.headers,
             self.body,
-            self.method
+            self.http_method
         ))
 
 
@@ -73,10 +72,11 @@ def tl_sign(args: SignArguments) -> str:
     )
 
     # sign the jws
-    key = serialization.load_pem_private_key(args.pkey.encode('utf-8'), None)
     signer = ECAlgorithm(ECAlgorithm.SHA512)
+    key = signer.prepare_key(args.pkey)
     jws_signed = signer.sign(jws_header_and_payload, key)
+    jws_signed_b64 = to_url_safe_base64(jws_signed)
 
     # return url safe criptext
-    jws = jws_header_b64 + b".." + base64url_encode(jws_signed)
-    return jws.decode('utf-8')
+    jws_b64 = jws_header_b64 + b".." + jws_signed_b64
+    return jws_b64.decode()

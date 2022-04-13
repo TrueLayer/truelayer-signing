@@ -19,7 +19,7 @@ class HttpMethod(str, Enum):
 
 class TlJwsBase:
     pkey: str
-    method: HttpMethod
+    http_method: HttpMethod
     path: str
     headers: Mapping[str, str]
     body: str
@@ -27,22 +27,22 @@ class TlJwsBase:
     def __init__(
         self,
         pkey: str,
-        method: HttpMethod = HttpMethod.POST,
+        http_method: HttpMethod = HttpMethod.POST,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
         body: str = ""
     ):
         self.pkey = pkey
-        self.method = method
+        self.http_method = http_method
         self.path = path
         self.headers = {} if headers is None else headers
         self.body = body
 
-    def set_method(self: T, method: HttpMethod) -> T:
+    def set_method(self: T, http_method: HttpMethod) -> T:
         """
         Add the request method, defaults to `"POST"` if unspecified.
         """
-        self.method = method
+        self.http_method = http_method
         return self
 
     def set_path(self: T, path: str) -> T:
@@ -118,17 +118,17 @@ def build_v2_jws_b64(
     Build a TLv2 jws.
     """
     # enocde header
-    json_header = json.dumps(jws_header, separators=(",", ":")).encode('utf-8')
-    jws_header_b64 = base64url_encode(json_header)
+    json_header = json.dumps(jws_header, separators=(",", ":")).encode()
+    jws_header_b64 = to_url_safe_base64(json_header)
 
     # build payload
     payload = build_v2_signing_payload(method, path, headers, body)
-    payload_b64 = base64url_encode(payload.encode('utf-8'))
+    payload_b64 = to_url_safe_base64(payload.encode())
 
     return jws_header_b64, b".".join((jws_header_b64, payload_b64))
 
 
-def base64url_decode(input: bytes) -> bytes:
+def decode_url_safe_base64(input: bytes) -> bytes:
     """
     decodes bytes from url safe base64 alphabet without padding
     """
@@ -136,7 +136,7 @@ def base64url_decode(input: bytes) -> bytes:
     return base64.urlsafe_b64decode(input)
 
 
-def base64url_encode(input: bytes) -> bytes:
+def to_url_safe_base64(input: bytes) -> bytes:
     """
     Encodes bytes into url safe base64 alphabet without padding
     """
