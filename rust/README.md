@@ -21,7 +21,7 @@ See [full example](./examples/sign-request/).
 
 ## Verifying webhooks
 The `verify_with_jwks` function may be used to verify webhook `Tl-Signature` header signatures.
- 
+
 ```rust
 // `jku` field is included in webhook signatures
 let jku = truelayer_signing::extract_jws_header(webhook_signature)?.jku?;
