@@ -14,7 +14,7 @@ import (
 
 // the base url to use
 const (
-	TlBaseUrl = "https://api.truelayer-sandbox.com"
+	TlBaseURL = "https://api.truelayer-sandbox.com"
 )
 
 func main() {
@@ -52,32 +52,43 @@ func main() {
 		Body([]byte(body)). // body of our request
 		Sign()
 
+	if err != nil {
+		fmt.Printf("Failed signing: %s\n", err.Error())
+		os.Exit(1)
+	}
+
 	fmt.Println("Sending...")
 
 	// Request body & any signed headers *must* exactly match what was used to generate the signature.
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/test-signature", TlBaseUrl), strings.NewReader(body))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/test-signature", TlBaseURL), strings.NewReader(body))
+	if err != nil {
+		fmt.Printf("Failed request creation: %s\n", err.Error())
+		os.Exit(1)
+	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	req.Header.Add("Idempotency-Key", idempotencyKey)
 	req.Header.Add("X-Bar-Header", "abc123")
 	req.Header.Add("Tl-Signature", tlSignature)
 	resp, err := client.Do(req)
 
-	statusCode := resp.StatusCode
-
-	var responseBody []byte
+	statusCode := -1
+	var responseBody string
 	if err == nil {
+		statusCode := resp.StatusCode
 		if statusCode == 204 {
-			responseBody = []byte("✓")
+			responseBody = "✓"
 		} else {
 			defer resp.Body.Close()
-			responseBody, err = io.ReadAll(resp.Body)
-			if err != nil {
-				responseBody = []byte(fmt.Sprintf("%s", err.Error()))
+			responseBodyBytes, err := io.ReadAll(resp.Body)
+			if err == nil {
+				responseBody = string(responseBodyBytes)
+			} else {
+				responseBody = fmt.Sprintf("Failed reading response body: %s", err.Error())
 			}
 		}
 	} else {
-		responseBody = []byte(fmt.Sprintf("%s", err.Error()))
+		responseBody = fmt.Sprintf("Test signature request failed: %s", err.Error())
 	}
 
 	// 204 means success
