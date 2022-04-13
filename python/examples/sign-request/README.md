@@ -9,6 +9,12 @@ Set environment variables:
 * `PRIVATE_KEY` Private key PEM string that matches the `KID` & uploaded public key.
   Should have the same format as [this example private key](https://github.com/TrueLayer/truelayer-signing/blob/main/test-resources/ec512-private.pem).
 
+### Requirements
+
+Insure the following packages are installed:
+- `requests`
+- `truelayer_signing`
+
 ```sh
 $ python main.py
 ```
