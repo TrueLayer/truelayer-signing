@@ -1,4 +1,4 @@
-# golang request signature example
+# Golang request signature example
 Sends a signed request to `https://api.truelayer-sandbox.com/test-signature`.
 
 ## Run

@@ -52,9 +52,10 @@ func main() {
 		Body([]byte(body)). // body of our request
 		Sign()
 
-	client := &http.Client{}
+	fmt.Println("Sending...")
 
 	// Request body & any signed headers *must* exactly match what was used to generate the signature.
+	client := &http.Client{}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/test-signature", TlBaseUrl), strings.NewReader(body))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	req.Header.Add("Idempotency-Key", idempotencyKey)
@@ -81,5 +82,5 @@ func main() {
 
 	// 204 means success
 	// 401 means either the access token is invalid, or the signature is invalid.
-	fmt.Printf("%d %s", statusCode, responseBody)
+	fmt.Printf("%d %s\n", statusCode, responseBody)
 }
