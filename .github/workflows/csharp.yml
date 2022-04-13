@@ -2,11 +2,13 @@ name: C#
 
 on:
   push:
+    branches: [ main ]
     paths:
-    - 'csharp/**'
+      - 'csharp/**'
   pull_request:
+    branches: [ main ]
     paths:
-    - 'csharp/**'
+      - 'csharp/**'
 
 jobs:
   test:
