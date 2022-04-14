@@ -11,6 +11,8 @@ signature, err := tlsigning.SignWithPem(Kid, privateKeyBytes).
         Sign()
 ```
 
+See [full example](./examples/sign-request/).
+
 ## Verifying webhooks
 The `VerifyWithJwks` function can be used to verify webhook `Tl-Signature` header signatures.
 
@@ -43,3 +45,5 @@ Install the package with:
 ```shell
 go get github.com/Truelayer/truelayer-signing/go
 ```
+
+See [webhook server example](./examples/webhook-server/).
