@@ -65,7 +65,7 @@ func verifyHook(client *http.Client, r *http.Request) error {
 	// fetch jwks (cached according to cache-control headers)
 	resp, err := client.Get(jwsHeader.Jku)
 	if err != nil {
-		return fmt.Errorf("jku missing")
+		return fmt.Errorf("failed to fetch jwks")
 	}
 	defer resp.Body.Close()
 	jwks, err := io.ReadAll(resp.Body)
@@ -80,10 +80,8 @@ func verifyHook(client *http.Client, r *http.Request) error {
 func getHeadersMap(requestHeaders map[string][]string) map[string][]byte {
 	headers := make(map[string][]byte)
 	for key, values := range requestHeaders {
-		for _, value := range values {
-			// keep last one in case of multiple values
-			headers[key] = []byte(value)
-		}
+		// take first value
+		headers[key] = []byte(values[0])
 	}
 	return headers
 }
