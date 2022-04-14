@@ -48,6 +48,9 @@ func verifyHook(client *http.Client, r *http.Request) error {
 
 	jwsHeader, err := tlsigning.ExtractJwsHeader(tlSignature)
 	if err != nil {
+		return err
+	}
+	if len(jwsHeader.Jku) == 0 {
 		return fmt.Errorf("jku missing")
 	}
 
