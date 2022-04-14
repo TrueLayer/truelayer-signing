@@ -14,14 +14,14 @@ func main() {
 	tp := httpcache.NewMemoryCacheTransport()
 	client := http.Client{Transport: tp}
 
-	http.HandleFunc("/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b", handler(&client))
+	http.HandleFunc("/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b", receiveHook(&client))
 
 	log.Println("Starting server on: 7000")
 
 	log.Fatal(http.ListenAndServe(":7000", nil))
 }
 
-func handler(client *http.Client) http.HandlerFunc {
+func receiveHook(client *http.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method is not supported.", http.StatusNotFound)
@@ -29,12 +29,14 @@ func handler(client *http.Client) http.HandlerFunc {
 		}
 
 		err := verifyHook(client, r)
-		if err == nil {
-			w.WriteHeader(http.StatusAccepted)
-		} else {
+		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusUnauthorized)
 		}
+
+		// handle verified hook
+
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
