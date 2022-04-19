@@ -92,8 +92,10 @@ def tl_verify(args: VerifyArguments) -> bool:
     verifier = ECAlgorithm(ECAlgorithm.SHA512)
     if args.key_fmt == KeyFmt.PEM:
         key = verifier.prepare_key(args.pkey)
-    else:
+    elif args.key_fmt == KeyFmt.JWKS:
         key = verifier.from_jwk(args.pkey)
+    else:
+        raise ValueError("Undefined Key Format given")
     return verifier.verify(jws_b64, key, signature)
 
 
