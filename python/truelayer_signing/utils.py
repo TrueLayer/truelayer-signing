@@ -4,7 +4,7 @@ from __future__ import annotations
 import base64
 import json
 from enum import Enum
-from typing import Dict, Mapping, Optional, Tuple, TypeVar
+from typing import Dict, Mapping, MutableMapping, Optional, Tuple, TypeVar
 
 T = TypeVar('T', bound='TlJwsBase')
 
@@ -21,7 +21,7 @@ class TlJwsBase:
     pkey: str
     http_method: HttpMethod
     path: str
-    headers: Mapping[str, str]
+    headers: MutableMapping[str, str]
     body: str
 
     def __init__(
@@ -53,7 +53,7 @@ class TlJwsBase:
         self.path = path
         return self
 
-    def add_headers(self: T, headers: Mapping[str, str]) -> T:
+    def add_headers(self: T, headers: MutableMapping[str, str]) -> T:
         """
         Appends multiple header names & values.
 

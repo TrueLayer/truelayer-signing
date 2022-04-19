@@ -22,7 +22,7 @@ class TlVerifier(TlJwsBase):
     """
     Tl-Verifier
     """
-    key_fmt: str
+    key_fmt: KeyFmt
 
     def __init__(
         self,
@@ -98,25 +98,25 @@ def tl_verify(args: VerifyArguments) -> bool:
 
 
 def extract_jws_header(tl_signature: str) -> Dict[str, str]:
-    header_b64, _ = tl_signature.split("..")
-    header_b64 = header_b64.encode()
+    header, _ = tl_signature.split("..")
+    header_b64 = header.encode()
     headers = json.loads(decode_url_safe_base64(header_b64).decode())
     _verify_header(headers)
     return headers
 
 
 def _parse_tl_signature(tl_signature: str) -> Tuple[Dict[str, str], bytes]:
-    header_b64, signature_b64 = tl_signature.split("..")
+    header, signature = tl_signature.split("..")
 
     # decode header
-    header_b64 = header_b64.encode()
+    header_b64 = header.encode()
     headers = json.loads(decode_url_safe_base64(header_b64).decode())
 
     # decode signature
-    signature_b64 = signature_b64.encode()
-    signature = decode_url_safe_base64(signature_b64)
+    signature_b64 = signature.encode()
+    raw_signature = decode_url_safe_base64(signature_b64)
 
-    return (headers, signature)
+    return (headers, raw_signature)
 
 
 def _verify_header(header: Mapping[str, str]):
