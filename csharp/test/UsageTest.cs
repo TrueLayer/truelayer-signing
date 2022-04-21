@@ -1,29 +1,45 @@
 using Xunit;
 using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using System.IO;
-
+using System.Linq;
 using static TrueLayer.Signing.Tests.TestData;
 
 namespace TrueLayer.Signing.Tests
 {
     public class UsageTest
     {
-        [Fact]
-        public void SignAndVerify()
+        public static IEnumerable<object[]> TestCases = new[]
+        {
+            new TestCase(
+                "Shared Test Key",
+                Kid,
+                PrivateKey,
+                PublicKey),
+            new TestCase(
+                "Length Error Reproduction",
+                BugReproduction.LengthError.Kid,
+                BugReproduction.LengthError.PrivateKey,
+                BugReproduction.LengthError.PublicKey),
+        }.Select(x => new object[] {x});
+        
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify(TestCase testCase)
         {
             var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
             var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
             var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
                 .Method("POST")
                 .Path(path)
                 .Header("Idempotency-Key", idempotency_key)
                 .Body(body)
                 .Sign();
 
-            Verifier.VerifyWithPem(PublicKey)
+            Verifier.VerifyWithPem(testCase.PublicKey)
                 .Method("post") // case-insensitive: no troubles
                 .Path(path)
                 .Header("X-Whatever-2", "t2345d")
@@ -32,19 +48,20 @@ namespace TrueLayer.Signing.Tests
                 .Verify(tlSignature); // should not throw
         }
 
-        [Fact]
-        public void SignAndVerify_NoHeaders()
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_NoHeaders(TestCase testCase)
         {
             var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
             var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
                 .Method("POST")
                 .Path(path)
                 .Body(body)
                 .Sign();
 
-            Verifier.VerifyWithPem(PublicKey)
+            Verifier.VerifyWithPem(testCase.PublicKey)
                 .Method("POST")
                 .Path(path)
                 .Body(body)
@@ -281,6 +298,24 @@ namespace TrueLayer.Signing.Tests
                 .Verify(tlSignature);
 
             verify.Should().Throw<SignatureException>();
+        }
+        
+        public sealed class TestCase
+        {
+            public TestCase(string name, string kid, string privateKey, string publicKey)
+            {
+                Name = name;
+                Kid = kid;
+                PrivateKey = privateKey;
+                PublicKey = publicKey;
+            }
+
+            private string Name { get; }
+            public string Kid { get; }
+            public string PrivateKey { get; }
+            public string PublicKey { get; }
+
+            public override string ToString() => Name;
         }
     }
 }

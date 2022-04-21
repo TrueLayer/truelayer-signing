@@ -16,4 +16,9 @@
     <PackageReference Include="FluentAssertions" Version="6.2.0" />
     <ProjectReference Include="..\src\truelayer-signing.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="BugReproduction\**\*.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
