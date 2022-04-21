@@ -69,8 +69,8 @@ namespace TrueLayer.Signing
                 Curve = ECCurve.CreateFromValue(keyParams.PublicKeyParamSet.Id),
                 Q =
                 {
-                    X = keyParams.Q.XCoord.GetEncoded(),
-                    Y = keyParams.Q.YCoord.GetEncoded(),
+                    X = keyParams.Q.XCoord.GetEncoded().PrependZeroPad(66),
+                    Y = keyParams.Q.YCoord.GetEncoded().PrependZeroPad(66),
                 }
             };
         }
