@@ -1,17 +1,14 @@
 using Xunit;
-using TrueLayer.Signing;
 using System;
 using FluentAssertions;
 using System.IO;
 
-namespace Tests
+using static TrueLayer.Signing.Tests.TestData;
+
+namespace TrueLayer.Signing.Tests
 {
     public class UsageTest
     {
-        internal const string Kid = "45fc75cf-5649-4134-84b3-192c2c78e990";
-        internal static string PrivateKey = File.ReadAllText(TestResourcePath("ec512-private.pem"));
-        internal static string PublicKey = File.ReadAllText(TestResourcePath("ec512-public.pem"));
-
         [Fact]
         public void SignAndVerify()
         {
@@ -285,9 +282,5 @@ namespace Tests
 
             verify.Should().Throw<SignatureException>();
         }
-
-        /// <summary>Return working path to /test-resources/$subpath</summary>
-        private static string TestResourcePath(string subpath)
-            => Path.Combine("../../../../../test-resources", subpath);
     }
 }
