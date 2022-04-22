@@ -1,32 +1,45 @@
 using Xunit;
-using TrueLayer.Signing;
 using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using System.IO;
+using System.Linq;
+using static TrueLayer.Signing.Tests.TestData;
 
-namespace Tests
+namespace TrueLayer.Signing.Tests
 {
     public class UsageTest
     {
-        internal const string Kid = "45fc75cf-5649-4134-84b3-192c2c78e990";
-        internal static string PrivateKey = File.ReadAllText(TestResourcePath("ec512-private.pem"));
-        internal static string PublicKey = File.ReadAllText(TestResourcePath("ec512-public.pem"));
-
-        [Fact]
-        public void SignAndVerify()
+        public static IEnumerable<object[]> TestCases = new[]
+        {
+            new TestCase(
+                "Shared Test Key",
+                Kid,
+                PrivateKey,
+                PublicKey),
+            new TestCase(
+                "Length Error Reproduction",
+                BugReproduction.LengthError.Kid,
+                BugReproduction.LengthError.PrivateKey,
+                BugReproduction.LengthError.PublicKey),
+        }.Select(x => new object[] {x});
+        
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify(TestCase testCase)
         {
             var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
             var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
             var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
                 .Method("POST")
                 .Path(path)
                 .Header("Idempotency-Key", idempotency_key)
                 .Body(body)
                 .Sign();
 
-            Verifier.VerifyWithPem(PublicKey)
+            Verifier.VerifyWithPem(testCase.PublicKey)
                 .Method("post") // case-insensitive: no troubles
                 .Path(path)
                 .Header("X-Whatever-2", "t2345d")
@@ -35,19 +48,20 @@ namespace Tests
                 .Verify(tlSignature); // should not throw
         }
 
-        [Fact]
-        public void SignAndVerify_NoHeaders()
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_NoHeaders(TestCase testCase)
         {
             var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
             var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
                 .Method("POST")
                 .Path(path)
                 .Body(body)
                 .Sign();
 
-            Verifier.VerifyWithPem(PublicKey)
+            Verifier.VerifyWithPem(testCase.PublicKey)
                 .Method("POST")
                 .Path(path)
                 .Body(body)
@@ -285,9 +299,23 @@ namespace Tests
 
             verify.Should().Throw<SignatureException>();
         }
+        
+        public sealed class TestCase
+        {
+            public TestCase(string name, string kid, string privateKey, string publicKey)
+            {
+                Name = name;
+                Kid = kid;
+                PrivateKey = privateKey;
+                PublicKey = publicKey;
+            }
 
-        /// <summary>Return working path to /test-resources/$subpath</summary>
-        private static string TestResourcePath(string subpath)
-            => Path.Combine("../../../../../test-resources", subpath);
+            private string Name { get; }
+            public string Kid { get; }
+            public string PrivateKey { get; }
+            public string PublicKey { get; }
+
+            public override string ToString() => Name;
+        }
     }
 }

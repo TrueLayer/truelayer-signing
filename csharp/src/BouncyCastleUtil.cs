@@ -51,11 +51,13 @@ namespace TrueLayer.Signing
             return new ECParameters
             {
                 Curve = ECCurve.CreateFromValue(keyParams.PublicKeyParamSet.Id),
-                D = keyParams.D.ToByteArrayUnsigned(),
+                // Note: An exception will be thrown if the coord byte
+                // representations have uneven length, so must be zero padded to 66
+                D = keyParams.D.ToByteArrayUnsigned().PrependZeroPad(66),
                 Q =
                 {
-                    X = normalizedPoint.XCoord.GetEncoded(),
-                    Y = normalizedPoint.YCoord.GetEncoded()
+                    X = normalizedPoint.XCoord.GetEncoded().PrependZeroPad(66),
+                    Y = normalizedPoint.YCoord.GetEncoded().PrependZeroPad(66),
                 }
             };
         }
@@ -67,8 +69,8 @@ namespace TrueLayer.Signing
                 Curve = ECCurve.CreateFromValue(keyParams.PublicKeyParamSet.Id),
                 Q =
                 {
-                    X = keyParams.Q.XCoord.GetEncoded(),
-                    Y = keyParams.Q.YCoord.GetEncoded(),
+                    X = keyParams.Q.XCoord.GetEncoded().PrependZeroPad(66),
+                    Y = keyParams.Q.YCoord.GetEncoded().PrependZeroPad(66),
                 }
             };
         }
