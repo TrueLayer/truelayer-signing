@@ -3,9 +3,16 @@ A http server than can receive and verify signed TrueLayer webhooks.
 
 ## Run
 
-Run the server.
+First, build the signing lib
 ```sh
-node index.js
+# in the `truelayer-signing/nodejs` dir
+yarn build
+```
+
+Then, run the server
+```sh
+# in the `examples/webhook-server` dir
+yarn start
 ```
 
 Send a valid webhook that was signed for path `/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b`.
