@@ -11,7 +11,7 @@ Set environment variables:
 
 ### Requirements
 
-Insure the following packages are installed:
+Ensure the following packages are installed:
 - `requests`
 - `truelayer_signing`
 
