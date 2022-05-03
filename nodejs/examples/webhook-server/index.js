@@ -51,7 +51,7 @@ async function verify_hook(req) {
     method: req.method,
     path: req.path,
     headers: req.headers,
-    body: JSON.stringify(req.body),
+    body: req.body,
     jwks: JSON.stringify(jwks),
   });
 }
@@ -59,7 +59,7 @@ async function verify_hook(req) {
 // Note: Webhook path can be whatever is configured, here a unique path
 // is used matching the README example signature.
 app.post('/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b',
-  express.json(), // parse body as json
+  express.text({ type: "application/json" }),
   (req, res, next) => {
     // attempt to verify the webhook
     // if success, call the next handler
