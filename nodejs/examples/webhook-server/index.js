@@ -10,6 +10,11 @@ const allowedJkus = {
 
 // global JWK cache
 const cachedJwks = {};
+
+// Tries to retrive the JWKs from a cache,
+// otherwises, gets the JWKs from the endpoint.
+// JWKs are unique by JKU+KID,
+// which is how the cache is determined to be up to date
 async function get_jwks(sig) {
   let kid = tlSigning.extractKid(sig);
   tlSigning.SignatureError.ensure(kid, `Tl-Signature has missing key id`);
@@ -51,7 +56,9 @@ async function verify_hook(req) {
   });
 }
 
-app.post('/hook/:id',
+// Note: Webhook path can be whatever is configured, here a unique path
+// is used matching the README example signature.
+app.post('/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b',
   express.json(), // parse body as json
   (req, res, next) => {
     // attempt to verify the webhook
