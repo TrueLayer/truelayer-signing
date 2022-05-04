@@ -1,5 +1,4 @@
 using Xunit;
-using TrueLayer.Signing;
 using System;
 using FluentAssertions;
 using Jose;
@@ -8,14 +7,12 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Linq;
 
-namespace Tests
+using static TrueLayer.Signing.Tests.TestData;
+
+namespace TrueLayer.Signing.Tests
 {
     public class ErrorTest
     {
-        private const string Kid = UsageTest.Kid;
-        private static string PublicKey = UsageTest.PublicKey;
-        private static string PrivateKey = UsageTest.PrivateKey;
-
         [Fact]
         public void BadKey()
         {

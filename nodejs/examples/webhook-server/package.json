@@ -1,0 +1,14 @@
+{
+  "name": "example-sign-request",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.26.1",
+    "express": "^4.18.0",
+    "truelayer-signing": "file:../.."
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
