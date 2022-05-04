@@ -22,7 +22,7 @@ class HookHandler(BaseHTTPRequestHandler):
                 self.send_response(res)
             except Exception as err:
                 print(f"Error: {err}")
-                self.send_response(HTTPStatus.UNAUTHORIZED)
+                self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
             finally:
                 self.end_headers()
 
