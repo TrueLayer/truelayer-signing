@@ -67,7 +67,7 @@ def tl_sign(args: SignArguments) -> str:
         jws_header,
         args.method,
         args.path,
-        args.headers,
+        args.headers.items(),
         args.body
     )
 

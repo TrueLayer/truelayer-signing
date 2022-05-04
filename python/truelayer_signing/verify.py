@@ -85,7 +85,7 @@ def tl_verify(args: VerifyArguments) -> bool:
         jws_header,
         args.method,
         args.path,
-        ordered_headers,
+        ordered_headers.items(),
         args.body
     )
 
