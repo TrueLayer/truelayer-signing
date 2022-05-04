@@ -17,4 +17,9 @@ The signature is verified if at least one key verification succeeds.
 
 ## [0.0.2] - 2022-01-05
 ### Changed
-- Excluded build/test files when publishing on packagist
+- Excluded build/test files when publishing on packagist.
+
+## [0.0.1] - 2021-12-09
+### Added
+- Support for signing using a PEM string, PEM file, PEM base64 string or `Jose\Component\Core\JWK` key.
+- Support for verifying a signature using a PEM string, PEM file, PEM base64 string or `Jose\Component\Core\JWK` key.
