@@ -5,7 +5,7 @@ A http server than can receive and verify signed TrueLayer webhooks.
 
 ### Requirements
 
-Insure the following packages are installed:
+Ensure the following packages are installed:
 - `requests`
 - `truelayer_signing`
 
