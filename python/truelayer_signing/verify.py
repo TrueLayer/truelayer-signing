@@ -5,7 +5,7 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Mapping, Optional, Tuple
+from typing import Dict, Mapping, Optional, Tuple
 
 # third party imports
 from jwt.algorithms import ECAlgorithm
@@ -31,7 +31,7 @@ class TlVerifier(TlJwsBase):
         key_fmt: KeyFmt,
         method: HttpMethod = HttpMethod.POST,
         path: str = "",
-        headers: Optional[OrderedDict[str, str]] = None,
+        headers: Optional[Dict[str, str]] = None,
         body: str = ""
     ) -> None:
         super().__init__(pkey, method, path, headers, body)
@@ -108,7 +108,7 @@ def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
     return headers
 
 
-def _parse_tl_signature(tl_signature: str) -> Tuple[OrderedDict[str, str], bytes]:
+def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
     header, signature = tl_signature.split("..")
 
     # decode header

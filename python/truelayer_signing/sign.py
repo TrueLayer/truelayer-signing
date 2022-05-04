@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 # std imports
-from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Mapping, Optional
 
 # third party imports
 from jwt.algorithms import ECAlgorithm
@@ -24,7 +23,7 @@ class TlSigner(TlJwsBase):
         pkey: str,
         method: HttpMethod = HttpMethod.POST,
         path: str = "",
-        headers: Optional[OrderedDict[str, str]] = None,
+        headers: Optional[Dict[str, str]] = None,
         body: str = ""
     ) -> None:
         super().__init__(pkey, method, path, headers, body)
@@ -49,7 +48,7 @@ class SignArguments:
     kid: str
     pkey: str
     path: str
-    headers: OrderedDict[str, str]
+    headers: Mapping[str, str]
     body: str
     method: HttpMethod
 
