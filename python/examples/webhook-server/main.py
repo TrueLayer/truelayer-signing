@@ -45,7 +45,10 @@ def hook_handler(path: str, headers: Mapping[str, str], body: str) -> HTTPStatus
     res = requests.get(jku)
     res.raise_for_status()
     keys = res.json()["keys"]
-    jwks = next(filter(lambda x: x["kid"] == jws_header["kid"], keys))
+    try:
+        jwks = next(filter(lambda x: x["kid"] == jws_header["kid"], keys))
+    except StopIteration:
+        raise ValueError("no jwk found for signature kid")
 
     # verify signature using the jkws
     res = verify_with_jkws(jwks) \
