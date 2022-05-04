@@ -6,12 +6,15 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Mapping, Optional, Tuple
+from jwt import InvalidKeyError
+from json import JSONDecodeError
 
 # third party imports
 from jwt.algorithms import ECAlgorithm
 
 # local imports
 from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, decode_url_safe_base64
+from .errors import TlSigningException
 
 
 class KeyFmt(Enum):
@@ -40,6 +43,9 @@ class TlVerifier(TlJwsBase):
     def verify(self, tl_signature: str) -> bool:
         """
         Verify the given `Tl-Signature`.
+
+        Raises:
+            TlSigningException
         """
         return tl_verify(VerifyArguments(
             tl_signature,
@@ -63,8 +69,17 @@ class VerifyArguments:
     method: HttpMethod
 
 
-def tl_verify(args: VerifyArguments) -> bool:
-    (jws_header, signature) = _parse_tl_signature(args.tl_signature)
+def tl_verify(args: VerifyArguments):
+    """
+    Verify the given `Tl-Signature`.
+
+    Raises:
+        TlSigningException
+    """
+    try:
+        (jws_header, signature) = _parse_tl_signature(args.tl_signature)
+    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError):
+        raise TlSigningException("Failed To Decode Signature")
     _verify_header(jws_header)
 
     # order headers
@@ -78,7 +93,8 @@ def tl_verify(args: VerifyArguments) -> bool:
             ))
             ordered_headers[header_name] = args.headers[key]
     except StopIteration:
-        raise ValueError(f"Missing Required Header Value: {header_name}")
+        raise TlSigningException(
+            f"Missing Required Header Value: {header_name}")
 
     # build the jws paintext
     _, jws_b64 = build_v2_jws_b64(
@@ -91,16 +107,28 @@ def tl_verify(args: VerifyArguments) -> bool:
 
     # verify the signature
     verifier = ECAlgorithm(ECAlgorithm.SHA512)
-    if args.key_fmt == KeyFmt.PEM:
-        key = verifier.prepare_key(args.pkey)
-    elif args.key_fmt == KeyFmt.JWKS:
-        key = verifier.from_jwk(args.pkey)
-    else:
-        raise ValueError("Undefined Key Format given")
-    return verifier.verify(jws_b64, key, signature)
+    try:
+        if args.key_fmt == KeyFmt.PEM:
+            key = verifier.prepare_key(args.pkey)
+        elif args.key_fmt == KeyFmt.JWKS:
+            key = verifier.from_jwk(args.pkey)
+    except (ValueError, InvalidKeyError):
+        raise TlSigningException("Invalid Key")
+
+    if not verifier.verify(jws_b64, key, signature):
+        raise TlSigningException("Invalid Signature")
 
 
 def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
+    """
+    Returns the signatures deserialize headers
+
+    Raises: 
+        - JSONDecodeError
+        - UnicodeEncodeError
+        - UnicodeDecodeError
+        - 
+    """
     header, _ = tl_signature.split("..")
     header_b64 = header.encode()
     headers = json.loads(decode_url_safe_base64(header_b64).decode())
@@ -109,6 +137,14 @@ def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
 
 
 def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
+    """
+    Returns deserialize headers and decoded payload.
+
+    Raises:
+        - JSONDecodeError
+        - UnicodeEncodeError
+        - UnicodeDecodeError
+    """
     header, signature = tl_signature.split("..")
 
     # decode header
@@ -123,11 +159,17 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
 
 
 def _verify_header(header: Mapping[str, str]):
+    """
+    Verify the JWT header.
+
+    Raises:
+        - TlSigningException
+    """
     if any(x not in header.keys() for x in ["alg", "kid", "tl_version", "tl_headers"]):
-        raise ValueError("Invaild Header")
+        raise TlSigningException("Invaild Header")
 
     if header["alg"] != "ES512":
-        raise ValueError("Unexpected Header Algorithm")
+        raise TlSigningException("Unexpected Header Algorithm")
 
     if header["tl_version"] != "2":
-        raise ValueError("Expected tl_version 2")
+        raise TlSigningException("Expected tl_version 2")
