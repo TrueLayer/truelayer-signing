@@ -14,3 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Methods that enable signature verification using PEM or PEM files can now receive multiple strings or paths (i.e multiple keys).
 The signature is verified if at least one key verification succeeds.
+
+## [0.0.2] - 2022-01-05
+### Changed
+- Excluded build/test files when publishing on packagist
