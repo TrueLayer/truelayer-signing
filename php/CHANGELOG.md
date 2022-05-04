@@ -4,5 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-[comment]: <> (## 0.1.0)
-[comment]: <> (* Added `truelayer_signing::{sign_with_pem, verify_with_pem, extract_jws_header}`.)
+## [Unreleased]
+
+## [0.1.0] - 2022-05-05
+### Added
+- Support for verifying a signature using JSON keys.
+- Support for verifying a signature using `Jose\Component\Core\JWK` keys.
+
+### Changed
+- Methods that enable signature verification using PEM or PEM files can now receive multiple strings or paths (i.e multiple keys).
+The signature is verified if at least one key verification succeeds.
