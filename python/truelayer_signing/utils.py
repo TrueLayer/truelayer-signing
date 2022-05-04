@@ -116,6 +116,9 @@ def build_v2_jws_b64(
 ) -> Tuple[bytes, bytes]:
     """
     Build a TLv2 jws.
+
+    Raises:
+        - UnicodeEncodeError: If any of the given strings are not unicoded enocded
     """
     # enocde header
     json_header = json.dumps(jws_header, separators=(",", ":")).encode()

@@ -6,6 +6,7 @@ from typing import Dict, Mapping, Optional
 
 # third party imports
 from jwt.algorithms import ECAlgorithm
+from truelayer_signing.errors import TlSigningException
 
 # local imports
 from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, to_url_safe_base64
@@ -32,6 +33,9 @@ class TlSigner(TlJwsBase):
     def sign(self) -> str:
         """
         Produce a JWS `Tl-Signature` v2.
+
+        Raises:
+            - TlSigningException
         """
         return tl_sign(SignArguments(
             self.kid,
@@ -54,6 +58,12 @@ class SignArguments:
 
 
 def tl_sign(args: SignArguments) -> str:
+    """
+    Produce a JWS `Tl-Signature` v2.
+
+    Raises:
+        - TlSigningException
+    """
     # create the TLv2 jws header
     jws_header = {
         "alg": "ES512",
@@ -62,21 +72,29 @@ def tl_sign(args: SignArguments) -> str:
         "tl_headers": ",".join(args.headers.keys()),
     }
 
-    # create the jws paintext
-    jws_header_b64, jws_header_and_payload = build_v2_jws_b64(
-        jws_header,
-        args.method,
-        args.path,
-        args.headers.items(),
-        args.body
-    )
+    try:
+        # create the jws paintext
+        jws_header_b64, jws_header_and_payload = build_v2_jws_b64(
+            jws_header,
+            args.method,
+            args.path,
+            args.headers.items(),
+            args.body
+        )
 
-    # sign the jws
-    signer = ECAlgorithm(ECAlgorithm.SHA512)
-    key = signer.prepare_key(args.pkey)
-    jws_signed = signer.sign(jws_header_and_payload, key)
-    jws_signed_b64 = to_url_safe_base64(jws_signed)
+        # sign the jws
+        signer = ECAlgorithm(ECAlgorithm.SHA512)
 
-    # return url safe criptext
-    jws_b64 = jws_header_b64 + b".." + jws_signed_b64
-    return jws_b64.decode()
+        key = signer.prepare_key(args.pkey)
+        jws_signed = signer.sign(jws_header_and_payload, key)
+        jws_signed_b64 = to_url_safe_base64(jws_signed)
+
+        # return url safe criptext
+        jws_b64 = jws_header_b64 + b".." + jws_signed_b64
+        return jws_b64.decode()
+    except UnicodeDecodeError:
+        raise TlSigningException("Signature Error")
+    except UnicodeEncodeError:
+        raise TlSigningException("Encoding Error")
+    except ValueError:
+        raise TlSigningException("Invalid Key")

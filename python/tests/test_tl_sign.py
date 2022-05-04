@@ -25,13 +25,11 @@ def test_tl_sign_and_verify():
         .set_body(body) \
         .sign()
 
-    result = verify_with_pem(PUBLIC_KEY) \
+    verify_with_pem(PUBLIC_KEY) \
         .set_path(path) \
         .add_header("Idempotency-Key", idempotency_key) \
         .set_body(body) \
         .verify(signature)
-
-    assert(result)
 
 
 def test_verify_full_request_static_signature():
@@ -40,15 +38,13 @@ def test_verify_full_request_static_signature():
     path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
     tl_signature = read_file("../test-resources/tl-signature.txt").rstrip()
 
-    result = verify_with_pem(PUBLIC_KEY) \
+    verify_with_pem(PUBLIC_KEY) \
         .set_method(HttpMethod.POST) \
         .set_path(path) \
         .add_header("X-Whatever-2", b"t2345d") \
         .add_header("Idempotency-Key", idempotency_key) \
         .set_body(body) \
         .verify(tl_signature)
-
-    assert(result)
 
 
 def test_mismatched_signature_with_attached_valid_body():
@@ -79,10 +75,8 @@ def mismatched_signature_with_attached_valid_body_trailing_dots():
       QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB\
       d2d3D17Wd9UA...."
 
-    result = verify_with_pem(PUBLIC_KEY) \
+    verify_with_pem(PUBLIC_KEY) \
         .set_method("POST") \
         .set_path("/foo") \
         .set_body("{}") \
         .verify(tl_signature)
-
-    assert(not result)

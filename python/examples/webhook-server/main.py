@@ -6,6 +6,7 @@ from typing import Mapping
 # third-party imports
 import requests
 from truelayer_signing import HttpMethod, extract_jws_header, verify_with_jkws
+from truelayer_signing.errors import TlSigningException
 
 HOOK_PATH: str = "/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b"
 
@@ -51,14 +52,17 @@ def hook_handler(path: str, headers: Mapping[str, str], body: str) -> HTTPStatus
         raise ValueError("no jwk found for signature kid")
 
     # verify signature using the jkws
-    res = verify_with_jkws(jwks) \
-        .set_method(HttpMethod.POST) \
-        .set_path(path) \
-        .add_headers(headers) \
-        .set_body(body) \
-        .verify(tl_signature)
+    try:
+        verify_with_jkws(jwks) \
+            .set_method(HttpMethod.POST) \
+            .set_path(path) \
+            .add_headers(headers) \
+            .set_body(body) \
+            .verify(tl_signature)
+    except TlSigningException:
+        return HTTPStatus.UNAUTHORIZED
 
-    return HTTPStatus.NO_CONTENT if res else HTTPStatus.UNAUTHORIZED
+    return HTTPStatus.NO_CONTENT
 
 
 def run():
