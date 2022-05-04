@@ -53,13 +53,13 @@ class TlJwsBase:
         self.path = path
         return self
 
-    def add_headers(self: T, headers: Iterable[Tuple[str, str]]) -> T:
+    def add_headers(self: T, headers: Mapping[str, str]) -> T:
         """
         Appends multiple header names & values.
 
         Warning: Only a single value per header name is supported.
         """
-        for k, v in headers:
+        for k, v in headers.items():
             self.headers[k] = v
         return self
 
@@ -86,7 +86,7 @@ class TlJwsBase:
 def build_v2_signing_payload(
     method: str,
     path: str,
-    headers: Mapping[str, str],
+    headers: Iterable[Tuple[str, str]],
     body: str
 ) -> str:
     """
@@ -101,7 +101,7 @@ def build_v2_signing_payload(
     ```
     """
     payload = f"{method} {path}\n"
-    for key, value in headers.items():
+    for key, value in headers:
         payload += f"{key}: {value}\n"
     payload += body
     return payload
@@ -111,7 +111,7 @@ def build_v2_jws_b64(
     jws_header: Mapping[str, str],
     method: str,
     path: str,
-    headers: Mapping[str, str],
+    headers: Iterable[Tuple[str, str]],
     body: str
 ) -> Tuple[bytes, bytes]:
     """
