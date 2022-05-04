@@ -3,9 +3,8 @@ from __future__ import annotations
 # std imports
 import base64
 import json
-from collections import OrderedDict
 from enum import Enum
-from typing import Iterable, Mapping, Optional, Tuple, TypeVar
+from typing import Dict, Iterable, Mapping, Optional, Tuple, TypeVar
 
 T = TypeVar('T', bound='TlJwsBase')
 
@@ -22,7 +21,7 @@ class TlJwsBase:
     pkey: str
     http_method: HttpMethod
     path: str
-    headers: OrderedDict[str, str]
+    headers: Dict[str, str]
     body: str
 
     def __init__(
@@ -30,13 +29,13 @@ class TlJwsBase:
         pkey: str,
         http_method: HttpMethod = HttpMethod.POST,
         path: str = "",
-        headers: Optional[OrderedDict[str, str]] = None,
+        headers: Optional[Dict[str, str]] = None,
         body: str = ""
     ):
         self.pkey = pkey
         self.http_method = http_method
         self.path = path
-        self.headers = OrderedDict() if headers is None else headers
+        self.headers = {} if headers is None else headers
         self.body = body
 
     def set_method(self: T, http_method: HttpMethod) -> T:
@@ -87,7 +86,7 @@ class TlJwsBase:
 def build_v2_signing_payload(
     method: str,
     path: str,
-    headers: OrderedDict[str, str],
+    headers: Mapping[str, str],
     body: str
 ) -> str:
     """
@@ -112,7 +111,7 @@ def build_v2_jws_b64(
     jws_header: Mapping[str, str],
     method: str,
     path: str,
-    headers: OrderedDict[str, str],
+    headers: Mapping[str, str],
     body: str
 ) -> Tuple[bytes, bytes]:
     """
