@@ -2,9 +2,10 @@ from __future__ import annotations
 
 # std imports
 import json
+from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Mapping, Tuple, Optional
+from typing import Mapping, Optional, Tuple
 
 # third party imports
 from jwt.algorithms import ECAlgorithm
@@ -30,7 +31,7 @@ class TlVerifier(TlJwsBase):
         key_fmt: KeyFmt,
         method: HttpMethod = HttpMethod.POST,
         path: str = "",
-        headers: Optional[Dict[str, str]] = None,
+        headers: Optional[OrderedDict[str, str]] = None,
         body: str = ""
     ) -> None:
         super().__init__(pkey, method, path, headers, body)
@@ -69,7 +70,7 @@ def tl_verify(args: VerifyArguments) -> bool:
     # order headers
     try:
         header_names = jws_header["tl_headers"].split(',')
-        ordered_headers = {}
+        ordered_headers = OrderedDict()
         for header_name in header_names:
             key = next(filter(
                 lambda x: x.lower() == header_name.lower(),
@@ -99,7 +100,7 @@ def tl_verify(args: VerifyArguments) -> bool:
     return verifier.verify(jws_b64, key, signature)
 
 
-def extract_jws_header(tl_signature: str) -> Dict[str, str]:
+def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
     header, _ = tl_signature.split("..")
     header_b64 = header.encode()
     headers = json.loads(decode_url_safe_base64(header_b64).decode())
@@ -107,7 +108,7 @@ def extract_jws_header(tl_signature: str) -> Dict[str, str]:
     return headers
 
 
-def _parse_tl_signature(tl_signature: str) -> Tuple[Dict[str, str], bytes]:
+def _parse_tl_signature(tl_signature: str) -> Tuple[OrderedDict[str, str], bytes]:
     header, signature = tl_signature.split("..")
 
     # decode header
