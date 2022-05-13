@@ -10,6 +10,7 @@ They can then be verified using the associated public key.
 * [Go](./go)
 * [Java](./java)
 * [PHP](./php)
+* [Python](./python)
 
 ## Request signing specification
 See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how request signing is implemented.
