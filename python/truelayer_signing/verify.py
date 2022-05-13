@@ -97,13 +97,16 @@ def tl_verify(args: VerifyArguments):
             f"Missing Required Header Value: {header_name}")
 
     # build the jws paintext
-    _, jws_b64 = build_v2_jws_b64(
-        jws_header,
-        args.method,
-        args.path,
-        ordered_headers.items(),
-        args.body
-    )
+    try:
+        _, jws_b64 = build_v2_jws_b64(
+            jws_header,
+            args.method,
+            args.path,
+            ordered_headers.items(),
+            args.body
+        )
+    except UnicodeEncodeError:
+        raise TlSigningException("Internal Error")
 
     # verify the signature
     verifier = ECAlgorithm(ECAlgorithm.SHA512)
@@ -124,16 +127,16 @@ def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
     Returns the signatures deserialize headers
 
     Raises: 
-        - JSONDecodeError
-        - UnicodeEncodeError
-        - UnicodeDecodeError
-        - 
+        - TlSigningException
     """
-    header, _ = tl_signature.split("..")
-    header_b64 = header.encode()
-    headers = json.loads(decode_url_safe_base64(header_b64).decode())
-    _verify_header(headers)
-    return headers
+    try:
+        header, _ = tl_signature.split("..")
+        header_b64 = header.encode()
+        headers = json.loads(decode_url_safe_base64(header_b64).decode())
+        _verify_header(headers)
+        return headers
+    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError):
+        raise TlSigningException("Invalid Signature")
 
 
 def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
