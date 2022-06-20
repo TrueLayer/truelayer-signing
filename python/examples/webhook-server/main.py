@@ -1,12 +1,18 @@
 # std imports
+import sys
+import logging
+
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from http import HTTPStatus
 from typing import Mapping
 
 # third-party imports
 import requests
-from truelayer_signing import HttpMethod, extract_jws_header, verify_with_jkws
+
+from truelayer_signing import HttpMethod, extract_jws_header, verify_with_jwks
 from truelayer_signing.errors import TlSigningException
+
+logger = logging.getLogger(__name__)
 
 HOOK_PATH: str = "/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b"
 
@@ -53,23 +59,29 @@ def hook_handler(path: str, headers: Mapping[str, str], body: str) -> HTTPStatus
 
     # verify signature using the jkws
     try:
-        verify_with_jkws(jwks) \
+        verify_with_jwks(jwks) \
             .set_method(HttpMethod.POST) \
             .set_path(path) \
             .add_headers(headers) \
             .set_body(body) \
             .verify(tl_signature)
-    except TlSigningException:
+    except TlSigningException as e:
+        logging.error(e)
         return HTTPStatus.UNAUTHORIZED
 
     return HTTPStatus.NO_CONTENT
 
 
 def run():
+    logformat = "[%(asctime)s] %(levelname)s: %(message)s"
+    logging.basicConfig(
+        level=logging.DEBUG, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
     PORT = 7000
     server_address = ('localhost', PORT)
     server = HTTPServer(server_address, HookHandler)
-    print(f"Server running on port {PORT}")
+    logging.info(f"Server running on port {PORT}")
     server.serve_forever()
 
 

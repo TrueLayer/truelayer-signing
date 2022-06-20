@@ -3,15 +3,9 @@ A http server than can receive and verify signed TrueLayer webhooks.
 
 ## Run
 
-### Requirements
-
-Ensure the following packages are installed:
-- `requests`
-- `truelayer_signing`
-
 Run the server.
 ```sh
-python main.py
+$ poetry run python main.py
 ```
 
 Send a valid webhook that was signed for path `/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b`.

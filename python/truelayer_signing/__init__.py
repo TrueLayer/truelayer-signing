@@ -19,7 +19,7 @@ def verify_with_pem(pkey: str) -> TlVerifier:
     return TlVerifier(pkey, KeyFmt.PEM)
 
 
-def verify_with_jkws(jkws: str) -> TlVerifier:
+def verify_with_jwks(jkws: str) -> TlVerifier:
     """
     Start building a `Tl-Signature` verifier using public key jkws data.
     """
@@ -31,5 +31,5 @@ __all__ = [
     "extract_jws_header",
     "sign_with_pem",
     "verify_with_pem",
-    "verify_with_jkws"
+    "verify_with_jwks"
 ]
