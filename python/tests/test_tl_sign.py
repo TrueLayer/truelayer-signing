@@ -1,12 +1,13 @@
 import pytest
 
 from truelayer_signing import sign_with_pem, verify_with_pem
+from truelayer_signing.errors import TlSigningException
 from truelayer_signing.utils import HttpMethod
 
 
 def read_file(path: str) -> str:
     with open(path) as fp:
-        return fp.read()
+        return fp.read().strip()
 
 
 PUBLIC_KEY: str = read_file("../test-resources/ec512-public.pem")
@@ -28,6 +29,7 @@ def test_tl_sign_and_verify():
     verify_with_pem(PUBLIC_KEY) \
         .set_path(path) \
         .add_header("Idempotency-Key", idempotency_key) \
+        .add_required_header("Idempotency-Key") \
         .set_body(body) \
         .verify(signature)
 
@@ -41,7 +43,7 @@ def test_verify_full_request_static_signature():
     verify_with_pem(PUBLIC_KEY) \
         .set_method(HttpMethod.POST) \
         .set_path(path) \
-        .add_header("X-Whatever-2", b"t2345d") \
+        .add_header("X-Whatever-2", "t2345d") \
         .add_header("Idempotency-Key", idempotency_key) \
         .set_body(body) \
         .verify(tl_signature)
@@ -57,7 +59,7 @@ def test_mismatched_signature_with_attached_valid_body():
       QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB\
       d2d3D17Wd9UA"
 
-    with pytest.raises(Exception):
+    with pytest.raises(TlSigningException):
         verify_with_pem(PUBLIC_KEY) \
             .set_method(HttpMethod.POST) \
             .set_path("/foo") \
@@ -65,7 +67,7 @@ def test_mismatched_signature_with_attached_valid_body():
             .verify(tl_signature)
 
 
-def mismatched_signature_with_attached_valid_body_trailing_dots():
+def test_mismatched_signature_with_attached_valid_body_trailing_dots():
     # signature for `/bar` but with a valid jws-body pre-attached
     # if we run a simple jws verify on this unchanged it'll work!
     tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND\
@@ -75,8 +77,174 @@ def mismatched_signature_with_attached_valid_body_trailing_dots():
       QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB\
       d2d3D17Wd9UA...."
 
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY) \
+            .set_method(HttpMethod.POST) \
+            .set_path("/foo") \
+            .set_body("{}") \
+            .verify(tl_signature)
+
+
+def test_signature_no_headers():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_path(path) \
+        .set_body(body) \
+        .sign()
+
     verify_with_pem(PUBLIC_KEY) \
-        .set_method("POST") \
-        .set_path("/foo") \
-        .set_body("{}") \
+        .set_path(path) \
+        .set_body(body) \
+        .add_header("X-Whatever", "aoitbeh") \
+        .verify(signature)
+
+
+def test_signature_method_mismatch():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_method(HttpMethod.POST) \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .set_body(body) \
+        .sign()
+
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY) \
+            .set_method(HttpMethod.DELETE) \
+            .set_path(path) \
+            .add_header("X-Whatever", "aoitbeh") \
+            .add_header("Idempotency-Key", idempotency_key) \
+            .set_body(body) \
+            .verify(tl_signature)
+
+
+def test_signature_path_mismatch():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_method(HttpMethod.POST) \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .set_body(body) \
+        .sign()
+
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY) \
+            .set_method(HttpMethod.POST) \
+            .set_path("/merchant_accounts/67b5b1cf-1d0c-45d4-a2ea-61bdc044327c/sweeping") \
+            .add_header("X-Whatever", "aoitbeh") \
+            .add_header("Idempotency-Key", idempotency_key) \
+            .set_body(body) \
+            .verify(tl_signature)
+
+
+def test_signature_header_mismatch():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_method(HttpMethod.POST) \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .set_body(body) \
+        .sign()
+
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY) \
+            .set_method(HttpMethod.POST) \
+            .set_path(path) \
+            .add_header("X-Whatever", "aoitbeh") \
+            .add_header("Idempotency-Key", "something-else") \
+            .set_body(body) \
+            .verify(tl_signature)
+
+
+def test_signature_body_mismatch():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .set_body(body) \
+        .sign()
+
+    verify_with_pem(PUBLIC_KEY) \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .set_body(body) \
+        .verify(signature)
+
+
+def test_signature_missing_signature_header():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_method(HttpMethod.POST) \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .set_body(body) \
+        .sign()
+
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY) \
+            .set_method(HttpMethod.POST) \
+            .set_path(path) \
+            .add_header("X-Whatever", "aoitbeh") \
+            .set_body(body) \
+            .verify(tl_signature)
+
+
+def test_signature_required_header_missing_from_signature():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_method("post") \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .set_body(body) \
+        .sign()
+
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY) \
+            .set_method("post") \
+            .set_path(path) \
+            .add_required_header("X-Required") \
+            .add_header("Idempotency-Key", idempotency_key) \
+            .set_body(body) \
+            .verify(tl_signature)
+
+
+def test_flexible_header_case_order_verify():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
+        .set_method("post") \
+        .set_path(path) \
+        .add_header("Idempotency-Key", idempotency_key) \
+        .add_header("X-Custom", "123") \
+        .set_body(body) \
+        .sign()
+
+    verify_with_pem(PUBLIC_KEY) \
+        .set_method("post") \
+        .set_path(path) \
+        .add_header("X-CUSTOM", "123") \
+        .add_header("idempotency-key", idempotency_key) \
+        .set_body(body) \
         .verify(tl_signature)

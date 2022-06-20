@@ -5,7 +5,7 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Mapping, Optional, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple
 from jwt import InvalidKeyError
 from json import JSONDecodeError
 
@@ -27,6 +27,7 @@ class TlVerifier(TlJwsBase):
     Tl-Verifier
     """
     key_fmt: KeyFmt
+    required_headers: List[str]
 
     def __init__(
         self,
@@ -35,10 +36,20 @@ class TlVerifier(TlJwsBase):
         method: HttpMethod = HttpMethod.POST,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
+        required_headers: Optional[List[str]] = None,
         body: str = ""
     ) -> None:
         super().__init__(pkey, method, path, headers, body)
         self.key_fmt = key_fmt
+        self.required_headers = required_headers if required_headers else []
+
+    def add_required_header(self, header: str) -> TlVerifier:
+        self.required_headers.append(header)
+        return self
+
+    def add_required_headers(self, headers: Iterable[str]) -> TlVerifier:
+        self.required_headers.extend(headers)
+        return self
 
     def verify(self, tl_signature: str) -> bool:
         """
@@ -53,6 +64,7 @@ class TlVerifier(TlJwsBase):
             self.key_fmt,
             self.path,
             self.headers,
+            self.required_headers,
             self.body,
             self.http_method
         ))
@@ -65,6 +77,7 @@ class VerifyArguments:
     key_fmt: KeyFmt
     path: str
     headers: Mapping[str, str]
+    required_headers: Iterable[str]
     body: str
     method: HttpMethod
 
@@ -76,16 +89,14 @@ def tl_verify(args: VerifyArguments):
     Raises:
         TlSigningException
     """
-    try:
-        (jws_header, signature) = _parse_tl_signature(args.tl_signature)
-    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError):
-        raise TlSigningException("Failed To Decode Signature")
+    (jws_header, signature) = _parse_tl_signature(args.tl_signature)
     _verify_header(jws_header)
 
     # order headers
     try:
-        header_names = jws_header["tl_headers"].split(',')
-        ordered_headers = OrderedDict()
+        header_names = jws_header["tl_headers"].split(
+            ',') if jws_header["tl_headers"] != "" else []
+        ordered_headers: OrderedDict[str, str] = OrderedDict()
         for header_name in header_names:
             key = next(filter(
                 lambda x: x.lower() == header_name.lower(),
@@ -95,6 +106,16 @@ def tl_verify(args: VerifyArguments):
     except StopIteration:
         raise TlSigningException(
             f"Missing Required Header Value: {header_name}")
+
+    header_diff = (
+        {header.lower() for header in args.required_headers}
+        -
+        {header.lower() for header in ordered_headers.keys()}
+    )
+    if header_diff:
+        missing_headers = " ".join(header_diff)
+        raise TlSigningException(
+            f"Missing Required Header(s): {missing_headers}")
 
     # build the jws paintext
     try:
@@ -115,8 +136,8 @@ def tl_verify(args: VerifyArguments):
             key = verifier.prepare_key(args.pkey)
         elif args.key_fmt == KeyFmt.JWKS:
             key = verifier.from_jwk(args.pkey)
-    except (ValueError, InvalidKeyError):
-        raise TlSigningException("Invalid Key")
+    except (ValueError, InvalidKeyError) as e:
+        raise TlSigningException(f"Invalid Key: {e}")
 
     if not verifier.verify(jws_b64, key, signature):
         raise TlSigningException("Invalid Signature")
@@ -147,16 +168,26 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
         - JSONDecodeError
         - UnicodeEncodeError
         - UnicodeDecodeError
+        - ValueError
     """
-    header, signature = tl_signature.split("..")
+    try:
+        header, signature = tl_signature.split("..", maxsplit=1)
+    except ValueError:
+        raise TlSigningException("invalid signature format")
 
     # decode header
-    header_b64 = header.encode()
-    headers = json.loads(decode_url_safe_base64(header_b64).decode())
+    try:
+        header_b64 = header.encode()
+        headers = json.loads(decode_url_safe_base64(header_b64).decode())
+    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError) as e:
+        raise TlSigningException(f"header decode failed: {e}")
 
     # decode signature
-    signature_b64 = signature.encode()
-    raw_signature = decode_url_safe_base64(signature_b64)
+    try:
+        signature_b64 = signature.encode()
+        raw_signature = decode_url_safe_base64(signature_b64)
+    except (UnicodeEncodeError) as e:
+        raise TlSigningException(f"signature decode failed: {e}")
 
     return (headers, raw_signature)
 
