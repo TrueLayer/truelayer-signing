@@ -1,6 +1,13 @@
+from copy import copy
+import json
 import pytest
 
-from truelayer_signing import sign_with_pem, verify_with_pem
+from truelayer_signing import (
+    sign_with_pem,
+    verify_with_jwks,
+    verify_with_pem,
+    extract_jws_header
+)
 from truelayer_signing.errors import TlSigningException
 from truelayer_signing.utils import HttpMethod
 
@@ -248,3 +255,38 @@ def test_flexible_header_case_order_verify():
         .add_header("idempotency-key", idempotency_key) \
         .set_body(body) \
         .verify(tl_signature)
+
+
+def test_extract_jws_header():
+    hook_signature = read_file("../test-resources/webhook-signature.txt")
+    jws_header = extract_jws_header(hook_signature)
+    assert(jws_header["alg"] == "ES512")
+    assert(jws_header["alg"] == "ES512")
+    assert(jws_header["kid"] == KID)
+    assert(jws_header["tl_version"] == "2")
+    assert(jws_header["tl_headers"] == "X-Tl-Webhook-Timestamp,Content-Type")
+    assert(jws_header["jku"] ==
+           "https://webhooks.truelayer.com/.well-known/jwks")
+
+
+def test_verify_with_jwks():
+    hook_signature = read_file("../test-resources/webhook-signature.txt")
+    jwks = json.loads(read_file("../test-resources/jwks.json"))
+    jwk = next(filter(lambda x: x["kty"] == "EC", jwks["keys"]))
+
+    verify_with_jwks(copy(jwk)) \
+        .set_method("POST") \
+        .set_path("/tl-webhook") \
+        .add_header("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z") \
+        .add_header("content-type", "application/json") \
+        .set_body('{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}') \
+        .verify(hook_signature)
+
+    with pytest.raises(TlSigningException):
+        verify_with_jwks(jwk) \
+            .set_method("POST") \
+            .set_path("/tl-webhook") \
+            .add_header("x-tl-webhook-timestamp", "2021-12-29T11:42:55Z") \
+            .add_header("content-type", "application/json") \
+            .set_body('{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}') \
+            .verify(hook_signature)

@@ -93,7 +93,6 @@ def build_v2_signing_payload(
     Build a TLv2 signing payload.
     Retruns signing payload as a string
 
-    ### Example
     ```txt
     POST /test-signature
     Idempotency-Key: 619410b3-b00c-406e-bb1b-2982f97edb8b
@@ -131,12 +130,14 @@ def build_v2_jws_b64(
     return jws_header_b64, b".".join((jws_header_b64, payload_b64))
 
 
-def decode_url_safe_base64(input: bytes) -> bytes:
+def decode_url_safe_base64(input: bytes, zero_pad=0) -> bytes:
     """
     decodes bytes from url safe base64 alphabet without padding
     """
     input += b"=" * (4 - (len(input) % 4))
-    return base64.urlsafe_b64decode(input)
+    output = base64.urlsafe_b64decode(input)
+    padding = bytes(bytearray(max(0, zero_pad-len(output))))
+    return padding + output
 
 
 def to_url_safe_base64(input: bytes) -> bytes:

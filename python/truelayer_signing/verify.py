@@ -13,7 +13,13 @@ from json import JSONDecodeError
 from jwt.algorithms import ECAlgorithm
 
 # local imports
-from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, decode_url_safe_base64
+from .utils import (
+    HttpMethod,
+    TlJwsBase,
+    build_v2_jws_b64,
+    decode_url_safe_base64,
+    to_url_safe_base64
+)
 from .errors import TlSigningException
 
 
@@ -135,7 +141,20 @@ def tl_verify(args: VerifyArguments):
         if args.key_fmt == KeyFmt.PEM:
             key = verifier.prepare_key(args.pkey)
         elif args.key_fmt == KeyFmt.JWKS:
-            key = verifier.from_jwk(args.pkey)
+            # adds zero-padding to keys
+            if isinstance(args.pkey, str):
+                pkey = json.loads(args.pkey)
+            elif isinstance(args.pkey, dict):
+                pkey = args.pkey
+            else:
+                raise ValueError
+
+            pkey["x"] = to_url_safe_base64(
+                decode_url_safe_base64(pkey["x"].encode(), zero_pad=66))
+            pkey["y"] = to_url_safe_base64(
+                decode_url_safe_base64(pkey["y"].encode(), zero_pad=66))
+
+            key = verifier.from_jwk(pkey)
     except (ValueError, InvalidKeyError) as e:
         raise TlSigningException(f"Invalid Key: {e}")
 
@@ -165,10 +184,7 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
     Returns deserialize headers and decoded payload.
 
     Raises:
-        - JSONDecodeError
-        - UnicodeEncodeError
-        - UnicodeDecodeError
-        - ValueError
+        - TlSigningException
     """
     try:
         header, signature = tl_signature.split("..", maxsplit=1)
