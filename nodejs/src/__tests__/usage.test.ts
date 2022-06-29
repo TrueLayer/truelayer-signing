@@ -37,6 +37,18 @@ describe('sign', () => {
       }
     });
   });
+
+  it('should throw when using an invalid path', () => {
+    const fn = () => sign({
+      kid: KID,
+      privateKeyPem: PRIVATE_KEY,
+      method: HttpMethod.Post,
+      path: 'https://example.com/the-path', // invalid path
+      body: '{}',
+    });
+
+    expect(fn).toThrow(new Error("Invalid path \"https://example.com/the-path\" must start with '/'"));
+  });
 });
 
 describe('verify', () => {
@@ -80,6 +92,26 @@ describe('verify', () => {
         "X-Whatever-2": "foaulrsjth",
       }
     });
+  });
+
+  it('should throw when using an invalid path', () => {
+    const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
+    const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    const fn = () => verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature: TL_SIGNATURE,
+      method: HttpMethod.Post,
+      path: 'https://example.com/the-path', // invalid path
+      body,
+      headers: {
+        "X-Whatever-2": "foaulrsjth",
+        "Idempotency-Key": idempotencyKey,
+      }
+    });
+
+    expect(fn).toThrow(new Error("Invalid path \"https://example.com/the-path\" must start with '/'"));
   });
 
   it('should throw using a mismatched signature that has an attached valid body', () => {

@@ -34,6 +34,10 @@ const buildV2SigningPayload = ({
   headers,
   body,
 }: BuildSigningPayloadConfig) => {
+  if (!path.startsWith('/')) {
+    throw new Error(`Invalid path \"${path}\" must start with '/'`);
+  }
+
   let payload = `${method} ${path}\n`;
 
   for (const [key, value] of headers.entries) {
@@ -196,7 +200,7 @@ export type PublicKeyParameters = BaseParameters & {
 /**
 * Parameters to verify a given `TL-signature` header value
 * @typedef {(JwkVerifyParameters | PublicKeyParameters)} VerifyParameters
-*/ 
+*/
 export type VerifyParameters = JwkVerifyParameters | PublicKeyParameters;
 
 
@@ -215,7 +219,7 @@ function isJwkParameters(args: VerifyParameters): args is JwkVerifyParameters {
  * @throws {SignatureError} Will throw if signature could not be verified.
  */
 export function verify(args: JwkVerifyParameters): any
-export function verify(args: PublicKeyParameters): any 
+export function verify(args: PublicKeyParameters): any
 export function verify(args: VerifyParameters): any {
   const signature = requireArg(args.signature, "signature");
   const { headerJson, header, footer } = parseSignature(signature);
@@ -233,7 +237,7 @@ export function verify(args: VerifyParameters): any {
   } else {
     publicKeyPem = requireArg(args.publicKeyPem, "publicKeyPem");
   }
-  
+
   const method = requireArg(args.method, "method").toUpperCase() as HttpMethod;
   const path = requireArg(args.path, "path");
   const body = args.body || "";
