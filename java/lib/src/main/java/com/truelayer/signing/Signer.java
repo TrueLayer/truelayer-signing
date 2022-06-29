@@ -50,11 +50,13 @@ final public class Signer {
      *
      * @param path - the request absolute path must not be null
      * @return the Signer instance
-     * @throws IllegalArgumentException if the provided param is null
+     * @throws IllegalArgumentException if the provided param is null or invalid
      */
     public Signer path(String path) {
         if (path == null)
             throw new IllegalArgumentException("the path must not be null");
+        if(!path.startsWith("/"))
+            throw new IllegalArgumentException("invalid path " + path + " must start with '/'");
         this.path = path;
         return this;
     }
