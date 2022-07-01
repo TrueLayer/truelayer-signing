@@ -1,4 +1,9 @@
+# std imports
+from copy import copy
+from typing import Mapping, List
+
 # local imports
+from .errors import TlSigningException
 from .sign import TlSigner
 from .utils import HttpMethod
 from .verify import TlVerifier, KeyFmt, extract_jws_header
@@ -19,11 +24,18 @@ def verify_with_pem(pkey: str) -> TlVerifier:
     return TlVerifier(pkey, KeyFmt.PEM)
 
 
-def verify_with_jwks(jkws: str) -> TlVerifier:
+def verify_with_jwks(jwks: Mapping[str, List[Mapping[str, str]]], jws_header: Mapping[str, str]) -> TlVerifier:
     """
     Start building a `Tl-Signature` verifier using public key jkws data.
     """
-    return TlVerifier(jkws, KeyFmt.JWKS)
+    try:
+        pkey = copy(next(filter(
+            lambda x: x["kid"] == jws_header["kid"],
+            jwks["keys"]
+        )))
+    except StopIteration:
+        raise TlSigningException("no jwk found for signature kid")
+    return TlVerifier(pkey, KeyFmt.JWKS)
 
 
 __all__ = [

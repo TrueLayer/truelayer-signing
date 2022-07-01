@@ -5,7 +5,7 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 from jwt import InvalidKeyError
 from json import JSONDecodeError
 
@@ -28,7 +28,7 @@ class KeyFmt(Enum):
     JWKS = 1
 
 
-class TlVerifier(TlJwsBase):
+class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
     """
     Tl-Verifier
     """
@@ -37,7 +37,7 @@ class TlVerifier(TlJwsBase):
 
     def __init__(
         self,
-        pkey: str,
+        pkey: Union[str, Mapping[str, str]],
         key_fmt: KeyFmt,
         method: HttpMethod = HttpMethod.POST,
         path: str = "",
@@ -79,7 +79,7 @@ class TlVerifier(TlJwsBase):
 @dataclass(frozen=True)
 class VerifyArguments:
     tl_signature: str
-    pkey: str
+    pkey: Union[str, Mapping[str, str]]
     key_fmt: KeyFmt
     path: str
     headers: Mapping[str, str]
@@ -138,13 +138,13 @@ def tl_verify(args: VerifyArguments):
     # verify the signature
     verifier = ECAlgorithm(ECAlgorithm.SHA512)
     try:
-        if args.key_fmt == KeyFmt.PEM:
+        if args.key_fmt == KeyFmt.PEM and isinstance(args.pkey, str):
             key = verifier.prepare_key(args.pkey)
         elif args.key_fmt == KeyFmt.JWKS:
             # adds zero-padding to keys
             if isinstance(args.pkey, str):
                 pkey = json.loads(args.pkey)
-            elif isinstance(args.pkey, dict):
+            elif isinstance(args.pkey, Mapping):
                 pkey = args.pkey
             else:
                 raise ValueError
@@ -155,6 +155,8 @@ def tl_verify(args: VerifyArguments):
                 decode_url_safe_base64(pkey["y"].encode(), zero_pad=66))
 
             key = verifier.from_jwk(pkey)
+        else:
+            raise ValueError
     except (ValueError, InvalidKeyError) as e:
         raise TlSigningException(f"Invalid Key: {e}")
 
@@ -166,7 +168,7 @@ def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
     """
     Returns the signatures deserialize headers
 
-    Raises: 
+    Raises:
         - TlSigningException
     """
     try:

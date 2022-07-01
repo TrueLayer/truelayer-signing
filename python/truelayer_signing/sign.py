@@ -6,13 +6,13 @@ from typing import Dict, Mapping, Optional
 
 # third party imports
 from jwt.algorithms import ECAlgorithm
-from truelayer_signing.errors import TlSigningException
 
 # local imports
+from .errors import TlSigningException
 from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, to_url_safe_base64
 
 
-class TlSigner(TlJwsBase):
+class TlSigner(TlJwsBase[str]):
     """
     Tl-Signer
     """

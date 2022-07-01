@@ -51,15 +51,11 @@ def hook_handler(path: str, headers: Mapping[str, str], body: str) -> HTTPStatus
     # fetch jkws
     res = requests.get(jku)
     res.raise_for_status()
-    keys = res.json()["keys"]
-    try:
-        jwks = next(filter(lambda x: x["kid"] == jws_header["kid"], keys))
-    except StopIteration:
-        raise ValueError("no jwk found for signature kid")
+    jwks = res.json()
 
     # verify signature using the jkws
     try:
-        verify_with_jwks(jwks) \
+        verify_with_jwks(jwks, jws_header) \
             .set_method(HttpMethod.POST) \
             .set_path(path) \
             .add_headers(headers) \

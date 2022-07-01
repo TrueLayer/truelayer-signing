@@ -1,4 +1,3 @@
-from copy import copy
 import json
 import pytest
 
@@ -272,9 +271,9 @@ def test_extract_jws_header():
 def test_verify_with_jwks():
     hook_signature = read_file("../test-resources/webhook-signature.txt")
     jwks = json.loads(read_file("../test-resources/jwks.json"))
-    jwk = next(filter(lambda x: x["kty"] == "EC", jwks["keys"]))
+    jws_header = extract_jws_header(hook_signature)
 
-    verify_with_jwks(copy(jwk)) \
+    verify_with_jwks(jwks, jws_header) \
         .set_method("POST") \
         .set_path("/tl-webhook") \
         .add_header("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z") \
@@ -283,7 +282,7 @@ def test_verify_with_jwks():
         .verify(hook_signature)
 
     with pytest.raises(TlSigningException):
-        verify_with_jwks(jwk) \
+        verify_with_jwks(jwks, jws_header) \
             .set_method("POST") \
             .set_path("/tl-webhook") \
             .add_header("x-tl-webhook-timestamp", "2021-12-29T11:42:55Z") \

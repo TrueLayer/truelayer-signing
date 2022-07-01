@@ -16,21 +16,19 @@ The `verify_with_jwks` function may be used to verify webhook `Tl-Signature` hea
 
 ```
 # `jku` field is included in webhook signatures
-let jku = extract_jws_header(webhook_signature)["jku"];
+let jws_header = extract_jws_header(webhook_signature)["jku"]
 
 // check `jku` is an allowed TrueLayer url & fetch jwks JSON (not provided by this lib)
-ensure_jku_allowed(jku)?;
-jwks = fetch_jwks(jku);
+ensure_jku_allowed(jku)
+jwks = fetch_jwks(jku)
 
 // jwks may be used directly to verify a signature
-res = verify_with_jwks(jwks) \
+verify_with_jwks(jwks, jws_header) \
     .set_method(HttpMethod.POST) \
     .set_path(path) \
-    .add_headers(all_webhook_headers) \
+    .add_headers(headers) \
     .set_body(body) \
-    .verify(webhook_signature)
-
-assert(res)
+    .verify(tl_signature)
 ```
 
 See [webhook server example](./examples/webhook-server/).

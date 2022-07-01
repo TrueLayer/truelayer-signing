@@ -4,9 +4,10 @@ from __future__ import annotations
 import base64
 import json
 from enum import Enum
-from typing import Dict, Iterable, Mapping, Optional, Tuple, TypeVar
+from typing import Dict, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
 
 T = TypeVar('T', bound='TlJwsBase')
+P = TypeVar('P', str, Union[str, Mapping[str, str]])
 
 
 class HttpMethod(str, Enum):
@@ -17,8 +18,8 @@ class HttpMethod(str, Enum):
     DELETE = "DELETE"
 
 
-class TlJwsBase:
-    pkey: str
+class TlJwsBase(Generic[P]):
+    pkey: P
     http_method: HttpMethod
     path: str
     headers: Dict[str, str]
@@ -26,7 +27,7 @@ class TlJwsBase:
 
     def __init__(
         self,
-        pkey: str,
+        pkey: P,
         http_method: HttpMethod = HttpMethod.POST,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
