@@ -2,10 +2,17 @@ name: Java
 
 on:
   push:
-    branches:
-      - '**'
+    branches: [ main ]
+    paths:
+      - 'java/**'
+      - 'test-resources/**'
     tags-ignore:
       - '**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'java/**'
+      - 'test-resources/**'
 
 jobs:
   build-and-test:
