@@ -7,6 +7,8 @@ on:
       - "php/v**"
   pull_request:
     branches: [ main ]
+    paths:
+      - 'php/**'
 
 jobs:
   test:
