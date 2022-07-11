@@ -3,8 +3,14 @@ name: Go
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'go/**'
+      - 'test-resources/**'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'go/**'
+      - 'test-resources/**'
 
 jobs:
   lint:

@@ -5,10 +5,14 @@ on:
     branches: [ main ]
     tags:
       - "php/v**"
+    paths:
+      - 'php/**'
+      - 'test-resources/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'php/**'
+      - 'test-resources/**'
 
 jobs:
   test:

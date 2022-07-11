@@ -5,10 +5,12 @@ on:
     branches: [ main ]
     paths:
       - 'java/**'
+      - 'test-resources/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'java/**'
+      - 'test-resources/**'
 
 jobs:
   build-and-test:
