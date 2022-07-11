@@ -112,6 +112,10 @@ namespace TrueLayer.Signing
         /// </summary>
         public Verifier Path(string path)
         {
+            if (!path.StartsWith("/"))
+            {
+                throw new ArgumentException($"Invalid path \"{path}\" must start with '/'");
+            }
             this.path = path;
             return this;
         }
