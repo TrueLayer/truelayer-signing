@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 * Fixed README example
+* Removed license symlinks
 
 ## 0.1.4
 * Added `Headers` method to `Signer` and `Verifier`

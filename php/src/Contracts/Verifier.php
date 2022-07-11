@@ -5,9 +5,24 @@ declare(strict_types=1);
 namespace TrueLayer\Signing\Contracts;
 
 use Jose\Component\Core\JWK;
+use TrueLayer\Signing\Exceptions\InvalidArgumentException;
 
 interface Verifier extends Jws
 {
+    /**
+     * @param array<string, string> ...$decodedJsonObjects
+     *
+     * @return static
+     */
+    public static function verifyWithJsonKeys(array ...$decodedJsonObjects): self;
+
+    /**
+     * @param JWK ...$jwks
+     *
+     * @return static
+     */
+    public static function verifyWithKeys(JWK ...$jwks): self;
+
     /**
      * @param JWK $jwk
      *
@@ -16,28 +31,31 @@ interface Verifier extends Jws
     public static function verifyWithKey(JWK $jwk): self;
 
     /**
-     * @param string $pem
+     * @param string ...$pems
      *
      * @return static
+     * @throws InvalidArgumentException
      */
-    public static function verifyWithPem(string $pem): self;
+    public static function verifyWithPem(string ...$pems): self;
 
     /**
-     * @param string $pemBase64
+     * @param string ...$pemsBase64
      *
      * @return static
+     * @throws InvalidArgumentException
      */
-    public static function verifyWithPemBase64(string $pemBase64): self;
+    public static function verifyWithPemBase64(string ...$pemsBase64): self;
 
     /**
-     * @param string $path
+     * @param string ...$paths
      *
      * @return static
+     * @throws InvalidArgumentException
      */
-    public static function verifyWithPemFile(string $path): self;
+    public static function verifyWithPemFile(string ...$paths): self;
 
     /**
-     * @param array<string, string> $headers
+     * @param string[] $headers
      *
      * @return $this
      */

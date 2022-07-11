@@ -14,6 +14,7 @@ use Jose\Component\Signature\Serializer\JWSSerializerManager;
 use TrueLayer\Signing\Constants\TrueLayerSignatures;
 use TrueLayer\Signing\Contracts\Verifier as IVerifier;
 use TrueLayer\Signing\Exceptions\InvalidAlgorithmException;
+use TrueLayer\Signing\Exceptions\InvalidArgumentException;
 use TrueLayer\Signing\Exceptions\InvalidSignatureException;
 use TrueLayer\Signing\Exceptions\InvalidTrueLayerSignatureVersionException;
 use TrueLayer\Signing\Exceptions\RequestPathNotFoundException;
@@ -22,9 +23,20 @@ use TrueLayer\Signing\Exceptions\SignatureMustUseDetachedPayloadException;
 
 final class Verifier extends AbstractJws implements IVerifier
 {
+    /**
+     * @var JWSSerializerManager
+     */
     private JWSSerializerManager $serializerManager;
+
+    /**
+     * @var JWSVerifier
+     */
     private JWSVerifier $verifier;
-    private JWK $jwk;
+
+    /**
+     * @var array<JWK>
+     */
+    private array $jwks;
 
     /**
      * @var string[]
@@ -32,59 +44,117 @@ final class Verifier extends AbstractJws implements IVerifier
     private array $requiredHeaders = [];
 
     /**
-     * @param JWK $jwk
+     * @param array<string, string> ...$jsonObjects
      *
-     * @return Verifier
+     * @return IVerifier
+     * @throws InvalidArgumentException
      */
-    public static function verifyWithKey(JWK $jwk): Verifier
+    public static function verifyWithJsonKeys(array ...$jsonObjects): IVerifier
     {
-        return new self($jwk);
+        $jwks = [];
+        try {
+            foreach ($jsonObjects as $jsonObject) {
+                $encoded = json_encode($jsonObject);
+                if (!is_string($encoded)) {
+                    throw new InvalidArgumentException('One or multiple keys are invalid');
+                }
+
+                $jwks[] = JWK::createFromJson($encoded);
+            }
+        } catch (\InvalidArgumentException $e) {
+            throw new InvalidArgumentException('One or multiple keys are invalid');
+        }
+
+        return new self($jwks);
     }
 
     /**
-     * @param string $pem
+     * @param JWK ...$jwks
      *
-     * @return Verifier
+     * @return IVerifier
      */
-    public static function verifyWithPem(string $pem): Verifier
+    public static function verifyWithKeys(JWK ...$jwks): IVerifier
     {
-        $jwk = JWKFactory::createFromKey($pem, null, [
-            'use' => 'sig',
-        ]);
-
-        return new self($jwk);
-    }
-
-    /**
-     * @param string $pemBase64
-     *
-     * @return Verifier
-     */
-    public static function verifyWithPemBase64(string $pemBase64): Verifier
-    {
-        return self::verifyWithPem(\base64_decode($pemBase64));
-    }
-
-    /**
-     * @param string $path
-     *
-     * @return Verifier
-     */
-    public static function verifyWithPemFile(string $path): Verifier
-    {
-        $jwk = JWKFactory::createFromKeyFile($path, null, [
-            'use' => 'sig',
-        ]);
-
-        return new self($jwk);
+        return new self($jwks);
     }
 
     /**
      * @param JWK $jwk
+     *
+     * @return IVerifier
      */
-    private function __construct(JWK $jwk)
+    public static function verifyWithKey(JWK $jwk): IVerifier
     {
-        $this->jwk = $jwk;
+        return self::verifyWithKeys($jwk);
+    }
+
+    /**
+     * @param string ...$pems
+     *
+     * @return IVerifier
+     * @throws InvalidArgumentException
+     */
+    public static function verifyWithPem(string ...$pems): IVerifier
+    {
+        $jwks = [];
+        try {
+            foreach ($pems as $pem) {
+                $jwks[] = JWKFactory::createFromKey($pem, null, [
+                    'use' => 'sig',
+                ]);
+            }
+        } catch (\Exception $e) {
+            throw new InvalidArgumentException('One or multiple PEM keys could not be deserialized');
+        }
+
+        return new self($jwks);
+    }
+
+    /**
+     * @param string ...$pemsBase64
+     *
+     * @return IVerifier
+     * @throws InvalidArgumentException
+     */
+    public static function verifyWithPemBase64(string ...$pemsBase64): IVerifier
+    {
+        $decodedPems = [];
+        foreach ($pemsBase64 as $pemBase64) {
+            $decodedPems[] = \base64_decode($pemBase64);
+        }
+
+        return self::verifyWithPem(...$decodedPems);
+    }
+
+    /**
+     * @param string ...$paths
+     *
+     * @return IVerifier
+     * @throws InvalidArgumentException
+     */
+    public static function verifyWithPemFile(string ...$paths): IVerifier
+    {
+        $jwks = [];
+
+        try {
+            foreach ($paths as $path) {
+                $jwks[] = JWKFactory::createFromKeyFile($path, null, [
+                    'use' => 'sig',
+                ]);
+            }
+        } catch (\Exception $e) {
+            throw new InvalidArgumentException('One or multiple files contain invalid keys');
+        }
+
+        return new self($jwks);
+    }
+
+    /**
+     * @param array<JWK> $jwks
+     */
+    private function __construct(array $jwks)
+    {
+        $this->jwks = $jwks;
         $this->serializerManager = new JWSSerializerManager([new CompactSerializer()]);
         $this->verifier = new JWSVerifier(new AlgorithmManager([new ES512()]));
     }
@@ -92,9 +162,9 @@ final class Verifier extends AbstractJws implements IVerifier
     /**
      * @param string[] $headers
      *
-     * @return $this
+     * @return IVerifier
      */
-    public function requireHeaders(array $headers): Verifier
+    public function requireHeaders(array $headers): IVerifier
     {
         \array_push($this->requiredHeaders, ...$headers);
 
@@ -126,8 +196,12 @@ final class Verifier extends AbstractJws implements IVerifier
             throw new InvalidAlgorithmException();
         }
 
-        if ($jwsHeaders['tl_version'] !== TrueLayerSignatures::SIGNING_VERSION) {
+        if (!empty($jwsHeaders['tl_version']) && $jwsHeaders['tl_version'] !== TrueLayerSignatures::SIGNING_VERSION) {
             throw new InvalidTrueLayerSignatureVersionException();
+        }
+
+        if (empty($jwsHeaders['kid'])) {
+            throw new InvalidSignatureException('The kid is missing from the signature headers');
         }
 
         $tlHeaders = !empty($jwsHeaders['tl_headers']) ? \explode(',', $jwsHeaders['tl_headers']) : [];
@@ -138,8 +212,12 @@ final class Verifier extends AbstractJws implements IVerifier
             }
         }
 
-        if (!$this->verifier->verifyWithKey($jws, $this->jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders))) {
-            throw new InvalidSignatureException();
+        foreach ($this->jwks as $jwk) {
+            if ($this->verifier->verifyWithKey($jws, $jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders))) {
+                return;
+            }
         }
+
+        throw new InvalidSignatureException();
     }
 }

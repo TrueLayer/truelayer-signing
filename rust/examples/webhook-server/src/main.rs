@@ -7,7 +7,7 @@ use axum::{
     Router,
 };
 use reqwest_middleware::ClientWithMiddleware;
-use std::{net::SocketAddr, sync::Arc};
+use std::net::SocketAddr;
 use tracing::{info, warn};
 
 #[tokio::main]
@@ -18,7 +18,7 @@ async fn main() {
     let client = reqwest_middleware::ClientBuilder::new(reqwest::Client::new())
         .with(http_cache_reqwest::Cache(http_cache_reqwest::HttpCache {
             mode: http_cache_reqwest::CacheMode::Default,
-            manager: Arc::new(http_cache_reqwest::MokaManager::default()),
+            manager: http_cache_reqwest::MokaManager::default(),
             options: None,
         }))
         .build();
