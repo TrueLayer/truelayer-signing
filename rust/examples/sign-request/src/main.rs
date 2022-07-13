@@ -1,4 +1,3 @@
-use rand;
 use std::env;
 use uuid::Uuid;
 

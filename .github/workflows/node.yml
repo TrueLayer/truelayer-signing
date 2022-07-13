@@ -5,10 +5,12 @@ on:
     branches: [ main ]
     paths:
     - 'nodejs/**'
+    - 'test-resources/**'
   pull_request:
     branches: [ main ]
     paths:
     - 'nodejs/**'
+    - 'test-resources/**'
 
 jobs:
   test:

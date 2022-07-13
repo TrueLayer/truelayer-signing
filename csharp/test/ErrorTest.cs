@@ -129,5 +129,25 @@ namespace TrueLayer.Signing.Tests
 
             verify.Should().Throw<SignatureException>();
         }
+
+        [Fact]
+        public void InvalidSignerPath()
+        {
+            Action sign = () => Signer.SignWithPem(Kid, PrivateKey)
+                .Path("https://example.com/the-path");
+
+            sign.Should().Throw<ArgumentException>()
+                .WithMessage("Invalid path \"https://example.com/the-path\" must start with '/'");
+        }
+
+        [Fact]
+        public void InvalidVerifierPath()
+        {
+            Action verify = () => Verifier.VerifyWithPem(PublicKey)
+                .Path("https://example.com/the-path");
+
+            verify.Should().Throw<ArgumentException>()
+                .WithMessage("Invalid path \"https://example.com/the-path\" must start with '/'");
+        }
     }
 }

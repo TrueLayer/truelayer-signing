@@ -83,5 +83,6 @@ Signer::signWithKey('kid-value', new \Jose\Component\Core\JWK());
 Verifier::verifyWithPemFile('path/to/publickey');
 Verifier::verifyWithPem('publickey-pem-text');
 Verifier::verifyWithPemBase64('base64-publickey-pem-text');
+Verifier::verifyWithJsonKeys(...$arrayOfMultipleJsonKeys);
 Verifier::verifyWithKey(new \Jose\Component\Core\JWK());
 ```

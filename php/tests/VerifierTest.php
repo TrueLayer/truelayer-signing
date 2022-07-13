@@ -51,8 +51,9 @@ it('should verify the full request static signature', function () {
 });
 
 it('should throw when required header is missing', function () {
-    $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $kid = Uuid::uuid4()->toString();
+    $keys = MockData::generateKeyPair($kid);
+    $signer = Signer::signWithKey($kid, $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method('PUT')
@@ -76,8 +77,9 @@ it('should throw when required header is missing', function () {
 );
 
 it('should throw when the signature is invalid', function () {
-    $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $kid = Uuid::uuid4()->toString();
+    $keys = MockData::generateKeyPair($kid);
+    $signer = Signer::signWithKey($kid, $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method('PUT')
@@ -97,8 +99,9 @@ it('should throw when the signature is invalid', function () {
 })->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class);
 
 it('should verify header order/casing flexibility', function () {
-    $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $kid = Uuid::uuid4()->toString();
+    $keys = MockData::generateKeyPair($kid);
+    $signer = Signer::signWithKey($kid, $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method('PUT')
@@ -127,8 +130,9 @@ it('should verify header order/casing flexibility', function () {
 });
 
 it('should not verify the wrong HTTP method', function () {
-    $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $kid = Uuid::uuid4()->toString();
+    $keys = MockData::generateKeyPair($kid);
+    $signer = Signer::signWithKey($kid, $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method('PUT')
@@ -154,8 +158,9 @@ it('should not verify the wrong HTTP method', function () {
 })->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class);
 
 it('should verify a signature that has no headers', function () {
-    $keys = MockData::generateKeyPair();
-    $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
+    $kid = Uuid::uuid4()->toString();
+    $keys = MockData::generateKeyPair($kid);
+    $signer = Signer::signWithKey($kid, $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method('POST')
@@ -201,6 +206,26 @@ it('should verify a valid signature from pem string', function () {
         ->requireHeaders([
             'X-Idempotency-Key',
         ]);
+
+    /* @phpstan-ignore-next-line */
+    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+});
+
+it('should verify a valid signature from decoded json', function () {
+    $signature = file_get_contents('../test-resources/tl-signature.txt');
+    $jwksJson = file_get_contents('../test-resources/jwks.json');
+
+    /**
+     * @var array<string, array<array<string, string>>> $jwks
+     */
+    $jwks = json_decode((string) $jwksJson, true);
+    $verifier = Verifier::verifyWithJsonKeys(...$jwks['keys']);
+
+    $verifier->method('POST')
+        ->path('/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping')
+        ->header('X-Whatever-2', 't2345d')
+        ->header('Idempotency-Key', 'idemp-2076717c-9005-4811-a321-9e0787fa0382')
+        ->body('{"currency":"GBP","max_amount_in_minor":5000000}');
 
     /* @phpstan-ignore-next-line */
     expect($verifier->verify($signature))->not->toThrow(Exception::class);

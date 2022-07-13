@@ -36,6 +36,7 @@ public class WebhookVerificationHandler implements Handler {
         }
 
         // fetch jwks (should cache this according to headers)
+        // http GET request to jku url
         try (Response response = httpClient.newCall(new Request.Builder().url(jku).build()).execute()) {
             if (response.code() == 200) {
                 ResponseBody body = response.body();
@@ -52,9 +53,10 @@ public class WebhookVerificationHandler implements Handler {
                         .path(ctx.path())
                         .method("POST")
                         .verify(tlSignature);
+
+                ctx.status(202);
             } else
                 ctx.status(401);
         }
-        ctx.status(202);
     }
 }

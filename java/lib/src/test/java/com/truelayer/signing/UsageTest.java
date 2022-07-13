@@ -1,8 +1,5 @@
 package com.truelayer.signing;
 
-import com.truelayer.signing.SignatureException;
-import com.truelayer.signing.Signer;
-import com.truelayer.signing.Verifier;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -346,6 +343,26 @@ public class UsageTest {
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(webhookSignature));
 
         assertEquals("invalid signature", invalidSignatureException.getMessage());
+    }
+
+    @Test
+    public void signInvalidPath() {
+        IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class, () ->
+                Signer.from(kid, privateKey)
+                        .path("https://example.com/the-path") //invalid path
+        );
+
+        assertEquals("invalid path https://example.com/the-path must start with '/'", illegalArgumentException.getMessage());
+    }
+
+    @Test
+    public void verifyInvalidPath() {
+        IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class, () ->
+                Verifier.from(publicKey)
+                        .path("https://example.com/the-path") //invalid path
+        );
+
+        assertEquals("invalid path https://example.com/the-path must start with '/'", illegalArgumentException.getMessage());
     }
 
     private static Path testResourcePath(String subPath) {
