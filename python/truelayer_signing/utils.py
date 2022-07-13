@@ -6,8 +6,8 @@ import json
 from enum import Enum
 from typing import Dict, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
 
-T = TypeVar('T', bound='TlJwsBase')
-P = TypeVar('P', str, Union[str, Mapping[str, str]])
+P = TypeVar("P", str, Union[str, Mapping[str, str]])
+T = TypeVar("T", bound="TlJwsBase")
 
 
 class HttpMethod(str, Enum):
@@ -31,7 +31,7 @@ class TlJwsBase(Generic[P]):
         http_method: HttpMethod = HttpMethod.POST,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
-        body: str = ""
+        body: str = "",
     ):
         self.pkey = pkey
         self.http_method = http_method
@@ -85,10 +85,7 @@ class TlJwsBase(Generic[P]):
 
 
 def build_v2_signing_payload(
-    method: str,
-    path: str,
-    headers: Iterable[Tuple[str, str]],
-    body: str
+    method: str, path: str, headers: Iterable[Tuple[str, str]], body: str
 ) -> str:
     """
     Build a TLv2 signing payload.
@@ -112,7 +109,7 @@ def build_v2_jws_b64(
     method: str,
     path: str,
     headers: Iterable[Tuple[str, str]],
-    body: str
+    body: str,
 ) -> Tuple[bytes, bytes]:
     """
     Build a TLv2 jws.
@@ -131,13 +128,13 @@ def build_v2_jws_b64(
     return jws_header_b64, b".".join((jws_header_b64, payload_b64))
 
 
-def decode_url_safe_base64(input: bytes, zero_pad=0) -> bytes:
+def decode_url_safe_base64(input: bytes, zero_pad: int = 0) -> bytes:
     """
     decodes bytes from url safe base64 alphabet without padding
     """
     input += b"=" * (4 - (len(input) % 4))
     output = base64.urlsafe_b64decode(input)
-    padding = bytes(bytearray(max(0, zero_pad-len(output))))
+    padding = bytes(bytearray(max(0, zero_pad - len(output))))
     return padding + output
 
 

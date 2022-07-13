@@ -16,6 +16,7 @@ class TlSigner(TlJwsBase[str]):
     """
     Tl-Signer
     """
+
     kid: str
 
     def __init__(
@@ -25,7 +26,7 @@ class TlSigner(TlJwsBase[str]):
         method: HttpMethod = HttpMethod.POST,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
-        body: str = ""
+        body: str = "",
     ) -> None:
         super().__init__(pkey, method, path, headers, body)
         self.kid = kid
@@ -37,14 +38,16 @@ class TlSigner(TlJwsBase[str]):
         Raises:
             - TlSigningException
         """
-        return tl_sign(SignArguments(
-            self.kid,
-            self.pkey,
-            self.path,
-            self.headers,
-            self.body,
-            self.http_method
-        ))
+        return tl_sign(
+            SignArguments(
+                self.kid,
+                self.pkey,
+                self.path,
+                self.headers,
+                self.body,
+                self.http_method,
+            )
+        )
 
 
 @dataclass(frozen=True)
@@ -75,11 +78,7 @@ def tl_sign(args: SignArguments) -> str:
     try:
         # create the jws paintext
         jws_header_b64, jws_header_and_payload = build_v2_jws_b64(
-            jws_header,
-            args.method,
-            args.path,
-            args.headers.items(),
-            args.body
+            jws_header, args.method, args.path, args.headers.items(), args.body
         )
 
         # sign the jws

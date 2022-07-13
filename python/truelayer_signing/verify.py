@@ -18,7 +18,7 @@ from .utils import (
     TlJwsBase,
     build_v2_jws_b64,
     decode_url_safe_base64,
-    to_url_safe_base64
+    to_url_safe_base64,
 )
 from .errors import TlSigningException
 
@@ -32,6 +32,7 @@ class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
     """
     Tl-Verifier
     """
+
     key_fmt: KeyFmt
     required_headers: List[str]
 
@@ -43,7 +44,7 @@ class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
         required_headers: Optional[List[str]] = None,
-        body: str = ""
+        body: str = "",
     ) -> None:
         super().__init__(pkey, method, path, headers, body)
         self.key_fmt = key_fmt
@@ -57,23 +58,25 @@ class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
         self.required_headers.extend(headers)
         return self
 
-    def verify(self, tl_signature: str) -> bool:
+    def verify(self, tl_signature: str) -> None:
         """
         Verify the given `Tl-Signature`.
 
         Raises:
             TlSigningException
         """
-        return tl_verify(VerifyArguments(
-            tl_signature,
-            self.pkey,
-            self.key_fmt,
-            self.path,
-            self.headers,
-            self.required_headers,
-            self.body,
-            self.http_method
-        ))
+        tl_verify(
+            VerifyArguments(
+                tl_signature,
+                self.pkey,
+                self.key_fmt,
+                self.path,
+                self.headers,
+                self.required_headers,
+                self.body,
+                self.http_method,
+            )
+        )
 
 
 @dataclass(frozen=True)
@@ -88,7 +91,7 @@ class VerifyArguments:
     method: HttpMethod
 
 
-def tl_verify(args: VerifyArguments):
+def tl_verify(args: VerifyArguments) -> None:
     """
     Verify the given `Tl-Signature`.
 
@@ -100,37 +103,31 @@ def tl_verify(args: VerifyArguments):
 
     # order headers
     try:
-        header_names = jws_header["tl_headers"].split(
-            ',') if jws_header["tl_headers"] != "" else []
+        header_names = (
+            jws_header["tl_headers"].split(",")
+            if jws_header["tl_headers"] != ""
+            else []
+        )
         ordered_headers: OrderedDict[str, str] = OrderedDict()
         for header_name in header_names:
-            key = next(filter(
-                lambda x: x.lower() == header_name.lower(),
-                args.headers.keys()
-            ))
+            key = next(
+                filter(lambda x: x.lower() == header_name.lower(), args.headers.keys())
+            )
             ordered_headers[header_name] = args.headers[key]
     except StopIteration:
-        raise TlSigningException(
-            f"Missing Required Header Value: {header_name}")
+        raise TlSigningException(f"Missing Required Header Value: {header_name}")
 
-    header_diff = (
-        {header.lower() for header in args.required_headers}
-        -
-        {header.lower() for header in ordered_headers.keys()}
-    )
+    header_diff = {header.lower() for header in args.required_headers} - {
+        header.lower() for header in ordered_headers.keys()
+    }
     if header_diff:
         missing_headers = " ".join(header_diff)
-        raise TlSigningException(
-            f"Missing Required Header(s): {missing_headers}")
+        raise TlSigningException(f"Missing Required Header(s): {missing_headers}")
 
     # build the jws paintext
     try:
         _, jws_b64 = build_v2_jws_b64(
-            jws_header,
-            args.method,
-            args.path,
-            ordered_headers.items(),
-            args.body
+            jws_header, args.method, args.path, ordered_headers.items(), args.body
         )
     except UnicodeEncodeError:
         raise TlSigningException("Internal Error")
@@ -150,9 +147,11 @@ def tl_verify(args: VerifyArguments):
                 raise ValueError
 
             pkey["x"] = to_url_safe_base64(
-                decode_url_safe_base64(pkey["x"].encode(), zero_pad=66))
+                decode_url_safe_base64(pkey["x"].encode(), zero_pad=66)
+            )
             pkey["y"] = to_url_safe_base64(
-                decode_url_safe_base64(pkey["y"].encode(), zero_pad=66))
+                decode_url_safe_base64(pkey["y"].encode(), zero_pad=66)
+            )
 
             key = verifier.from_jwk(pkey)
         else:
@@ -174,7 +173,9 @@ def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
     try:
         header, _ = tl_signature.split("..")
         header_b64 = header.encode()
-        headers = json.loads(decode_url_safe_base64(header_b64).decode())
+        headers: Mapping[str, str] = json.loads(
+            decode_url_safe_base64(header_b64).decode()
+        )
         _verify_header(headers)
         return headers
     except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError):
@@ -210,7 +211,7 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
     return (headers, raw_signature)
 
 
-def _verify_header(header: Mapping[str, str]):
+def _verify_header(header: Mapping[str, str]) -> None:
     """
     Verify the JWT header.
 

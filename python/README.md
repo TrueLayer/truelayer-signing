@@ -1,5 +1,21 @@
 # truelayer-signing
+
+## Description
+
 Python package to produce & verify TrueLayer API requests signatures.
+
+## How to build
+
+Python: `poetry install`
+
+## Contributing
+Enable `black` and `flake-8` pre-commit hooks: `pre-commit install`
+
+## How to test
+- Type checking: `poetry run mypy ./truelayer_signing`
+
+- Test suite: `poetry run pytest -v tests/`
+
 
 ```
 tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
