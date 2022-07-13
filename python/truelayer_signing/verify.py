@@ -39,7 +39,7 @@ class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
         self,
         pkey: Union[str, Mapping[str, str]],
         key_fmt: KeyFmt,
-        method: HttpMethod = HttpMethod.POST,
+        method: HttpMethod,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
         required_headers: Optional[List[str]] = None,
