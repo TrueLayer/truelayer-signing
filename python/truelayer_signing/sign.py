@@ -12,7 +12,7 @@ from .errors import TlSigningException
 from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, to_url_safe_base64
 
 
-class TlSigner(TlJwsBase[str]):
+class TlSigner(TlJwsBase[str, HttpMethod]):
     """
     Tl-Signer
     """
@@ -82,10 +82,10 @@ def tl_sign(args: SignArguments) -> str:
         )
 
         # sign the jws
-        signer = ECAlgorithm(ECAlgorithm.SHA512)
+        signer = ECAlgorithm(ECAlgorithm.SHA512)  # type: ignore
 
-        key = signer.prepare_key(args.pkey)
-        jws_signed = signer.sign(jws_header_and_payload, key)
+        key = signer.prepare_key(args.pkey)  # type: ignore
+        jws_signed = signer.sign(jws_header_and_payload, key)  # type: ignore
         jws_signed_b64 = to_url_safe_base64(jws_signed)
 
         # return url safe criptext

@@ -28,7 +28,7 @@ class KeyFmt(Enum):
     JWKS = 1
 
 
-class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
+class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]], Optional[HttpMethod]]):
     """
     Tl-Verifier
     """
@@ -40,7 +40,7 @@ class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
         self,
         pkey: Union[str, Mapping[str, str]],
         key_fmt: KeyFmt,
-        method: HttpMethod,
+        method: Optional[HttpMethod] = None,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
         required_headers: Optional[List[str]] = None,
@@ -65,6 +65,9 @@ class TlVerifier(TlJwsBase[Union[str, Mapping[str, str]]]):
         Raises:
             TlSigningException
         """
+        if self.http_method is None:
+            raise TlSigningException("HttpMethod not set")
+
         tl_verify(
             VerifyArguments(
                 tl_signature,
@@ -133,10 +136,10 @@ def tl_verify(args: VerifyArguments) -> None:
         raise TlSigningException("Internal Error")
 
     # verify the signature
-    verifier = ECAlgorithm(ECAlgorithm.SHA512)
+    verifier = ECAlgorithm(ECAlgorithm.SHA512)  # type: ignore
     try:
         if args.key_fmt == KeyFmt.PEM and isinstance(args.pkey, str):
-            key = verifier.prepare_key(args.pkey)
+            key = verifier.prepare_key(args.pkey)  # type: ignore
         elif args.key_fmt == KeyFmt.JWKS:
             # adds zero-padding to keys
             if isinstance(args.pkey, str):
@@ -153,13 +156,13 @@ def tl_verify(args: VerifyArguments) -> None:
                 decode_url_safe_base64(pkey["y"].encode(), zero_pad=66)
             )
 
-            key = verifier.from_jwk(pkey)
+            key = verifier.from_jwk(pkey)  # type: ignore
         else:
             raise ValueError
     except (ValueError, InvalidKeyError) as e:
         raise TlSigningException(f"Invalid Key: {e}")
 
-    if not verifier.verify(jws_b64, key, signature):
+    if not verifier.verify(jws_b64, key, signature):  # type: ignore
         raise TlSigningException("Invalid Signature")
 
 

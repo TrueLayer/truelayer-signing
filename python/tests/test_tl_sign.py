@@ -34,7 +34,7 @@ def test_tl_sign_and_verify():
         .sign()
     )
 
-    verify_with_pem(PUBLIC_KEY).set_path(path).add_header(
+    verify_with_pem(PUBLIC_KEY).set_method(HttpMethod.POST).set_path(path).add_header(
         "Idempotency-Key", idempotency_key
     ).add_required_header("Idempotency-Key").set_body(body).verify(signature)
 
@@ -88,9 +88,9 @@ def test_signature_no_headers():
 
     signature = sign_with_pem(KID, PRIVATE_KEY).set_path(path).set_body(body).sign()
 
-    verify_with_pem(PUBLIC_KEY).set_path(path).set_body(body).add_header(
-        "X-Whatever", "aoitbeh"
-    ).verify(signature)
+    verify_with_pem(PUBLIC_KEY).set_method(HttpMethod.POST).set_path(path).set_body(
+        body
+    ).add_header("X-Whatever", "aoitbeh").verify(signature)
 
 
 def test_signature_method_mismatch():
@@ -184,7 +184,7 @@ def test_signature_body_mismatch():
         .sign()
     )
 
-    verify_with_pem(PUBLIC_KEY).set_path(path).add_header(
+    verify_with_pem(PUBLIC_KEY).set_method(HttpMethod.POST).set_path(path).add_header(
         "Idempotency-Key", idempotency_key
     ).set_body(body).verify(signature)
 
@@ -216,7 +216,7 @@ def test_signature_required_header_missing_from_signature():
 
     tl_signature = (
         sign_with_pem(KID, PRIVATE_KEY)
-        .set_method("post")
+        .set_method(HttpMethod.POST)
         .set_path(path)
         .add_header("Idempotency-Key", idempotency_key)
         .set_body(body)
@@ -224,7 +224,7 @@ def test_signature_required_header_missing_from_signature():
     )
 
     with pytest.raises(TlSigningException):
-        verify_with_pem(PUBLIC_KEY).set_method("post").set_path(
+        verify_with_pem(PUBLIC_KEY).set_method(HttpMethod.POST).set_path(
             path
         ).add_required_header("X-Required").add_header(
             "Idempotency-Key", idempotency_key
@@ -242,7 +242,7 @@ def test_flexible_header_case_order_verify():
 
     tl_signature = (
         sign_with_pem(KID, PRIVATE_KEY)
-        .set_method("post")
+        .set_method(HttpMethod.POST)
         .set_path(path)
         .add_header("Idempotency-Key", idempotency_key)
         .add_header("X-Custom", "123")
@@ -250,7 +250,7 @@ def test_flexible_header_case_order_verify():
         .sign()
     )
 
-    verify_with_pem(PUBLIC_KEY).set_method("post").set_path(path).add_header(
+    verify_with_pem(PUBLIC_KEY).set_method(HttpMethod.POST).set_path(path).add_header(
         "X-CUSTOM", "123"
     ).add_header("idempotency-key", idempotency_key).set_body(body).verify(tl_signature)
 
@@ -270,7 +270,7 @@ def test_verify_with_jwks():
     jwks = json.loads(read_file("../test-resources/jwks.json"))
     jws_header = extract_jws_header(hook_signature)
 
-    verify_with_jwks(jwks, jws_header).set_method("POST").set_path(
+    verify_with_jwks(jwks, jws_header).set_method(HttpMethod.POST).set_path(
         "/tl-webhook"
     ).add_header("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z").add_header(
         "content-type", "application/json"
@@ -281,7 +281,7 @@ def test_verify_with_jwks():
     )
 
     with pytest.raises(TlSigningException):
-        verify_with_jwks(jwks, jws_header).set_method("POST").set_path(
+        verify_with_jwks(jwks, jws_header).set_method(HttpMethod.POST).set_path(
             "/tl-webhook"
         ).add_header("x-tl-webhook-timestamp", "2021-12-29T11:42:55Z").add_header(
             "content-type", "application/json"
@@ -290,3 +290,15 @@ def test_verify_with_jwks():
         ).verify(
             hook_signature
         )
+
+
+def test_verify_without_http_method():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    signature = sign_with_pem(KID, PRIVATE_KEY).set_path(path).set_body(body).sign()
+
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY).set_path(path).set_body(body).add_header(
+            "X-Whatever", "aoitbeh"
+        ).verify(signature)

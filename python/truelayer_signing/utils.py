@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Dict, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
 
 P = TypeVar("P", str, Union[str, Mapping[str, str]])
-T = TypeVar("T", bound="TlJwsBase")
+T = TypeVar("T", bound="TlJwsBase")  # type: ignore
 
 
 class HttpMethod(str, Enum):
@@ -18,9 +18,12 @@ class HttpMethod(str, Enum):
     DELETE = "DELETE"
 
 
-class TlJwsBase(Generic[P]):
+M = TypeVar("M", HttpMethod, Optional[HttpMethod])
+
+
+class TlJwsBase(Generic[P, M]):
     pkey: P
-    http_method: HttpMethod
+    http_method: M
     path: str
     headers: Dict[str, str]
     body: str
@@ -28,7 +31,7 @@ class TlJwsBase(Generic[P]):
     def __init__(
         self,
         pkey: P,
-        http_method: HttpMethod = HttpMethod.POST,
+        http_method: M,
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
         body: str = "",
