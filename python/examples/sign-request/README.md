@@ -1,4 +1,4 @@
-# rust request signature example
+# Python request signature example
 Sends a signed request to `https://api.truelayer-sandbox.com/test-signature`.
 
 ## Run
@@ -10,5 +10,5 @@ Set environment variables:
   Should have the same format as [this example private key](https://github.com/TrueLayer/truelayer-signing/blob/main/test-resources/ec512-private.pem).
 
 ```sh
-$ cargo run
+$ poetry run python main.py
 ```

@@ -30,7 +30,7 @@ docker run --rm -v ${PWD}:/out -w /out -it alpine/openssl ec -in ec512-private-k
 
 ## Sign a request
 You need to specify a `Tl-Signature` header in your HTTP request.
-The header value is a [JWS with detached content](https://tools.ietf.org/html/rfc7515#appendix-F), signed using the ES512 algorithm.  
+The header value is a [JWS with detached content](https://tools.ietf.org/html/rfc7515#appendix-F), signed using the ES512 algorithm.
 
 A JWS with detached content has the following structure:
 

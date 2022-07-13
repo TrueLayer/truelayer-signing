@@ -1,0 +1,2 @@
+class TlSigningException(Exception):
+    pass

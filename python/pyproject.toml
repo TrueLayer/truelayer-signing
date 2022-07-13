@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "truelayer-signing"
+version = "0.1.0"
+description = ""
+authors = ["tl-flavio-barinas <flavio.barinas@truelayer.com>"]
+
+[tool.poetry.dependencies]
+PyJWT = {extras = ["crypto"], version = "^2.3.0"}
+python = "^3.9"
+
+
+[tool.poetry.dev-dependencies]
+black = "^22.6.0"
+coverage = "^5.5"
+flake8 = "^4.0.1"
+mypy = "^0.942"
+pre-commit = "^2.20.0"
+pylint = "^2.11.1"
+pytest = "^7.1.1"
+pytest-cov = "^3.0.0"
+requests = "^2.28.0"
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
