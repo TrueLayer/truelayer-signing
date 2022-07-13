@@ -39,3 +39,6 @@ Verifier.VerifyWithJwks(jwks)
 ```
 
 See [webhook server example](./examples/webhook-server/).
+
+## Compatibility
+.NET Standard 2.0 is supported however .NET Framework 4.6.x **is not** as it's missing required cryptography libraries. For .NET Framework use 4.7.x or higher.
