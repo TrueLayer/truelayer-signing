@@ -3,11 +3,12 @@ name = "truelayer-signing"
 version = "0.1.0"
 description = "Produce & verify TrueLayer API requests signatures"
 authors = ["tl-flavio-barinas <flavio.barinas@truelayer.com>"]
-license = "MIT OR Apache-2.0"
+license = "Apache-2.0 or MIT"
 readme = "README.md"
 homepage = "https://github.com/TrueLayer/truelayer-signing/tree/main/python"
 repository = "https://github.com/TrueLayer/truelayer-signing"
 keywords = ["truelayer"]
+include = ["LICENSE-APACHE", "LICENSE-MIT"]
 
 [tool.poetry.dependencies]
 PyJWT = {extras = ["crypto"], version = "^2.3.0"}
