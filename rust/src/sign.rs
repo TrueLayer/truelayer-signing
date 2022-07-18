@@ -66,6 +66,9 @@ impl<'a> Signer<'a> {
     /// Add the request absolute path starting with a leading `/` and without
     /// any trailing slashes.
     ///
+    /// # Panics
+    /// If `path` does not start with a '/' char.
+    ///
     /// # Example
     /// ```
     /// # let (kid, key) = ("", &[]);
@@ -73,6 +76,10 @@ impl<'a> Signer<'a> {
     ///     .path("/payouts");
     /// ```
     pub fn path(mut self, path: &'a str) -> Self {
+        assert!(
+            path.starts_with('/'),
+            "Invalid path \"{path}\" must start with '/'"
+        );
         self.path = path;
         self
     }

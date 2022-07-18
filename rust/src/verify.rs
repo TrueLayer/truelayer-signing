@@ -65,7 +65,14 @@ impl<'a> Verifier<'a> {
     }
 
     /// Add the request path, e.g. `"/payouts"`.
+    ///
+    /// # Panics
+    /// If `path` does not start with a '/' char.
     pub fn path(mut self, path: &'a str) -> Self {
+        assert!(
+            path.starts_with('/'),
+            "Invalid path \"{path}\" must start with '/'",
+        );
         self.path = path;
         self
     }
