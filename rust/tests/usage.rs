@@ -2,64 +2,6 @@ const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem"
 const PRIVATE_KEY: &[u8] = include_bytes!("../../test-resources/ec512-private.pem");
 const KID: &str = "45fc75cf-5649-4134-84b3-192c2c78e990";
 
-/// Sign a request body only and verify.
-#[test]
-fn body_signature() {
-    let body = br#"{"abc":123}"#;
-
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .body(body)
-        .sign_body_only()
-        .expect("sign_body");
-
-    // Note: Can be used as new static body signature
-    eprintln!("signature: {tl_signature}");
-
-    truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .allow_v1(true)
-        .body(body)
-        .verify(&tl_signature)
-        .expect("verify");
-}
-
-#[test]
-fn body_signature_mismatch() {
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .body(br#"{"abc":123}"#)
-        .sign_body_only()
-        .expect("sign_body");
-
-    truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .allow_v1(true)
-        .body(br#"{"abc":124}"#) // different
-        .verify(&tl_signature)
-        .expect_err("verify should fail");
-}
-
-#[test]
-fn verify_body_static_signature() {
-    let body = br#"{"abc":123}"#;
-    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
-
-    truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .allow_v1(true)
-        .body(body)
-        .verify(tl_signature)
-        .expect("verify");
-}
-
-#[test]
-fn verify_body_static_signature_not_allowed() {
-    let body = br#"{"abc":123}"#;
-    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
-
-    truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        // v1 not allowed by default
-        .body(body)
-        .verify(tl_signature)
-        .expect_err("verify should not be allowed");
-}
-
 /// Sign method, path, headers & body and verify.
 /// * method `POST`
 /// * path `/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping`
@@ -168,6 +110,18 @@ fn verify_full_request_static_signature() {
         .body(body)
         .verify(tl_signature)
         .expect("verify");
+}
+
+#[test]
+#[should_panic = r#"Invalid path "https://example.com/the-path" must start with '/'"#]
+fn sign_an_invalid_path() {
+    truelayer_signing::sign_with_pem(KID, PRIVATE_KEY).path("https://example.com/the-path");
+}
+
+#[test]
+#[should_panic = r#"Invalid path "https://example.com/the-path" must start with '/'"#]
+fn verify_an_invalid_path() {
+    truelayer_signing::verify_with_pem(PUBLIC_KEY).path("https://example.com/the-path");
 }
 
 #[test]
@@ -404,4 +358,65 @@ fn verify_with_jwks() {
         .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
         .verify(hook_signature)
         .expect_err("verify should fail as header is different");
+}
+
+// body-only aka v1 signatures. This functionality isn't necessary for other langs
+// and is used to provide backward compatibility in some rust services.
+
+/// Sign a request body only and verify.
+#[test]
+fn body_signature() {
+    let body = br#"{"abc":123}"#;
+
+    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+        .body(body)
+        .sign_body_only()
+        .expect("sign_body");
+
+    // Note: Can be used as new static body signature
+    eprintln!("signature: {tl_signature}");
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .allow_v1(true)
+        .body(body)
+        .verify(&tl_signature)
+        .expect("verify");
+}
+
+#[test]
+fn body_signature_mismatch() {
+    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+        .body(br#"{"abc":123}"#)
+        .sign_body_only()
+        .expect("sign_body");
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .allow_v1(true)
+        .body(br#"{"abc":124}"#) // different
+        .verify(&tl_signature)
+        .expect_err("verify should fail");
+}
+
+#[test]
+fn verify_body_static_signature() {
+    let body = br#"{"abc":123}"#;
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .allow_v1(true)
+        .body(body)
+        .verify(tl_signature)
+        .expect("verify");
+}
+
+#[test]
+fn verify_body_static_signature_not_allowed() {
+    let body = br#"{"abc":123}"#;
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        // v1 not allowed by default
+        .body(body)
+        .verify(tl_signature)
+        .expect_err("verify should not be allowed");
 }
