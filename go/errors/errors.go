@@ -31,3 +31,18 @@ func NewJwsError(msg string) *JwsError {
 func (e *JwsError) Error() string {
 	return e.message
 }
+
+// Argument invalid
+type InvalidArgumentError struct {
+	message string
+}
+
+func NewInvalidArgumentError(msg string) *InvalidArgumentError {
+	return &InvalidArgumentError{
+		message: fmt.Sprintf("invalid argument: %s", msg),
+	}
+}
+
+func (e *InvalidArgumentError) Error() string {
+	return e.message
+}

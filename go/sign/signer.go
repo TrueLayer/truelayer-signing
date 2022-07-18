@@ -87,6 +87,10 @@ func (s *Signer) AddHeader(name string, value []byte) {
 
 // Sign produces a JWS 'Tl-Signature' v2 header value.
 func (s *Signer) Sign() (string, error) {
+	if !strings.HasPrefix(s.path, "/") {
+		return "", errors.NewInvalidArgumentError("path must start with '/'")
+	}
+
 	privateKey, err := crypto.ParseEcPrivateKey(s.privateKey)
 	if err != nil {
 		return "", errors.NewInvalidKeyError(fmt.Sprintf("private key parsing failed: %v", err))

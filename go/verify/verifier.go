@@ -105,6 +105,10 @@ func (v *Verifier) RequireHeader(name string) *Verifier {
 //
 // Returns error if verification fails.
 func (v *Verifier) Verify(tlSignature string) error {
+	if !strings.HasPrefix(v.path, "/") {
+		return errors.NewInvalidArgumentError("path must start with '/'")
+	}
+
 	tlSignatureData, err := ParseTlSignature(tlSignature)
 	if err != nil {
 		return errors.NewJwsError(fmt.Sprintf("signature parsing failed: %v", err))
