@@ -424,3 +424,32 @@ func TestHeadersMethod(t *testing.T) {
 		Verify(signature)
 	assert.Nilf(err, "signature verification should not fail: %v", err)
 }
+
+func TestInvalidSignerPath(t *testing.T) {
+	assert := assert.New(t)
+
+	privateKeyBytes, _ := getTestKeys(assert)
+	path := "https://example.com/the-path"
+
+	_, err := SignWithPem(Kid, privateKeyBytes).
+		Method("post").
+		Path(path).
+		Sign()
+	assert.NotNilf(err, "signing should fail: %v", err)
+	assert.ErrorAs(&errors.InvalidArgumentError{}, &err, "error should be an InvalidArgumentError")
+}
+
+func TestInvalidVerifierPath(t *testing.T) {
+	assert := assert.New(t)
+
+	_, publicKeyBytes := getTestKeys(assert)
+	path := "https://example.com/the-path"
+	signature := "signature"
+
+	err := VerifyWithPem(publicKeyBytes).
+		Method("POST").
+		Path(path).
+		Verify(signature)
+	assert.NotNilf(err, "signature verification should fail: %v", err)
+	assert.ErrorAs(&errors.InvalidArgumentError{}, &err, "error should be an InvalidArgumentError")
+}
