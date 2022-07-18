@@ -2,7 +2,7 @@
 name = "truelayer-signing"
 version = "0.1.4"
 authors = ["Alex Butler <alex.butler@truelayer.com>"]
-edition = "2018"
+edition = "2021"
 description = "Produce & verify TrueLayer API requests signatures"
 repository = "https://github.com/TrueLayer/truelayer-signing"
 keywords = ["truelayer"]

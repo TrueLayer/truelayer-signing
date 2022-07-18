@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.1.4
 * Add `path` arg assertions to `Signer::path` & `Verifier::path`.
+* Use rust edition 2021.
 
 ## 0.1.3
 * Add support for verifying jwks with alg: `ES512`.

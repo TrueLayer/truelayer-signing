@@ -78,8 +78,7 @@ impl<'a> Signer<'a> {
     pub fn path(mut self, path: &'a str) -> Self {
         assert!(
             path.starts_with('/'),
-            "Invalid path \"{}\" must start with '/'",
-            path,
+            "Invalid path \"{path}\" must start with '/'"
         );
         self.path = path;
         self
