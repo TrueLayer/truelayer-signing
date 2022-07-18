@@ -17,7 +17,7 @@ Enable `black` and `flake-8` pre-commit hooks: `pre-commit install`
 - Test suite: `poetry run pytest -v tests/`
 
 
-```
+```python
 tl_signature = sign_with_pem(KID, PRIVATE_KEY) \
     .set_method(HttpMethod.POST) \
     .set_path(path) \
@@ -30,7 +30,7 @@ See [full example](./examples/sign-request/).
 ## Verifying webhooks
 The `verify_with_jwks` function may be used to verify webhook `Tl-Signature` header signatures.
 
-```
+```python
 # `jku` field is included in webhook signatures
 let jws_header = extract_jws_header(webhook_signature)["jku"]
 
