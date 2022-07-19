@@ -51,8 +51,7 @@ $verifier = Verifier::verifyWithPemFile('/path/to/publickey');
 $verifier->method('POST')
     ->path('/path')
     ->headers([
-        'Idempotency-Key' => 'my-key',
-        'Correlation-Id'  => 'my-correlation',
+        'x-tl-webhook-timestamp' => '2022-03-07T12:39:04Z'
     ])
     ->requireHeaders([
         'User-Agent',
