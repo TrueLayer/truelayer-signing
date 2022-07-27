@@ -10,11 +10,11 @@ import (
 
 // Tl-Signature header.
 type JwsHeader struct {
-	Alg       string `json:"alg"`        // algorithm, should be "ES512".
-	Kid       string `json:"kid"`        // signing key id.
-	TlVersion string `json:"tl_version"` // signing scheme version, e.g. "2", empty implies v1 aka body-only signing.
-	TlHeaders string `json:"tl_headers"` // comma separated ordered headers used in the signature.
-	Jku       string `json:"jku"`        // Json Web Key Url. Used in webhook signatures providing the public key jwk url.
+	Alg       string `json:"alg"`           // algorithm, should be "ES512".
+	Kid       string `json:"kid"`           // signing key id.
+	TlVersion string `json:"tl_version"`    // signing scheme version, e.g. "2", empty implies v1 aka body-only signing.
+	TlHeaders string `json:"tl_headers"`    // comma separated ordered headers used in the signature.
+	Jku       string `json:"jku,omitempty"` // Json Web Key Url. Used in webhook signatures providing the public key jwk url.
 }
 
 func NewJwsHeaderV2(kid string, headers *orderedmap.OrderedMap, jku string) JwsHeader {
