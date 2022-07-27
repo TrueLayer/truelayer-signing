@@ -453,3 +453,27 @@ func TestInvalidVerifierPath(t *testing.T) {
 	assert.NotNilf(err, "signature verification should fail: %v", err)
 	assert.ErrorAs(&errors.InvalidArgumentError{}, &err, "error should be an InvalidArgumentError")
 }
+
+func TestSetJku(t *testing.T) {
+	assert := assert.New(t)
+
+	privateKeyBytes, _ := getTestKeys(assert)
+
+	body := []byte("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")
+	headers := make(map[string][]byte)
+	headers["X-Tl-Webhook-Timestamp"] = []byte("2021-11-29T11:42:55Z")
+	headers["Content-Type"] = []byte("application/json")
+
+	signature, err := SignWithPem(Kid, privateKeyBytes).
+		Method("POST").
+		Path("/tl-webhook").
+		Headers(headers).
+		Body(body).
+		Jku("https://webhooks.truelayer.com/.well-known/jwks").
+		Sign()
+	assert.Nilf(err, "signing failed: %v", err)
+
+	jwsHeader, err := ExtractJwsHeader(signature)
+	assert.Nilf(err, "jws header extraction failed: %v", err)
+	assert.Equal("https://webhooks.truelayer.com/.well-known/jwks", jwsHeader.Jku)
+}
