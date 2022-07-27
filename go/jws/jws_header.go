@@ -17,7 +17,7 @@ type JwsHeader struct {
 	Jku       string `json:"jku"`        // Json Web Key Url. Used in webhook signatures providing the public key jwk url.
 }
 
-func NewJwsHeaderV2(kid string, headers *orderedmap.OrderedMap) JwsHeader {
+func NewJwsHeaderV2(kid string, headers *orderedmap.OrderedMap, jku string) JwsHeader {
 	headerKeys := ""
 	for pair := headers.Oldest(); pair != nil; pair = pair.Next() {
 		header := pair.Value.(*tlhttp.Header)
@@ -32,6 +32,7 @@ func NewJwsHeaderV2(kid string, headers *orderedmap.OrderedMap) JwsHeader {
 		Kid:       kid,
 		TlVersion: "2",
 		TlHeaders: headerKeys,
+		Jku:       jku,
 	}
 }
 

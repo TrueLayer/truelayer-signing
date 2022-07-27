@@ -21,6 +21,7 @@ type Signer struct {
 	method     string
 	path       string
 	headers    *orderedmap.OrderedMap
+	jwsJku     string
 }
 
 func NewSigner(kid string, privateKeyPem []byte) *Signer {
@@ -31,6 +32,7 @@ func NewSigner(kid string, privateKeyPem []byte) *Signer {
 		path:       "",
 		body:       []byte(""),
 		headers:    orderedmap.New(),
+		jwsJku:     "",
 	}
 }
 
@@ -85,6 +87,11 @@ func (s *Signer) AddHeader(name string, value []byte) {
 	s.headers.Set(strings.ToLower(name), header)
 }
 
+func (s *Signer) Jku(jku string) *Signer {
+	s.jwsJku = jku
+	return s
+}
+
 // Sign produces a JWS 'Tl-Signature' v2 header value.
 func (s *Signer) Sign() (string, error) {
 	if !strings.HasPrefix(s.path, "/") {
@@ -95,7 +102,7 @@ func (s *Signer) Sign() (string, error) {
 	if err != nil {
 		return "", errors.NewInvalidKeyError(fmt.Sprintf("private key parsing failed: %v", err))
 	}
-	jwsHeader := jws.NewJwsHeaderV2(s.kid, s.headers)
+	jwsHeader := jws.NewJwsHeaderV2(s.kid, s.headers, s.jwsJku)
 	marshalledJwsHeader, err := json.Marshal(jwsHeader)
 	if err != nil {
 		return "", errors.NewJwsError(fmt.Sprintf("jws header json marshalling failed: %v", err))
