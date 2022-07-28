@@ -173,7 +173,7 @@ def extract_jws_header(tl_signature: str) -> JwsHeader:
         - TlSigningException
     """
     try:
-        header, _ = tl_signature.split("..", maxsplit=1)
+        (header, _) = signature_split(tl_signature)
         header_b64 = header.encode()
         headers: Mapping[str, str] = json.loads(
             decode_url_safe_base64(header_b64).decode()
@@ -190,22 +190,22 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[JwsHeader, bytes]:
     Raises:
         - TlSigningException
     """
-    try:
-        _, signature = tl_signature.split("..", maxsplit=1)
-    except ValueError:
-        raise TlSigningException("invalid signature format")
-
-    # decode header
-    try:
-        headers = extract_jws_header(tl_signature)
-    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError) as e:
-        raise TlSigningException(f"header decode failed: {e}")
+    headers = extract_jws_header(tl_signature)
 
     # decode signature
     try:
+        (_, signature) = signature_split(tl_signature)
         signature_b64 = signature.encode()
         raw_signature = decode_url_safe_base64(signature_b64)
-    except (UnicodeEncodeError) as e:
+    except (UnicodeEncodeError, UnicodeEncodeError) as e:
         raise TlSigningException(f"signature decode failed: {e}")
 
     return (headers, raw_signature)
+
+
+def signature_split(tl_signature: str) -> Tuple[str, str]:
+    try:
+        header, signature = tl_signature.split("..", maxsplit=1)
+        return (header, signature)
+    except ValueError:
+        raise TlSigningException("Invalid Signature")
