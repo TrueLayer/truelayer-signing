@@ -33,7 +33,8 @@ class JwsHeader:
     tl_headers: str
     jku: Optional[str] = None
 
-    def from_dict(header: Mapping[str, str]) -> "JwsHeader":
+    @classmethod
+    def from_dict(cls, header: Mapping[str, str]) -> "JwsHeader":
         if any(
             x not in header.keys() for x in ["alg", "kid", "tl_version", "tl_headers"]
         ):
