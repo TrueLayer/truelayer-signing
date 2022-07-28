@@ -86,6 +86,8 @@ class TlJwsBase(Generic[P, M]):
         Add the request absolute path starting with a leading `/` and without
         any trailing slashes.
         """
+        if not path.startswith("/"):
+            raise TlSigningException("Invalid path \"{path}\" must start with '/'")
         self.path = path
         return self
 

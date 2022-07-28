@@ -351,3 +351,13 @@ def test_verify_without_http_method():
             .add_header("X-Whatever", "aoitbeh")
             .verify(signature)
         )
+
+
+def test_sign_an_invalid_path():
+    with pytest.raises(TlSigningException):
+        sign_with_pem(KID, PRIVATE_KEY).set_path("https://example.com/the-path")
+
+
+def test_verify_an_invalid_path():
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY).set_path("https://example.com/the-path")
