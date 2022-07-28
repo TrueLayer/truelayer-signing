@@ -9,7 +9,13 @@ from jwt.algorithms import ECAlgorithm
 
 # local imports
 from .errors import TlSigningException
-from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, to_url_safe_base64
+from .utils import (
+    HttpMethod,
+    JwsHeader,
+    TlJwsBase,
+    build_v2_jws_b64,
+    to_url_safe_base64,
+)
 
 
 class TlSigner(TlJwsBase[str, HttpMethod]):
@@ -68,12 +74,13 @@ def tl_sign(args: SignArguments) -> str:
         - TlSigningException
     """
     # create the TLv2 jws header
-    jws_header = {
-        "alg": "ES512",
-        "kid": args.kid,
-        "tl_version": "2",
-        "tl_headers": ",".join(args.headers.keys()),
-    }
+    jws_header = JwsHeader(
+        alg="ES512",
+        kid=args.kid,
+        tl_version="2",
+        tl_headers=",".join(args.headers.keys()),
+        jku=None,
+    )
 
     try:
         # create the jws paintext

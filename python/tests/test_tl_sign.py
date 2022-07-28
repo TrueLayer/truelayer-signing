@@ -301,11 +301,11 @@ def test_flexible_header_case_order_verify():
 def test_extract_jws_header():
     hook_signature = read_file("../test-resources/webhook-signature.txt")
     jws_header = extract_jws_header(hook_signature)
-    assert jws_header["alg"] == "ES512"
-    assert jws_header["kid"] == KID
-    assert jws_header["tl_version"] == "2"
-    assert jws_header["tl_headers"] == "X-Tl-Webhook-Timestamp,Content-Type"
-    assert jws_header["jku"] == "https://webhooks.truelayer.com/.well-known/jwks"
+    assert jws_header.alg == "ES512"
+    assert jws_header.kid == KID
+    assert jws_header.tl_version == "2"
+    assert jws_header.tl_headers == "X-Tl-Webhook-Timestamp,Content-Type"
+    assert jws_header.jku == "https://webhooks.truelayer.com/.well-known/jwks"
 
 
 def test_verify_with_jwks():
