@@ -42,7 +42,7 @@ def hook_handler(path: str, headers: Mapping[str, str], body: str) -> HTTPStatus
 
     # extract and ensure jku is an expected TrueLayer url
     jws_header = extract_jws_header(headers["Tl-Signature"])
-    jku = jws_header["jku"]
+    jku = jws_header.jku
     valid_jkus = [
         "https://webhooks.truelayer.com/.well-known/jwks",
         "https://webhooks.truelayer-sandbox.com/.well-known/jwks",
