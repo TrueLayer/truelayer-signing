@@ -88,7 +88,7 @@ class TlJwsBase(Generic[P, M]):
         any trailing slashes.
         """
         if not path.startswith("/"):
-            raise TlSigningException("Invalid path \"{path}\" must start with '/'")
+            raise TlSigningException(f"Invalid path \"{path}\" must start with '/'")
         self.path = path
         return self
 
