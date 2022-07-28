@@ -361,3 +361,23 @@ def test_sign_an_invalid_path():
 def test_verify_an_invalid_path():
     with pytest.raises(TlSigningException):
         verify_with_pem(PUBLIC_KEY).set_path("https://example.com/the-path")
+
+
+def test_tl_sign_set_jku():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+    jku = "https://webhooks.truelayer.com/.well-known/jwks"
+
+    signature = (
+        sign_with_pem(KID, PRIVATE_KEY)
+        .set_path(path)
+        .add_header("Idempotency-Key", idempotency_key)
+        .set_body(body)
+        .set_jku(jku)
+        .sign()
+    )
+
+    jws_header = extract_jws_header(signature)
+
+    assert jws_header.jku == jku
