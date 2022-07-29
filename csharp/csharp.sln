@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "truelayer-signing", "src\tr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "truelayer-signing.test", "test\TrueLayer.Signing.Test\truelayer-signing.test.csproj", "{1357A459-8D8E-4780-9037-BD6357894AA6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{0C6E6BAF-EDBA-41E2-B67F-E3AE0E7F2123}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{197F0A81-2C9F-43F1-99E8-756E5FE65C75}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +48,20 @@ Global
 		{1357A459-8D8E-4780-9037-BD6357894AA6}.Release|x64.Build.0 = Release|Any CPU
 		{1357A459-8D8E-4780-9037-BD6357894AA6}.Release|x86.ActiveCfg = Release|Any CPU
 		{1357A459-8D8E-4780-9037-BD6357894AA6}.Release|x86.Build.0 = Release|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Debug|x64.Build.0 = Debug|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Debug|x86.Build.0 = Debug|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Release|x64.ActiveCfg = Release|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Release|x64.Build.0 = Release|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Release|x86.ActiveCfg = Release|Any CPU
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{197F0A81-2C9F-43F1-99E8-756E5FE65C75} = {0C6E6BAF-EDBA-41E2-B67F-E3AE0E7F2123}
 	EndGlobalSection
 EndGlobal
