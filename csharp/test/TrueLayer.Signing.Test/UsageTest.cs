@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using FluentAssertions;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using static TrueLayer.Signing.Tests.TestData;
 
 namespace TrueLayer.Signing.Tests
