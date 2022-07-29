@@ -51,64 +51,6 @@ namespace TrueLayer.Signing.Tests
 
         [Theory]
         [MemberData(nameof(TestCases))]
-        public void SignAndVerify_Static(TestCase testCase)
-        {
-            const string body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
-            const string idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
-            const string path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-
-            var headers = new Dictionary<string, string>
-            {
-                { "Idempotency-Key", idempotencyKey },
-            };
-            var tlSignature = Signer.Sign(
-                headers,
-                testCase.Kid,
-                testCase.PrivateKey,
-                HttpMethod.Post,
-                path,
-                body);
-
-            Verifier.VerifyWithPem(testCase.PublicKey)
-                .Method("post") // case-insensitive: no troubles
-                .Path(path)
-                .Header("X-Whatever-2", "t2345d")
-                .Header("Idempotency-Key", idempotencyKey)
-                .Body(body)
-                .Verify(tlSignature); // should not throw
-        }
-
-        [Theory]
-        [MemberData(nameof(TestCases))]
-        public void SignAndVerify_Static_Sb(TestCase testCase)
-        {
-            const string body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
-            const string idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
-            const string path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-
-            var headers = new Dictionary<string, string>
-            {
-                { "Idempotency-Key", idempotencyKey },
-            };
-            var tlSignature = Signer.SignSb(
-                headers,
-                testCase.Kid,
-                testCase.PrivateKey,
-                HttpMethod.Post,
-                path,
-                body);
-
-            Verifier.VerifyWithPem(testCase.PublicKey)
-                .Method("post") // case-insensitive: no troubles
-                .Path(path)
-                .Header("X-Whatever-2", "t2345d")
-                .Header("Idempotency-Key", idempotencyKey)
-                .Body(body)
-                .Verify(tlSignature); // should not throw
-        }
-
-        [Theory]
-        [MemberData(nameof(TestCases))]
         public void SignAndVerify_NoHeaders(TestCase testCase)
         {
             var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
