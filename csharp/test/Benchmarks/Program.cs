@@ -1,4 +1,12 @@
 ﻿using BenchmarkDotNet.Running;
-using Benchmarks;
 
-BenchmarkRunner.Run<SignerBenchmarks>();
+namespace Benchmarks
+{
+    public static class Program
+    {
+        public static void Main()
+        {
+            BenchmarkRunner.Run<SignerBenchmarks>();
+        }
+    }
+}
