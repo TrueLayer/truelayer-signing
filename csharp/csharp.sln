@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "truelayer-signing", "src\truelayer-signing.csproj", "{8CF3CC06-ABAE-4D6F-8AB9-879F2E54101A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "truelayer-signing.test", "test\truelayer-signing.test.csproj", "{1357A459-8D8E-4780-9037-BD6357894AA6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "truelayer-signing.test", "test\TrueLayer.Signing.Test\truelayer-signing.test.csproj", "{1357A459-8D8E-4780-9037-BD6357894AA6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
