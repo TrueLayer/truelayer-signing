@@ -10,7 +10,7 @@ namespace TrueLayer.Signing.Tests
 
         /// <summary>Return working path to /test-resources/$subpath</summary>
         public static string TestResourcePath(string subpath)
-            => Path.Combine("../../../../../test-resources", subpath);
+            => Path.Combine("../../../../../../test-resources", subpath);
 
         public static class BugReproduction
         {
