@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BenchmarkDotNet.Attributes;
@@ -17,6 +18,7 @@ WS1/11+TH1x/lgKckAws6sAzJLPtCUZLV4IZTb6ENg==
 -----END EC PRIVATE KEY-----";
 
     private static readonly string Json = JsonSerializer.Serialize(new TestObject(), SerializerOptions.Default);
+    private static readonly ECDsa EcdsaKey = PrivateKey.AsSpan().ParsePem();
 
     [Benchmark]
     public string SignWithPem()
@@ -28,24 +30,13 @@ WS1/11+TH1x/lgKckAws6sAzJLPtCUZLV4IZTb6ENg==
             .Sign();
 
     [Benchmark]
-    public string SignWithPem_Static()
-        => Signer.Sign(
-            new Dictionary<string, string>{{"Idempotency-Key", "idempotency-key"}},
-            Guid.NewGuid().ToString(),
-            PrivateKey,
-            HttpMethod.Post,
-            "/payments",
-            Json);
-
-    [Benchmark]
-    public string SignWithPem_Static_Sb()
-        => Signer.SignSb(
-            new Dictionary<string, string>{{"Idempotency-Key", "idempotency-key"}},
-            Guid.NewGuid().ToString(),
-            PrivateKey,
-            HttpMethod.Post,
-            "/payments",
-            Json);
+    public string SignWith_Ecdsa()
+        => Signer.SignWith(Guid.NewGuid().ToString(), EcdsaKey)
+            .Method("POST")
+            .Path("/payments")
+            .Body(Json)
+            .Header("Idempotency-Key", "idempotency-key")
+            .Sign();
 }
 
 public class TestObject

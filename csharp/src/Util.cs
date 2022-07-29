@@ -52,7 +52,10 @@ namespace TrueLayer.Signing
         internal SignatureException(string message, Exception? innerException) : base(message, innerException) { }
     }
 
-    internal static class Util
+    /// <summary>
+    /// Signing utility class.
+    /// </summary>
+    public static class Util
     {
         /// <summary>
         /// Build signing payload from method, path, some/none/all headers and body.
@@ -83,7 +86,7 @@ namespace TrueLayer.Signing
         internal static byte[] ToUtf8(this string text) => Encoding.UTF8.GetBytes(text);
 
         /// <summary>Parses a RFC 7468 PEM-encoded key into a `ECDsa`.</summary>
-        internal static ECDsa ParsePem(this ReadOnlySpan<char> pem)
+        public static ECDsa ParsePem(this ReadOnlySpan<char> pem)
         {
             var ecdsa = ECDsa.Create();
 #if (NET5_0 || NET5_0_OR_GREATER)
