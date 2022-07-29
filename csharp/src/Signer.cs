@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using Jose;
@@ -150,6 +151,83 @@ namespace TrueLayer.Signing
             return JWT.EncodeBytes(
                 signingPayload,
                 key,
+                JwsAlgorithm.ES512,
+                jwsHeaders,
+                options: new JwtOptions { DetachPayload = true });
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="headers"></param>
+        /// <param name="kid"></param>
+        /// <param name="key"></param>
+        /// <param name="httpMethod"></param>
+        /// <param name="path"></param>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        public static string Sign(
+            Dictionary<string, string> headers,
+            string kid,
+            ReadOnlySpan<char> key,
+            HttpMethod httpMethod,
+            string path,
+            string body)
+        {
+            var headerList = headers.Select(e => (e.Key, e.Value.ToUtf8())).ToList();
+            var jwsHeaders = new Dictionary<string, object>()
+            {
+                {"alg", "ES512"},
+                {"kid", kid},
+                {"tl_version", "2"},
+                {"tl_headers", string.Join(",", headerList.Select(h => h.Key))},
+            };
+            var signingPayload = Util.BuildV2SigningPayload(httpMethod.Method, path, headerList, body.ToUtf8());
+
+            return JWT.EncodeBytes(
+                signingPayload,
+                key.ParsePem(),
+                JwsAlgorithm.ES512,
+                jwsHeaders,
+                options: new JwtOptions { DetachPayload = true });
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="headers"></param>
+        /// <param name="kid"></param>
+        /// <param name="key"></param>
+        /// <param name="httpMethod"></param>
+        /// <param name="path"></param>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        public static string SignSb(
+            Dictionary<string, string> headers,
+            string kid,
+            ReadOnlySpan<char> key,
+            HttpMethod httpMethod,
+            string path,
+            string body)
+        {
+            var jwsHeaders = new Dictionary<string, object>()
+            {
+                {"alg", "ES512"},
+                {"kid", kid},
+                {"tl_version", "2"},
+                {"tl_headers", string.Join(",", headers.Select(h => h.Key))},
+            };
+
+            var sb = new StringBuilder().AppendFormat("{0} {1}\n", httpMethod.Method, path);
+            foreach (var kv in headers)
+            {
+                sb.AppendFormat("{0}: {1}\n", kv.Key, kv.Value);
+            }
+            sb.Append(body);
+
+            return JWT.Encode(
+                sb.ToString(),
+                key.ParsePem(),
                 JwsAlgorithm.ES512,
                 jwsHeaders,
                 options: new JwtOptions { DetachPayload = true });

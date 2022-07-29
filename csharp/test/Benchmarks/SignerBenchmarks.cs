@@ -5,6 +5,7 @@ using TrueLayer.Signing;
 
 namespace Benchmarks;
 
+[MemoryDiagnoser]
 public class SignerBenchmarks
 {
     private const string PrivateKey = @"-----BEGIN EC PRIVATE KEY-----
@@ -28,12 +29,23 @@ WS1/11+TH1x/lgKckAws6sAzJLPtCUZLV4IZTb6ENg==
 
     [Benchmark]
     public string SignWithPem_Static()
-        => Signer.SignWithPem(Guid.NewGuid().ToString(), PrivateKey)
-            .Method("POST")
-            .Path("/payments")
-            .Body(Json)
-            .Header("Idempotency-Key", "idempotency-key")
-            .Sign();
+        => Signer.Sign(
+            new Dictionary<string, string>{{"Idempotency-Key", "idempotency-key"}},
+            Guid.NewGuid().ToString(),
+            PrivateKey,
+            HttpMethod.Post,
+            "/payments",
+            Json);
+
+    [Benchmark]
+    public string SignWithPem_Static_Sb()
+        => Signer.SignSb(
+            new Dictionary<string, string>{{"Idempotency-Key", "idempotency-key"}},
+            Guid.NewGuid().ToString(),
+            PrivateKey,
+            HttpMethod.Post,
+            "/payments",
+            Json);
 }
 
 public class TestObject
