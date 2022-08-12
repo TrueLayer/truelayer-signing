@@ -36,6 +36,22 @@ describe('sign', () => {
       }
     });
   });
+
+  it("should throw if using a non-string body", () => {
+    const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    const fn = () => sign({
+      kid: KID,
+      privateKeyPem: PRIVATE_KEY,
+      method: "post",
+      path,
+      headers: { "Idempotency-Key": idempotencyKey },
+      body: { "currency": "GBP", "max_amount_in_minor": 5000000 }, // wrong
+    });
+
+    expect(fn).toThrow(new Error("Invalid body 'object' type must be a string"));
+  });
 });
 
 describe("verify", () => {

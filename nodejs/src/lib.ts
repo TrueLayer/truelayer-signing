@@ -37,6 +37,9 @@ const buildV2SigningPayload = ({
   if (!path.startsWith('/')) {
     throw new Error(`Invalid path \"${path}\" must start with '/'`);
   }
+  if (!(typeof body === 'string' || (body as any) instanceof String)) {
+    throw new Error(`Invalid body '${typeof body}' type must be a string`);
+  }
 
   let payload = `${method} ${path}\n`;
 
