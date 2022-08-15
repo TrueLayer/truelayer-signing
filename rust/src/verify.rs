@@ -8,7 +8,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
-use std::{borrow::Cow, fmt};
+use std::fmt;
 
 /// Builder to verify a request against a `Tl-Signature` header.
 ///
@@ -182,17 +182,17 @@ impl<'a> Verifier<'a> {
 
         // reconstruct the payload as it would have been signed
         let signing_payload =
-            build_v2_signing_payload(self.method, self.path, &ordered_headers, self.body);
+            build_v2_signing_payload(self.method, self.path, &ordered_headers, self.body, false);
         let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
         openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
             .or_else(|e| {
                 // try again with/without a trailing slash (#80)
-                let path = match self.path {
-                    p if p.ends_with('/') => Cow::Borrowed(&p[..p.len() - 1]),
-                    p => Cow::Owned(p.to_owned() + "/"),
+                let (path, slash) = match self.path {
+                    p if p.ends_with('/') => (&p[..p.len() - 1], false),
+                    p => (p, true),
                 };
                 let signing_payload =
-                    build_v2_signing_payload(self.method, &path, &ordered_headers, self.body);
+                    build_v2_signing_payload(self.method, path, &ordered_headers, self.body, slash);
                 let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
                 // use original error if both fail
                 openssl::verify_es512(&public_key, payload.as_bytes(), &signature).map_err(|_| e)
