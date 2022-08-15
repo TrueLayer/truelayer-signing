@@ -8,7 +8,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
 /// Builder to verify a request against a `Tl-Signature` header.
 ///
@@ -158,10 +158,9 @@ impl<'a> Verifier<'a> {
             }
 
             // v1 signature: body only
-            let payload = format!("{}.{}", header_b64, self.body.to_url_safe_base64());
-            openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
-                .map_err(Error::JwsError)?;
-            return Ok(());
+            let payload = format!("{header_b64}.{}", self.body.to_url_safe_base64());
+            return openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
+                .map_err(Error::JwsError);
         }
 
         // check and order all required headers
@@ -184,11 +183,24 @@ impl<'a> Verifier<'a> {
         // reconstruct the payload as it would have been signed
         let signing_payload =
             build_v2_signing_payload(self.method, self.path, &ordered_headers, self.body);
-        let payload = format!("{}.{}", header_b64, signing_payload.to_url_safe_base64());
-        openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
-            .map_err(Error::JwsError)?;
+        let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
+        let mut verify = openssl::verify_es512(&public_key, payload.as_bytes(), &signature);
 
-        Ok(())
+        if verify.is_err() {
+            // try again with/without a trailing slash (#80)
+            let path = match self.path {
+                p if p.ends_with('/') => Cow::Borrowed(&p[..p.len() - 1]),
+                p => Cow::Owned(p.to_owned() + "/"),
+            };
+            let signing_payload =
+                build_v2_signing_payload(self.method, &path, &ordered_headers, self.body);
+            let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
+            if openssl::verify_es512(&public_key, payload.as_bytes(), &signature).is_ok() {
+                verify = Ok(());
+            }
+        }
+
+        verify.map_err(Error::JwsError)
     }
 }
 

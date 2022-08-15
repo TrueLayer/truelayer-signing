@@ -112,6 +112,46 @@ fn verify_full_request_static_signature() {
         .expect("verify");
 }
 
+/// Signing a path with a single trailing slash & trying to verify
+/// without that slash should still work. See #80.
+#[test]
+fn verify_without_signed_trailing_slash() {
+    let body = br#"{"foo":"bar"}"#;
+
+    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+        .path("/tl-webhook/")
+        .body(body)
+        .sign()
+        .expect("sign");
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method("POST")
+        .path("/tl-webhook") // missing trailing slash
+        .body(body)
+        .verify(&tl_signature)
+        .expect("verify");
+}
+
+/// Verify a path that matches except it has an additional trailing slash
+/// should still work. See #80.
+#[test]
+fn verify_with_unsigned_trailing_slash() {
+    let body = br#"{"foo":"bar"}"#;
+
+    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+        .path("/tl-webhook")
+        .body(body)
+        .sign()
+        .expect("sign");
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method("POST")
+        .path("/tl-webhook/") // additional trailing slash
+        .body(body)
+        .verify(&tl_signature)
+        .expect("verify");
+}
+
 #[test]
 #[should_panic = r#"Invalid path "https://example.com/the-path" must start with '/'"#]
 fn sign_an_invalid_path() {
