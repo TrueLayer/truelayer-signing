@@ -184,7 +184,7 @@ impl<'a> Signer<'a> {
             .to_url_safe_base64();
 
         let signing_payload =
-            build_v2_signing_payload(self.method, self.path, &self.headers, self.body);
+            build_v2_signing_payload(self.method, self.path, &self.headers, self.body, false);
 
         let jws_header_and_payload = format!(
             "{}.{}",
@@ -216,11 +216,15 @@ pub(crate) fn build_v2_signing_payload(
     path: &str,
     headers: &IndexMap<HeaderName<'_>, &[u8]>,
     body: &[u8],
+    add_path_trailing_slash: bool,
 ) -> Vec<u8> {
     let mut payload = Vec::new();
     payload.extend(method.to_ascii_uppercase().as_bytes());
     payload.push(b' ');
     payload.extend(path.as_bytes());
+    if add_path_trailing_slash {
+        payload.push(b'/');
+    }
     payload.push(b'\n');
     for (h_name, h_val) in headers {
         payload.extend(h_name.0.as_bytes());

@@ -158,10 +158,9 @@ impl<'a> Verifier<'a> {
             }
 
             // v1 signature: body only
-            let payload = format!("{}.{}", header_b64, self.body.to_url_safe_base64());
-            openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
-                .map_err(Error::JwsError)?;
-            return Ok(());
+            let payload = format!("{header_b64}.{}", self.body.to_url_safe_base64());
+            return openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
+                .map_err(Error::JwsError);
         }
 
         // check and order all required headers
@@ -183,12 +182,22 @@ impl<'a> Verifier<'a> {
 
         // reconstruct the payload as it would have been signed
         let signing_payload =
-            build_v2_signing_payload(self.method, self.path, &ordered_headers, self.body);
-        let payload = format!("{}.{}", header_b64, signing_payload.to_url_safe_base64());
+            build_v2_signing_payload(self.method, self.path, &ordered_headers, self.body, false);
+        let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
         openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
-            .map_err(Error::JwsError)?;
-
-        Ok(())
+            .or_else(|e| {
+                // try again with/without a trailing slash (#80)
+                let (path, slash) = match self.path {
+                    p if p.ends_with('/') => (&p[..p.len() - 1], false),
+                    p => (p, true),
+                };
+                let signing_payload =
+                    build_v2_signing_payload(self.method, path, &ordered_headers, self.body, slash);
+                let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
+                // use original error if both fail
+                openssl::verify_es512(&public_key, payload.as_bytes(), &signature).map_err(|_| e)
+            })
+            .map_err(Error::JwsError)
     }
 }
 
