@@ -267,7 +267,16 @@ export function verify(args: VerifyParameters): any {
   const fullSignature = `${header}.${Base64.encode(payload, true)}.${footer}`;
 
   if (!jws.verify(fullSignature, headerJson.alg, publicKeyPem)) {
-    throw new SignatureError("Invalid signature");
+    // try again with/without a trailing slash (#80)
+    let path2 = path + '/';
+    if (path.endsWith('/')) {
+      path2 = path.slice(0, path.length - 1);
+    }
+    const payload = buildV2SigningPayload({ method, path: path2, headers, body });
+    const fullSignature = `${header}.${Base64.encode(payload, true)}.${footer}`;
+    if (!jws.verify(fullSignature, headerJson.alg, publicKeyPem)) {
+      throw new SignatureError("Invalid signature");
+    }
   }
 }
 

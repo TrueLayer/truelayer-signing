@@ -1,6 +1,6 @@
 {
   "name": "truelayer-signing",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Produce & verify TrueLayer API requests signatures",
   "main": "lib/lib.js",
   "types": "lib/lib.d.ts",

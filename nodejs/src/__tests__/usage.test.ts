@@ -38,6 +38,46 @@ describe('sign', () => {
     });
   });
 
+  it('should not throw when signed path has an additional trailing slash', () => {
+    const body = '{"foo":"bar"}';
+
+    const signature = sign({
+      kid: KID,
+      privateKeyPem: PRIVATE_KEY,
+      method: HttpMethod.Post,
+      path: "/tl-webhook/",
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: HttpMethod.Post,
+      path: "/tl-webhook", // missing trailing slash
+      body,
+    });
+  });
+
+  it('should not throw when verified path has an additional trailing slash', () => {
+    const body = '{"foo":"bar"}';
+
+    const signature = sign({
+      kid: KID,
+      privateKeyPem: PRIVATE_KEY,
+      method: HttpMethod.Post,
+      path: "/tl-webhook",
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: HttpMethod.Post,
+      path: "/tl-webhook/", // additional trailing slash
+      body,
+    });
+  });
+
   it('should throw when using an invalid path', () => {
     const fn = () => sign({
       kid: KID,
