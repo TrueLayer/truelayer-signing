@@ -184,23 +184,20 @@ impl<'a> Verifier<'a> {
         let signing_payload =
             build_v2_signing_payload(self.method, self.path, &ordered_headers, self.body);
         let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
-        let mut verify = openssl::verify_es512(&public_key, payload.as_bytes(), &signature);
-
-        if verify.is_err() {
-            // try again with/without a trailing slash (#80)
-            let path = match self.path {
-                p if p.ends_with('/') => Cow::Borrowed(&p[..p.len() - 1]),
-                p => Cow::Owned(p.to_owned() + "/"),
-            };
-            let signing_payload =
-                build_v2_signing_payload(self.method, &path, &ordered_headers, self.body);
-            let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
-            if openssl::verify_es512(&public_key, payload.as_bytes(), &signature).is_ok() {
-                verify = Ok(());
-            }
-        }
-
-        verify.map_err(Error::JwsError)
+        openssl::verify_es512(&public_key, payload.as_bytes(), &signature)
+            .or_else(|e| {
+                // try again with/without a trailing slash (#80)
+                let path = match self.path {
+                    p if p.ends_with('/') => Cow::Borrowed(&p[..p.len() - 1]),
+                    p => Cow::Owned(p.to_owned() + "/"),
+                };
+                let signing_payload =
+                    build_v2_signing_payload(self.method, &path, &ordered_headers, self.body);
+                let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
+                // use original error if both fail
+                openssl::verify_es512(&public_key, payload.as_bytes(), &signature).map_err(|_| e)
+            })
+            .map_err(Error::JwsError)
     }
 }
 
