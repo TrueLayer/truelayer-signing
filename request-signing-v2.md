@@ -71,7 +71,7 @@ Idempotency-Key: 619410b3-b00c-406e-bb1b-2982f97edb8b
 {"currency":"GBP","amount_in_minor":100}
 ```
 
-## Verify a signature
+## Verify a TrueLayer signature
 Extract the `Tl-Signature` from the HTTP headers.
 The header follows the same structure as the signing process described above.
 
