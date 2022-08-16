@@ -70,3 +70,16 @@ POST /payouts
 Idempotency-Key: 619410b3-b00c-406e-bb1b-2982f97edb8b
 {"currency":"GBP","amount_in_minor":100}
 ```
+
+## Verify a signature
+Extract the `Tl-Signature` from the HTTP headers.
+The header follows the same structure as the signing process described above.
+
+The steps for verifying the signature are as follows:
+
+1. Verify the `jku` field in the token header matches the expected value as listed below. If not, the signature should be rejected as invalid.
+    - Sandbox: **`https://webhooks.truelayer-sandbox.com/.well-known/jwks`**
+    - Production: **`https://webhooks.truelayer.com/.well-known/jwks`**
+2. Use the `jku` value to retrieve the JWKS. This may be cached for some time, but if verification fails, the JWKS must be retrieved again to ensure that all keys are up-to-date. TrueLayer may rotate or revoke keys at any time.
+3. Retrieve the relevant public key by using the `kid` to look up the relevant value from the JWKS.
+4. Use a [JWT library](https://jwt.io/libraries) to verify the JWS headers combined with the payload.
