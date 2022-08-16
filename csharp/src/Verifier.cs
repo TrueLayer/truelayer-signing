@@ -236,7 +236,7 @@ namespace TrueLayer.Signing
                 {
                     return Jose.JWT.Decode(jws, key);
                 }
-                catch (Exception)
+                catch (Jose.IntegrityException)
                 {
                     // try again with/without a trailing slash (#80)
                     var path2 = path + "/";
