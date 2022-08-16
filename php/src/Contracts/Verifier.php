@@ -33,24 +33,27 @@ interface Verifier extends Jws
     /**
      * @param string ...$pems
      *
-     * @return static
      * @throws InvalidArgumentException
+     *
+     * @return static
      */
     public static function verifyWithPem(string ...$pems): self;
 
     /**
      * @param string ...$pemsBase64
      *
-     * @return static
      * @throws InvalidArgumentException
+     *
+     * @return static
      */
     public static function verifyWithPemBase64(string ...$pemsBase64): self;
 
     /**
      * @param string ...$paths
      *
-     * @return static
      * @throws InvalidArgumentException
+     *
+     * @return static
      */
     public static function verifyWithPemFile(string ...$paths): self;
 

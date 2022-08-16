@@ -43,5 +43,20 @@
         "roave/security-advisories": "dev-latest",
         "friendsofphp/php-cs-fixer": "^3.3",
         "mockery/mockery": "^1.4"
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=-1",
+        "tests": "vendor/bin/pest",
+        "cs-fix": "vendor/bin/php-cs-fixer fix",
+        "checks": [
+            "@analyse",
+            "@tests",
+            "@cs-fix"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     }
 }

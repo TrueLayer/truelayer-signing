@@ -43,9 +43,10 @@ interface Jws
     public function headers(array $headers): self;
 
     /**
-     * @param string[] $orderOfHeaderKeys
+     * @param string[] $tlHeaders
+     * @param bool     $withTrailingSlash
      *
      * @return string
      */
-    public function buildPayload(array $orderOfHeaderKeys): string;
+    public function buildPayload(array $tlHeaders, bool $withTrailingSlash = false): string;
 }

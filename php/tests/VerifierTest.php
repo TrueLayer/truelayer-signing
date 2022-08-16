@@ -7,19 +7,19 @@ use TrueLayer\Signing\Signer;
 use TrueLayer\Signing\Tests\MockData;
 use TrueLayer\Signing\Verifier;
 
-it('should verify a valid signature', function () {
+\it('should verify a valid signature', function (string $signedPath, string $verifiedPath) {
     $keys = MockData::generateKeyPair();
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $verifier = Verifier::verifyWithKey($keys['public']);
 
     $signature = $signer->method('PUT')
-        ->path('/test')
+        ->path($signedPath)
         ->header('X-Idempotency-Key', 'idempotency-test')
         ->body('{"random-key": "random-value"}')
         ->sign();
 
     $verifier->method('PUT')
-        ->path('/test')
+        ->path($verifiedPath)
         ->header('X-Idempotency-Key', 'idempotency-test')
         ->body('{"random-key": "random-value"}')
         ->requireHeaders([
@@ -27,10 +27,15 @@ it('should verify a valid signature', function () {
         ]);
 
     /* @phpstan-ignore-next-line */
-    expect($verifier->verify($signature))->not->toThrow(Exception::class);
-});
+    \expect($verifier->verify($signature))->not->toThrow(Exception::class);
+})->with([
+    ['/test', '/test'],
+    ['/test', '/test/'],
+    ['/test/', '/test'],
+    ['/test/', '/test/'],
+]);
 
-it('should verify the full request static signature', function () {
+\it('should verify the full request static signature', function () {
     $body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     $idempotencyKey = 'idemp-2076717c-9005-4811-a321-9e0787fa0382';
     $path = '/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping';
@@ -47,10 +52,10 @@ it('should verify the full request static signature', function () {
         ->body($body);
 
     /* @phpstan-ignore-next-line */
-    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+    \expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
-it('should throw when required header is missing', function () {
+\it('should throw when required header is missing', function () {
     $kid = Uuid::uuid4()->toString();
     $keys = MockData::generateKeyPair($kid);
     $signer = Signer::signWithKey($kid, $keys['private']);
@@ -73,10 +78,10 @@ it('should throw when required header is missing', function () {
         ->verify($signature);
 })->throws(
     \TrueLayer\Signing\Exceptions\RequiredHeaderMissingException::class,
-    'Signature is missing the X-Correlation-Id required header'
+    'Signature is missing the x-correlation-id required header'
 );
 
-it('should throw when the signature is invalid', function () {
+\it('should throw when the signature is invalid', function () {
     $kid = Uuid::uuid4()->toString();
     $keys = MockData::generateKeyPair($kid);
     $signer = Signer::signWithKey($kid, $keys['private']);
@@ -98,7 +103,7 @@ it('should throw when the signature is invalid', function () {
         ->verify($signature);
 })->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class);
 
-it('should verify header order/casing flexibility', function () {
+\it('should verify header order/casing flexibility', function () {
     $kid = Uuid::uuid4()->toString();
     $keys = MockData::generateKeyPair($kid);
     $signer = Signer::signWithKey($kid, $keys['private']);
@@ -116,20 +121,20 @@ it('should verify header order/casing flexibility', function () {
     $verifier->method('PUT')
         ->path('/test')
         ->headers([
-            'X-Custom' => '123', // different order & case, it's ok!
+            'X-custom' => '123', // different order & case, it's ok!
             'X-Whatever-2' => 'foaulrsjth',
-            'Idempotency-Key' => 'test', // different order & case, chill it'll work!
+            'idempotency-key' => 'test', // different order & case, chill it'll work!
         ])
         ->body('{"random-key": "random-value"}')
         ->requireHeaders([
-            'Idempotency-Key', // different case
+            'IDEMPOTENCY-Key', // different case
         ]);
 
     /* @phpstan-ignore-next-line */
-    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+    \expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
-it('should not verify the wrong HTTP method', function () {
+\it('should not verify the wrong HTTP method', function () {
     $kid = Uuid::uuid4()->toString();
     $keys = MockData::generateKeyPair($kid);
     $signer = Signer::signWithKey($kid, $keys['private']);
@@ -157,7 +162,7 @@ it('should not verify the wrong HTTP method', function () {
         ->verify($signature);
 })->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class);
 
-it('should verify a signature that has no headers', function () {
+\it('should verify a signature that has no headers', function () {
     $kid = Uuid::uuid4()->toString();
     $keys = MockData::generateKeyPair($kid);
     $signer = Signer::signWithKey($kid, $keys['private']);
@@ -173,10 +178,10 @@ it('should verify a signature that has no headers', function () {
         ->body('{"random-key": "random-value"}');
 
     /* @phpstan-ignore-next-line */
-    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+    \expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
-it('should not verify a signature that has an attached payload', function () {
+\it('should not verify a signature that has an attached payload', function () {
     $signature = 'eyJhbGciOiJFUzUxMiIsImtpZCI6ImU5OTYzOTNmLWFiZGQtNDc4ZS1iZDIzLTZlYTU4OGJhY2IzMyIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGVhZGVycyI6IiJ9.UFVUIC90ZXN0CnsicmFuZG9tLWtleSI6ICJyYW5kb20tdmFsdWUifQ.AVfKw5gNZCKTfa7p_z4S7RQs6qpqWFTbg7x-Rv-1wmPffPCNBktVwbxTu5I359pP6ilFTTgS0IR58JKkDbRE2NqsALDh08EYea17dfZPUaDFh7E8r9eOHllrHTGyF2mKj9rRILoBauYgRJ3shAG2XBIL6GB6tklchUGJHxsRXA0bTp8M';
 
     $keys = MockData::generateKeyPair();
@@ -185,7 +190,7 @@ it('should not verify a signature that has an attached payload', function () {
     $verifier->verify($signature);
 })->throws(\TrueLayer\Signing\Exceptions\SignatureMustUseDetachedPayloadException::class);
 
-it('should verify a valid signature from pem string', function () {
+\it('should verify a valid signature from pem string', function () {
     $privateKey = \file_get_contents(__DIR__ . '/ec512-private.pem') ?: '';
     $publicKey = \file_get_contents(__DIR__ . '/ec512-public.pem') ?: '';
     $signer = Signer::signWithPem(Uuid::uuid4()->toString(), $privateKey, null);
@@ -208,17 +213,17 @@ it('should verify a valid signature from pem string', function () {
         ]);
 
     /* @phpstan-ignore-next-line */
-    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+    \expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
 
-it('should verify a valid signature from decoded json', function () {
-    $signature = file_get_contents('../test-resources/tl-signature.txt');
-    $jwksJson = file_get_contents('../test-resources/jwks.json');
+\it('should verify a valid signature from decoded json', function () {
+    $signature = \file_get_contents('../test-resources/tl-signature.txt');
+    $jwksJson = \file_get_contents('../test-resources/jwks.json');
 
     /**
      * @var array<string, array<array<string, string>>> $jwks
      */
-    $jwks = json_decode((string) $jwksJson, true);
+    $jwks = \json_decode((string) $jwksJson, true);
     $verifier = Verifier::verifyWithJsonKeys(...$jwks['keys']);
 
     $verifier->method('POST')
@@ -228,5 +233,5 @@ it('should verify a valid signature from decoded json', function () {
         ->body('{"currency":"GBP","max_amount_in_minor":5000000}');
 
     /* @phpstan-ignore-next-line */
-    expect($verifier->verify($signature))->not->toThrow(Exception::class);
+    \expect($verifier->verify($signature))->not->toThrow(Exception::class);
 });
