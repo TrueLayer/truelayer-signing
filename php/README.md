@@ -73,7 +73,7 @@ Then you can use it to verify the signature you receive in your webhook under th
 ```php
 $verifier
     ->path('/path') // Should be your webhook path, for example $_SERVER['REQUEST_URI']
-    ->headers($headers) // All headers you receive. The header keys should be lowercased.
+    ->headers($headers) // All headers you receive. Header names can be in any casing.
     ->body('stringified request body'); // For example file_get_contents('php://input');
 
 try {
