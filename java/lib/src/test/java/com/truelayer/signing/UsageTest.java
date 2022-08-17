@@ -313,6 +313,59 @@ public class UsageTest {
                 .verify(tlSignature); // should not throw
     }
 
+    // Signing a path with a single trailing slash & trying to verify
+    // without that slash should still work. See #80.
+    @Test
+    public void signAndVerifySignedTrailingSlash() {
+        byte[] body = "{\"foo\":\"bar\"}".getBytes();
+
+        String tlSignature = Signer.from(kid, privateKey)
+                .method("POST")
+                .path("/tl-webhook/")
+                .body(body)
+                .sign();
+
+        Verifier.from(publicKey)
+                .method("POST")
+                .path("/tl-webhook") // missing trailing slash
+                .body(body)
+                .verify(tlSignature); // should not throw
+    }
+
+    // Verify a path that matches except it has an additional trailing slash
+    // should still work. See #80.
+    @Test
+    public void signAndVerifyUnsignedTrailingSlash() {
+        byte[] body = "{\"foo\":\"bar\"}".getBytes();
+
+        String tlSignature = Signer.from(kid, privateKey)
+                .method("POST")
+                .path("/tl-webhook")
+                .body(body)
+                .sign();
+
+        Verifier.from(publicKey)
+                .method("POST")
+                .path("/tl-webhook/") // additional trailing slash
+                .body(body)
+                .verify(tlSignature); // should not throw
+    }
+
+    // Verify a path that matches except it has an additional trailing slash
+    // should still work. See #80.
+    @Test
+    public void verifyJwksUnsignedTrailingSlash() {
+        Verifier.verifyWithJwks(jwks)
+                .method("POST")
+                .path("/tl-webhook/")
+                .headers(new HashMap<String, String>() {{
+                    put("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z");
+                    put("content-type", "application/json");
+                }})
+                .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}")
+                .verify(webhookSignature); // should not throw
+    }
+
     @Test
     public void verifierExtractJku() {
         String jku = Verifier.extractJku(webhookSignature);

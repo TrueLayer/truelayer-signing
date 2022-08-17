@@ -23,6 +23,19 @@ class VerifierFromPublicKey extends Verifier{
                 JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
                         .verify(new ECDSAVerifier(publicKey)));
 
+        if (!verifiedResult) {
+            // try again with/without a trailing slash (#80)
+            String path2;
+            if (path.endsWith("/")) {
+                path2 = path.substring(0, path.length() - 1);
+            } else {
+                path2 = path + "/";
+            }
+            verifiedResult = SignatureException.evaluate(() ->
+                    JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
+                            .verify(new ECDSAVerifier(publicKey)));
+        }
+
         SignatureException.ensure(verifiedResult, "invalid signature");
     }
 
