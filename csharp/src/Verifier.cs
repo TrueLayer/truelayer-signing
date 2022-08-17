@@ -230,7 +230,22 @@ namespace TrueLayer.Signing
             var signingPayload = Util.BuildV2SigningPayload(method, path, signedHeaders, body);
             var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
 
-            SignatureException.Try(() => Jose.JWT.Decode(jws, key), "Invalid signature");
+            SignatureException.Try(() =>
+            {
+                try
+                {
+                    return Jose.JWT.Decode(jws, key);
+                }
+                catch (Jose.IntegrityException)
+                {
+                    // try again with/without a trailing slash (#80)
+                    var path2 = path + "/";
+                    if (path.EndsWith("/")) path2 = path.Remove(path.Length - 1);
+                    var signingPayload = Util.BuildV2SigningPayload(method, path2, signedHeaders, body);
+                    var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
+                    return Jose.JWT.Decode(jws, key);
+                }
+            }, "Invalid signature");
         }
 
         /// <summary>Find and import jwk into `key`</summary>

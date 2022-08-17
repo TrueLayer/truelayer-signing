@@ -22,8 +22,8 @@ namespace TrueLayer.Signing.Tests
                 BugReproduction.LengthError.Kid,
                 BugReproduction.LengthError.PrivateKey,
                 BugReproduction.LengthError.PublicKey),
-        }.Select(x => new object[] {x});
-        
+        }.Select(x => new object[] { x });
+
         [Theory]
         [MemberData(nameof(TestCases))]
         public void SignAndVerify(TestCase testCase)
@@ -66,6 +66,31 @@ namespace TrueLayer.Signing.Tests
                 .Path(path)
                 .Body(body)
                 .Verify(tlSignature); // should not throw
+        }
+
+        // Signing a path with a single trailing slash & trying to verify
+        // without that slash should still work. 
+        // Verify a path that matches except it has an additional trailing slash
+        // should still work too.
+        // See #80.
+        [Theory]
+        [InlineData("/tl-webhook/", "/tl-webhook")]
+        [InlineData("/tl-webhook", "/tl-webhook/")]
+        public void SignAndVerify_SignedTrailingSlash(string signedPath, string verifyPath)
+        {
+            var body = "{\"foo\":\"bar\"}";
+
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path(signedPath)
+                .Body(body)
+                .Sign();
+
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(verifyPath)
+                .Body(body)
+                .Verify(tlSignature);
         }
 
         // Verify the a static signature used in all lang tests to ensure
@@ -299,7 +324,7 @@ namespace TrueLayer.Signing.Tests
 
             verify.Should().Throw<SignatureException>();
         }
-        
+
         public sealed class TestCase
         {
             public TestCase(string name, string kid, string privateKey, string publicKey)
