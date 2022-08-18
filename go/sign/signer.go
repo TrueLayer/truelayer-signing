@@ -128,10 +128,10 @@ func (s *Signer) Sign() (string, error) {
 func BuildV2SigningPayload(method string, path string, headers *orderedmap.OrderedMap, body []byte, addPathTrailingSlash bool) []byte {
 	payload := make([]byte, 0)
 	payload = append(payload, []byte(strings.ToUpper(method))...)
-	payload = append(payload, []byte(" ")...)
+	payload = append(payload, ' ')
 	payload = append(payload, []byte(path)...)
 	if addPathTrailingSlash {
-		payload = append(payload, []byte("/")...)
+		payload = append(payload, '/')
 	}
 	payload = append(payload, []byte("\n")...)
 	for pair := headers.Oldest(); pair != nil; pair = pair.Next() {
