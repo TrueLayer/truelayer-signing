@@ -1,7 +1,7 @@
 package tlsigning
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/Truelayer/truelayer-signing/go/errors"
@@ -13,27 +13,27 @@ const (
 )
 
 func getTestKeys(assert *assert.Assertions) ([]byte, []byte) {
-	privateKeyBytes, err := ioutil.ReadFile("../test-resources/ec512-private.pem")
+	privateKeyBytes, err := os.ReadFile("../test-resources/ec512-private.pem")
 	assert.Nilf(err, "private key read failed: %v", err)
-	publicKeyBytes, err := ioutil.ReadFile("../test-resources/ec512-public.pem")
+	publicKeyBytes, err := os.ReadFile("../test-resources/ec512-public.pem")
 	assert.Nilf(err, "public key read failed: %v", err)
 	return privateKeyBytes, publicKeyBytes
 }
 
 func getTlSignature(assert *assert.Assertions) string {
-	signature, err := ioutil.ReadFile("../test-resources/tl-signature.txt")
+	signature, err := os.ReadFile("../test-resources/tl-signature.txt")
 	assert.Nilf(err, "tl signature read failed: %v", err)
 	return string(signature)
 }
 
 func getWebhookSignature(assert *assert.Assertions) string {
-	signature, err := ioutil.ReadFile("../test-resources/webhook-signature.txt")
+	signature, err := os.ReadFile("../test-resources/webhook-signature.txt")
 	assert.Nilf(err, "webhook signature read failed: %v", err)
 	return string(signature)
 }
 
 func getJwksJson(assert *assert.Assertions) []byte {
-	jwks, err := ioutil.ReadFile("../test-resources/jwks.json")
+	jwks, err := os.ReadFile("../test-resources/jwks.json")
 	assert.Nilf(err, "jwks json read failed: %v", err)
 	return jwks
 }
