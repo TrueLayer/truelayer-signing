@@ -172,11 +172,7 @@ func (v *Verifier) Verify(tlSignature string) error {
 }
 
 func (v *Verifier) handleTrailingSlashRetry() (string, bool) {
-	if strings.HasSuffix(v.path, "/") {
-		return strings.TrimSuffix(v.path, "/"), false
-	} else {
-		return v.path, true
-	}
+	return strings.TrimSuffix(v.path, "/"), !strings.HasSuffix(v.path, "/")
 }
 
 // ParseTlSignature parses a tl signature header value into (header, headerBase64, signature).
