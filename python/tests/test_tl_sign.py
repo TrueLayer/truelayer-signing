@@ -381,3 +381,43 @@ def test_tl_sign_set_jku():
     jws_header = extract_jws_header(signature)
 
     assert jws_header.jku == jku
+
+
+def verify_without_signed_trailing_slash():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+
+    tl_signature = (
+        sign_with_pem(KID, PRIVATE_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook/")
+        .set_body(body)
+        .sign()
+    )
+
+    (
+        verify_with_pem(PUBLIC_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook")
+        .set_body(body)
+        .verify(tl_signature)
+    )
+
+
+def verify_with_unsigned_trailing_slash():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+
+    tl_signature = (
+        sign_with_pem(KID, PRIVATE_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook")
+        .set_body(body)
+        .sign()
+    )
+
+    (
+        verify_with_pem(PUBLIC_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook/")
+        .set_body(body)
+        .verify(tl_signature)
+    )

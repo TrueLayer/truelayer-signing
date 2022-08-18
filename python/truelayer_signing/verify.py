@@ -129,7 +129,12 @@ def tl_verify(args: VerifyArguments) -> None:
     # build the jws paintext
     try:
         _, jws_b64 = build_v2_jws_b64(
-            jws_header, args.method, args.path, ordered_headers.items(), args.body
+            jws_header,
+            args.method,
+            args.path,
+            ordered_headers.items(),
+            args.body,
+            False,
         )
     except UnicodeEncodeError:
         raise TlSigningException("Internal Error")
@@ -162,7 +167,26 @@ def tl_verify(args: VerifyArguments) -> None:
         raise TlSigningException(f"Invalid Key: {e}")
 
     if not verifier.verify(jws_b64, key, signature):  # type: ignore
-        raise TlSigningException("Invalid Signature")
+        if args.path.endswith("/"):
+            _, jws_b64_2 = build_v2_jws_b64(
+                jws_header,
+                args.method,
+                args.path[:-1],
+                ordered_headers.items(),
+                args.body,
+                False,
+            )
+        else:
+            _, jws_b64_2 = build_v2_jws_b64(
+                jws_header,
+                args.method,
+                args.path,
+                ordered_headers.items(),
+                args.body,
+                True,
+            )
+        if not verifier.verify(jws_b64_2, key, signature):  # type: ignore
+            raise TlSigningException("Invalid Signature")
 
 
 def extract_jws_header(tl_signature: str) -> JwsHeader:

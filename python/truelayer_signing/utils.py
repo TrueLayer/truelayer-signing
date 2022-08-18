@@ -148,6 +148,7 @@ def build_v2_jws_b64(
     path: str,
     headers: Iterable[Tuple[str, str]],
     body: str,
+    add_path_trailing_slash: bool,
 ) -> Tuple[bytes, bytes]:
     """
     Build a TLv2 jws.
@@ -160,6 +161,7 @@ def build_v2_jws_b64(
     jws_header_b64 = to_url_safe_base64(json_header)
 
     # build payload
+    path = path + "/" if add_path_trailing_slash else path
     payload = build_v2_signing_payload(method, path, headers, body)
     payload_b64 = to_url_safe_base64(payload.encode())
 

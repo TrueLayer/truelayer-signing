@@ -94,7 +94,7 @@ def tl_sign(args: SignArguments) -> str:
     try:
         # create the jws paintext
         jws_header_b64, jws_header_and_payload = build_v2_jws_b64(
-            jws_header, args.method, args.path, args.headers.items(), args.body
+            jws_header, args.method, args.path, args.headers.items(), args.body, False
         )
 
         # sign the jws
