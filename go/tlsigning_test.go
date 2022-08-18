@@ -480,7 +480,7 @@ func TestSetJku(t *testing.T) {
 
 // Signing a path with a single trailing slash & trying to verify
 // without that slash should still work. See #80.
-func VerifyWithoutSignedTrailingSlash(t *testing.T) {
+func TestVerifyWithoutSignedTrailingSlash(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
@@ -504,7 +504,7 @@ func VerifyWithoutSignedTrailingSlash(t *testing.T) {
 
 // Verify a path that matches except it has an additional trailing slash
 // should still work. See #80.
-func VerifyWithUnsignedTrailingSlash(t *testing.T) {
+func TestVerifyWithUnsignedTrailingSlash(t *testing.T) {
 	assert := assert.New(t)
 
 	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
