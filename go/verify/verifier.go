@@ -154,15 +154,30 @@ func (v *Verifier) Verify(tlSignature string) error {
 	}
 
 	// reconstruct the payload as it would have been signed
-	signingPayload := sign.BuildV2SigningPayload(v.method, v.path, orderedHeaders, v.body)
-	signingPayloadB64 := base64.RawURLEncoding.EncodeToString(signingPayload)
-	payload := fmt.Sprintf("%s.%s", tlSignatureData.HeaderBase64, signingPayloadB64)
+	signingPayload := sign.BuildV2SigningPayload(v.method, v.path, orderedHeaders, v.body, false)
+	payload := fmt.Sprintf("%s.%s", tlSignatureData.HeaderBase64, base64.RawURLEncoding.EncodeToString(signingPayload))
 	err = crypto.VerifyES512(publicKey, []byte(payload), tlSignatureData.Signature)
 	if err != nil {
-		return errors.NewJwsError(fmt.Sprintf("signature verification failed: %v", err))
+		// try again with/without a trailing slash (#80)
+		newPath, addPathTrailingSlash := v.handleTrailingSlashRetry()
+		signingPayload := sign.BuildV2SigningPayload(v.method, newPath, orderedHeaders, v.body, addPathTrailingSlash)
+		payload := fmt.Sprintf("%s.%s", tlSignatureData.HeaderBase64, base64.RawURLEncoding.EncodeToString(signingPayload))
+		retryErr := crypto.VerifyES512(publicKey, []byte(payload), tlSignatureData.Signature)
+		if retryErr != nil {
+			// use original error if both fail
+			return errors.NewJwsError(fmt.Sprintf("signature verification failed: %v", err))
+		}
 	}
 
 	return nil
+}
+
+func (v *Verifier) handleTrailingSlashRetry() (string, bool) {
+	if strings.HasSuffix(v.path, "/") {
+		return strings.TrimSuffix(v.path, "/"), false
+	} else {
+		return v.path, true
+	}
 }
 
 // ParseTlSignature parses a tl signature header value into (header, headerBase64, signature).

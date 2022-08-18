@@ -477,3 +477,51 @@ func TestSetJku(t *testing.T) {
 	assert.Nilf(err, "jws header extraction failed: %v", err)
 	assert.Equal("https://webhooks.truelayer.com/.well-known/jwks", jwsHeader.Jku)
 }
+
+// Signing a path with a single trailing slash & trying to verify
+// without that slash should still work. See #80.
+func VerifyWithoutSignedTrailingSlash(t *testing.T) {
+	assert := assert.New(t)
+
+	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
+
+	body := []byte("{\"foo\":\"bar\"}")
+
+	signature, err := SignWithPem(Kid, privateKeyBytes).
+		Method("post").
+		Path("/tl-webhook/").
+		Body(body).
+		Sign()
+	assert.Nilf(err, "signing failed: %v", err)
+
+	err = VerifyWithPem(publicKeyBytes).
+		Method("POST").
+		Path("/tl-webhook"). // missing trailing slash
+		Body(body).
+		Verify(signature)
+	assert.Nilf(err, "signature verification should not fail: %v", err)
+}
+
+// Verify a path that matches except it has an additional trailing slash
+// should still work. See #80.
+func VerifyWithUnsignedTrailingSlash(t *testing.T) {
+	assert := assert.New(t)
+
+	privateKeyBytes, publicKeyBytes := getTestKeys(assert)
+
+	body := []byte("{\"foo\":\"bar\"}")
+
+	signature, err := SignWithPem(Kid, privateKeyBytes).
+		Method("post").
+		Path("/tl-webhook").
+		Body(body).
+		Sign()
+	assert.Nilf(err, "signing failed: %v", err)
+
+	err = VerifyWithPem(publicKeyBytes).
+		Method("POST").
+		Path("/tl-webhook/"). // additional trailing slash
+		Body(body).
+		Verify(signature)
+	assert.Nilf(err, "signature verification should not fail: %v", err)
+}
