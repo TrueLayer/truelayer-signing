@@ -162,8 +162,7 @@ func (v *Verifier) Verify(tlSignature string) error {
 		newPath, addPathTrailingSlash := v.handleTrailingSlashRetry()
 		signingPayload := sign.BuildV2SigningPayload(v.method, newPath, orderedHeaders, v.body, addPathTrailingSlash)
 		payload := fmt.Sprintf("%s.%s", tlSignatureData.HeaderBase64, base64.RawURLEncoding.EncodeToString(signingPayload))
-		retryErr := crypto.VerifyES512(publicKey, []byte(payload), tlSignatureData.Signature)
-		if retryErr != nil {
+		if retryErr := crypto.VerifyES512(publicKey, []byte(payload), tlSignatureData.Signature); retryErr != nil {
 			// use original error if both fail
 			return errors.NewJwsError(fmt.Sprintf("signature verification failed: %v", err))
 		}
