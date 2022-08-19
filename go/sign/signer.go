@@ -109,7 +109,7 @@ func (s *Signer) Sign() (string, error) {
 	}
 	jwsHeaderB64 := base64.RawURLEncoding.EncodeToString(marshalledJwsHeader)
 
-	signingPayload := BuildV2SigningPayload(s.method, s.path, s.headers, s.body)
+	signingPayload := BuildV2SigningPayload(s.method, s.path, s.headers, s.body, false)
 	signingPayloadB64 := base64.RawURLEncoding.EncodeToString(signingPayload)
 
 	jwsHeaderAndPayload := fmt.Sprintf("%s.%s", jwsHeaderB64, signingPayloadB64)
@@ -125,11 +125,14 @@ func (s *Signer) Sign() (string, error) {
 }
 
 // BuildV2SigningPayload builds a v2 signing payload.
-func BuildV2SigningPayload(method string, path string, headers *orderedmap.OrderedMap, body []byte) []byte {
+func BuildV2SigningPayload(method string, path string, headers *orderedmap.OrderedMap, body []byte, addPathTrailingSlash bool) []byte {
 	payload := make([]byte, 0)
 	payload = append(payload, []byte(strings.ToUpper(method))...)
-	payload = append(payload, []byte(" ")...)
+	payload = append(payload, ' ')
 	payload = append(payload, []byte(path)...)
+	if addPathTrailingSlash {
+		payload = append(payload, '/')
+	}
 	payload = append(payload, []byte("\n")...)
 	for pair := headers.Oldest(); pair != nil; pair = pair.Next() {
 		header := pair.Value.(*tlhttp.Header)
