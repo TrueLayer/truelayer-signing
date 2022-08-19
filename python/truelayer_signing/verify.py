@@ -167,24 +167,17 @@ def tl_verify(args: VerifyArguments) -> None:
         raise TlSigningException(f"Invalid Key: {e}")
 
     if not verifier.verify(jws_b64, key, signature):  # type: ignore
-        if args.path.endswith("/"):
-            _, jws_b64_2 = build_v2_jws_b64(
-                jws_header,
-                args.method,
-                args.path[:-1],
-                ordered_headers.items(),
-                args.body,
-                False,
-            )
-        else:
-            _, jws_b64_2 = build_v2_jws_b64(
-                jws_header,
-                args.method,
-                args.path,
-                ordered_headers.items(),
-                args.body,
-                True,
-            )
+        (path, slash) = (
+            (args.path[:-1], False) if args.path.endswith("/") else (args.path, True)
+        )
+        _, jws_b64_2 = build_v2_jws_b64(
+            jws_header,
+            args.method,
+            path,
+            ordered_headers.items(),
+            args.body,
+            slash,
+        )
         if not verifier.verify(jws_b64_2, key, signature):  # type: ignore
             raise TlSigningException("Invalid Signature")
 
