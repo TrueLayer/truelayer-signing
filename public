@@ -1,0 +1,17 @@
+olang: verify handle path trailing /
+
+* Fixed tests
+
+* Update go/verify/verifier.go
+
+Co-authored-by: Maciej Baczynski <maciej.baczynski@truelayer.com>
+
+* Better appending
+
+* Better condition check
+
+* Updated CI
+
+* Fixed lint error
+
+Co-authored-by: Maciej Baczynski <maciej.baczynski@truelayer.com>
