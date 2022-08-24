@@ -24,7 +24,7 @@ The `verify_with_jwks` function may be used to verify webhook `Tl-Signature` hea
 
 ```python
 # `jku` field is included in webhook signatures
-let jws_header = extract_jws_header(webhook_signature)["jku"]
+jws_header = extract_jws_header(webhook_signature).jku
 
 # check `jku` is an allowed TrueLayer url & fetch jwks JSON (not provided by this lib)
 ensure_jku_allowed(jku)
