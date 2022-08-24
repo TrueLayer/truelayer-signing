@@ -230,7 +230,7 @@ use TrueLayer\Signing\Verifier;
         ->path('/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping')
         ->header('X-Whatever-2', 't2345d')
         ->header('Idempotency-Key', 'idemp-2076717c-9005-4811-a321-9e0787fa0382')
-        ->body('{"currency":"GBP","max_amount_in_minor":5000000}');
+        ->body('{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}');
 
     /* @phpstan-ignore-next-line */
     \expect($verifier->verify($signature))->not->toThrow(Exception::class);

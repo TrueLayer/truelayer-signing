@@ -93,7 +93,7 @@ describe('sign', () => {
 
 describe('verify', () => {
   it('should not throw using the valid cross-lang static signature', () => {
-    const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
+    const body = '{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 

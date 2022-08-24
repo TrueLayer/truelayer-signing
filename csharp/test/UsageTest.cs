@@ -98,7 +98,7 @@ namespace TrueLayer.Signing.Tests
         [Fact]
         public void VerifyStaticSignature()
         {
-            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000,\"name\":\"Foo???\"}";
             var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
             var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
             var tlSignature = File.ReadAllText(TestResourcePath("tl-signature.txt")).Trim();

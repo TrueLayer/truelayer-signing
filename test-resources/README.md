@@ -16,7 +16,7 @@ A static `Tl-Signature` signed by **ec512-private.pem** with:
 * method `POST`
 * path `/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping`
 * header `Idempotency-Key: idemp-2076717c-9005-4811-a321-9e0787fa0382`
-* body `{"currency":"GBP","max_amount_in_minor":5000000}`
+* body `{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}`
 
 **All verify implementations should include a test against this signature to ensure cross-lang consistency.**
 
