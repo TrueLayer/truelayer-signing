@@ -9,7 +9,9 @@ const KID: &str = "45fc75cf-5649-4134-84b3-192c2c78e990";
 /// * body `{"currency":"GBP","max_amount_in_minor":5000000}`
 #[test]
 fn full_request_signature() {
-    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
+    // Note: "Foo???" will encode differently if not using url-safe base64 so using
+    //       this as static-signature should ensure all langs use url-safe base64.
+    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
@@ -97,7 +99,7 @@ fn mismatched_signature_with_attached_valid_body_trailing_dots() {
 
 #[test]
 fn verify_full_request_static_signature() {
-    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
+    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
     let tl_signature = include_str!("../../test-resources/tl-signature.txt").trim();
