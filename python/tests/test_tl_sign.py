@@ -46,7 +46,7 @@ def test_tl_sign_and_verify():
 
 
 def test_verify_full_request_static_signature():
-    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    body = '{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}'
     idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
     path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
     tl_signature = read_file("../test-resources/tl-signature.txt").rstrip()
