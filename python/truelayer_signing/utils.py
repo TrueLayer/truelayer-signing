@@ -10,6 +10,9 @@ from typing import Dict, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, U
 # local imports
 from .errors import TlSigningException
 
+SIGNING_ALGORITHM = "ES512"
+TL_VERSION = "2"
+
 P = TypeVar("P", str, Union[str, Mapping[str, str]])
 T = TypeVar("T", bound="TlJwsBase")  # type: ignore
 
@@ -38,12 +41,12 @@ class JwsHeader:
         if any(
             x not in header.keys() for x in ["alg", "kid", "tl_version", "tl_headers"]
         ):
-            raise TlSigningException("Invaild Header")
+            raise TlSigningException("Invalid Header")
 
-        if header["alg"] != "ES512":
+        if header["alg"] != SIGNING_ALGORITHM:
             raise TlSigningException("Unexpected Header Algorithm")
 
-        if header["tl_version"] != "2":
+        if header["tl_version"] != TL_VERSION:
             raise TlSigningException("Expected tl_version 2")
         return JwsHeader(**header)
 

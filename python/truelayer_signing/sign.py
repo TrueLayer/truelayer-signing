@@ -10,6 +10,8 @@ from jwt.algorithms import ECAlgorithm
 # local imports
 from .errors import TlSigningException
 from .utils import (
+    SIGNING_ALGORITHM,
+    TL_VERSION,
     HttpMethod,
     JwsHeader,
     TlJwsBase,
@@ -84,9 +86,9 @@ def tl_sign(args: SignArguments) -> str:
     """
     # create the TLv2 jws header
     jws_header = JwsHeader(
-        alg="ES512",
+        alg=SIGNING_ALGORITHM,
         kid=args.kid,
-        tl_version="2",
+        tl_version=TL_VERSION,
         tl_headers=",".join(args.headers.keys()),
         jku=args.jws_jku,
     )

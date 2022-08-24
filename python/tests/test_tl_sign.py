@@ -383,7 +383,7 @@ def test_tl_sign_set_jku():
     assert jws_header.jku == jku
 
 
-def verify_without_signed_trailing_slash():
+def test_verify_without_signed_trailing_slash():
     body = '{"currency":"GBP","max_amount_in_minor":5000000}'
 
     tl_signature = (
@@ -403,7 +403,7 @@ def verify_without_signed_trailing_slash():
     )
 
 
-def verify_with_unsigned_trailing_slash():
+def test_verify_with_unsigned_trailing_slash():
     body = '{"currency":"GBP","max_amount_in_minor":5000000}'
 
     tl_signature = (
