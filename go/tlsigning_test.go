@@ -87,7 +87,7 @@ func TestVerifyStaticSignature(t *testing.T) {
 
 	_, publicKeyBytes := getTestKeys(assert)
 
-	body := []byte("{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}")
+	body := []byte("{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000,\"name\":\"Foo???\"}")
 	idempotencyKey := []byte("idemp-2076717c-9005-4811-a321-9e0787fa0382")
 	path := "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
 	tlSignature := getTlSignature(assert)
