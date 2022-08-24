@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
-use Exception;
 use TrueLayer\Signing\Contracts\Jws as IJws;
 use TrueLayer\Signing\Exceptions\RequestPathNotFoundException;
+use TrueLayer\Signing\Exceptions\RequiredHeaderMissingException;
 
 abstract class AbstractJws implements IJws
 {
@@ -18,7 +18,7 @@ abstract class AbstractJws implements IJws
     /**
      * @var string
      */
-    protected string $requestPath;
+    protected string $requestPath = '';
 
     /**
      * @var string
@@ -74,7 +74,7 @@ abstract class AbstractJws implements IJws
      */
     public function header(string $key, string $value): self
     {
-        $this->requestHeaders[$key] = $value;
+        $this->requestHeaders[\strtolower($key)] = $value;
 
         return $this;
     }
@@ -94,27 +94,39 @@ abstract class AbstractJws implements IJws
     }
 
     /**
-     * @param string[] $orderOfHeaderKeys
+     * @param string[] $tlHeaders
+     * @param bool     $withTrailingSlash
      *
      * @throws RequestPathNotFoundException
-     * @throws Exception
+     * @throws RequiredHeaderMissingException
      *
      * @return string
      */
-    public function buildPayload(array $orderOfHeaderKeys): string
+    public function buildPayload(array $tlHeaders, bool $withTrailingSlash = false): string
     {
         if (empty($this->requestPath)) {
             throw new RequestPathNotFoundException();
         }
 
+        // The request path, with or without trailing slash
+        $requestPath = \rtrim($this->requestPath, '/');
+        if ($withTrailingSlash) {
+            $requestPath .= '/';
+        }
+
         // Add the HTTP Method and Path
-        $payload = "{$this->requestMethod} {$this->requestPath}\n";
+        $payload = "{$this->requestMethod} {$requestPath}\n";
 
         // Add the request headers
-        $normalisedRequestHeaders = Util::normaliseHeaders($this->requestHeaders);
-        foreach ($orderOfHeaderKeys as $headerKey) {
-            $value = $normalisedRequestHeaders[$headerKey];
-            $payload .= "{$headerKey}: {$value}\n";
+        foreach ($tlHeaders as $tlHeaderKey) {
+            $lcTlHeaderKey = \strtolower($tlHeaderKey);
+
+            if (!isset($this->requestHeaders[$lcTlHeaderKey])) {
+                throw new RequiredHeaderMissingException("Signature is missing the {$lcTlHeaderKey} header");
+            }
+
+            $headerValue = $this->requestHeaders[$lcTlHeaderKey];
+            $payload .= "{$tlHeaderKey}: {$headerValue}\n";
         }
 
         // Add the request body

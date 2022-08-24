@@ -46,16 +46,17 @@ final class Verifier extends AbstractJws implements IVerifier
     /**
      * @param array<string, string> ...$jsonObjects
      *
-     * @return IVerifier
      * @throws InvalidArgumentException
+     *
+     * @return IVerifier
      */
     public static function verifyWithJsonKeys(array ...$jsonObjects): IVerifier
     {
         $jwks = [];
         try {
             foreach ($jsonObjects as $jsonObject) {
-                $encoded = json_encode($jsonObject);
-                if (!is_string($encoded)) {
+                $encoded = \json_encode($jsonObject);
+                if (!\is_string($encoded)) {
                     throw new InvalidArgumentException('One or multiple keys are invalid');
                 }
 
@@ -91,8 +92,9 @@ final class Verifier extends AbstractJws implements IVerifier
     /**
      * @param string ...$pems
      *
-     * @return IVerifier
      * @throws InvalidArgumentException
+     *
+     * @return IVerifier
      */
     public static function verifyWithPem(string ...$pems): IVerifier
     {
@@ -113,8 +115,9 @@ final class Verifier extends AbstractJws implements IVerifier
     /**
      * @param string ...$pemsBase64
      *
-     * @return IVerifier
      * @throws InvalidArgumentException
+     *
+     * @return IVerifier
      */
     public static function verifyWithPemBase64(string ...$pemsBase64): IVerifier
     {
@@ -129,8 +132,9 @@ final class Verifier extends AbstractJws implements IVerifier
     /**
      * @param string ...$paths
      *
-     * @return IVerifier
      * @throws InvalidArgumentException
+     *
+     * @return IVerifier
      */
     public static function verifyWithPemFile(string ...$paths): IVerifier
     {
@@ -166,7 +170,9 @@ final class Verifier extends AbstractJws implements IVerifier
      */
     public function requireHeaders(array $headers): IVerifier
     {
-        \array_push($this->requiredHeaders, ...$headers);
+        $lowercaseHeaders = \array_map('strtolower', $headers);
+
+        \array_push($this->requiredHeaders, ...$lowercaseHeaders);
 
         return $this;
     }
@@ -205,15 +211,21 @@ final class Verifier extends AbstractJws implements IVerifier
         }
 
         $tlHeaders = !empty($jwsHeaders['tl_headers']) ? \explode(',', $jwsHeaders['tl_headers']) : [];
-        $normalisedTlHeaders = Util::normaliseHeaderKeys($tlHeaders);
-        foreach ($this->requiredHeaders as $header) {
-            if (!\in_array($header, $normalisedTlHeaders, true)) {
-                throw new RequiredHeaderMissingException("Signature is missing the {$header} required header");
+
+        if (!empty($this->requestHeaders)) {
+            $lowercaseTlHeaders = \array_map('strtolower', $tlHeaders);
+            foreach ($this->requiredHeaders as $requiredHeader) {
+                if (!\in_array($requiredHeader, $lowercaseTlHeaders, true)) {
+                    throw new RequiredHeaderMissingException("Signature is missing the {$requiredHeader} required header");
+                }
             }
         }
 
         foreach ($this->jwks as $jwk) {
             if ($this->verifier->verifyWithKey($jws, $jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders))) {
+                return;
+            }
+            if ($this->verifier->verifyWithKey($jws, $jwk, TrueLayerSignatures::SIGNATURE_INDEX, $this->buildPayload($tlHeaders, true))) {
                 return;
             }
         }

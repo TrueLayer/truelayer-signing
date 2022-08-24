@@ -7,7 +7,7 @@ use TrueLayer\Signing\Exceptions\RequestPathNotFoundException;
 use TrueLayer\Signing\Signer;
 use TrueLayer\Signing\Tests\MockData;
 
-it('should produce a signature', function () {
+\it('should produce a signature', function () {
     $keys = MockData::generateKeyPair();
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
 
@@ -16,13 +16,13 @@ it('should produce a signature', function () {
     \expect($signer->sign())->toBeString();
 });
 
-it('should throw when the request path is not set', function () {
+\it('should throw when the request path is not set', function () {
     $keys = MockData::generateKeyPair();
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
     $signer->sign();
 })->throws(RequestPathNotFoundException::class);
 
-it('should allow signing a request with no headers', function () {
+\it('should allow signing a request with no headers', function () {
     $keys = MockData::generateKeyPair();
     $signer = Signer::signWithKey(Uuid::uuid4()->toString(), $keys['private']);
 
@@ -32,10 +32,10 @@ it('should allow signing a request with no headers', function () {
     \expect($signer->sign())->not->toThrow(Exception::class);
 });
 
-/**
+/*
  * @throws RequestPathNotFoundException
  */
-it( 'should allow signing classes implementing PSR7 interfaces', function () {
+\it('should allow signing classes implementing PSR7 interfaces', function () {
     $keys = MockData::generateKeyPair();
     $kid = Uuid::uuid4()->toString();
     $path = '/test';
