@@ -32,6 +32,6 @@ public class Utils {
                 .append(new String(body))
                 .toString();
 
-        return Base64URL.from(Base64.getEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
+        return Base64URL.from(Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
     }
 }
