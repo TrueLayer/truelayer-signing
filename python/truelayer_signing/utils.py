@@ -3,8 +3,15 @@ from __future__ import annotations
 # std imports
 import base64
 import json
+from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Dict, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
+
+# local imports
+from .errors import TlSigningException
+
+SIGNING_ALGORITHM = "ES512"
+TL_VERSION = "2"
 
 P = TypeVar("P", str, Union[str, Mapping[str, str]])
 T = TypeVar("T", bound="TlJwsBase")  # type: ignore
@@ -19,6 +26,35 @@ class HttpMethod(str, Enum):
 
 
 M = TypeVar("M", HttpMethod, Optional[HttpMethod])
+
+
+@dataclass(frozen=True)
+class JwsHeader:
+    alg: str
+    kid: str
+    tl_version: str
+    tl_headers: str
+    jku: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, header: Mapping[str, str]) -> "JwsHeader":
+        if any(
+            x not in header.keys() for x in ["alg", "kid", "tl_version", "tl_headers"]
+        ):
+            raise TlSigningException("Invalid Header")
+
+        if header["alg"] != SIGNING_ALGORITHM:
+            raise TlSigningException("Unexpected Header Algorithm")
+
+        if header["tl_version"] != TL_VERSION:
+            raise TlSigningException("Expected tl_version 2")
+        return JwsHeader(**header)
+
+    def to_dict(self) -> Dict[str, str]:
+        data = asdict(self)
+        if self.jku is None:
+            del data["jku"]
+        return data
 
 
 class TlJwsBase(Generic[P, M]):
@@ -54,6 +90,8 @@ class TlJwsBase(Generic[P, M]):
         Add the request absolute path starting with a leading `/` and without
         any trailing slashes.
         """
+        if not path.startswith("/"):
+            raise TlSigningException(f"Invalid path \"{path}\" must start with '/'")
         self.path = path
         return self
 
@@ -108,11 +146,12 @@ def build_v2_signing_payload(
 
 
 def build_v2_jws_b64(
-    jws_header: Mapping[str, str],
+    jws_header: JwsHeader,
     method: str,
     path: str,
     headers: Iterable[Tuple[str, str]],
     body: str,
+    add_path_trailing_slash: bool,
 ) -> Tuple[bytes, bytes]:
     """
     Build a TLv2 jws.
@@ -121,10 +160,11 @@ def build_v2_jws_b64(
         - UnicodeEncodeError: If any of the given strings are not unicoded enocded
     """
     # enocde header
-    json_header = json.dumps(jws_header, separators=(",", ":")).encode()
+    json_header = json.dumps(jws_header.to_dict(), separators=(",", ":")).encode()
     jws_header_b64 = to_url_safe_base64(json_header)
 
     # build payload
+    path = path + "/" if add_path_trailing_slash else path
     payload = build_v2_signing_payload(method, path, headers, body)
     payload_b64 = to_url_safe_base64(payload.encode())
 

@@ -9,7 +9,15 @@ from jwt.algorithms import ECAlgorithm
 
 # local imports
 from .errors import TlSigningException
-from .utils import HttpMethod, TlJwsBase, build_v2_jws_b64, to_url_safe_base64
+from .utils import (
+    SIGNING_ALGORITHM,
+    TL_VERSION,
+    HttpMethod,
+    JwsHeader,
+    TlJwsBase,
+    build_v2_jws_b64,
+    to_url_safe_base64,
+)
 
 
 class TlSigner(TlJwsBase[str, HttpMethod]):
@@ -18,6 +26,7 @@ class TlSigner(TlJwsBase[str, HttpMethod]):
     """
 
     kid: str
+    jws_jku: Optional[str]
 
     def __init__(
         self,
@@ -27,9 +36,15 @@ class TlSigner(TlJwsBase[str, HttpMethod]):
         path: str = "",
         headers: Optional[Dict[str, str]] = None,
         body: str = "",
+        jws_jku: Optional[str] = None,
     ) -> None:
         super().__init__(pkey, method, path, headers, body)
         self.kid = kid
+        self.jws_jku = jws_jku
+
+    def set_jku(self, jku: str) -> TlSigner:
+        self.jws_jku = jku
+        return self
 
     def sign(self) -> str:
         """
@@ -46,6 +61,7 @@ class TlSigner(TlJwsBase[str, HttpMethod]):
                 self.headers,
                 self.body,
                 self.http_method,
+                self.jws_jku,
             )
         )
 
@@ -58,6 +74,7 @@ class SignArguments:
     headers: Mapping[str, str]
     body: str
     method: HttpMethod
+    jws_jku: Optional[str]
 
 
 def tl_sign(args: SignArguments) -> str:
@@ -68,17 +85,18 @@ def tl_sign(args: SignArguments) -> str:
         - TlSigningException
     """
     # create the TLv2 jws header
-    jws_header = {
-        "alg": "ES512",
-        "kid": args.kid,
-        "tl_version": "2",
-        "tl_headers": ",".join(args.headers.keys()),
-    }
+    jws_header = JwsHeader(
+        alg=SIGNING_ALGORITHM,
+        kid=args.kid,
+        tl_version=TL_VERSION,
+        tl_headers=",".join(args.headers.keys()),
+        jku=args.jws_jku,
+    )
 
     try:
         # create the jws paintext
         jws_header_b64, jws_header_and_payload = build_v2_jws_b64(
-            jws_header, args.method, args.path, args.headers.items(), args.body
+            jws_header, args.method, args.path, args.headers.items(), args.body, False
         )
 
         # sign the jws

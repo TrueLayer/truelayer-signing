@@ -15,6 +15,7 @@ from jwt.algorithms import ECAlgorithm
 # local imports
 from .utils import (
     HttpMethod,
+    JwsHeader,
     TlJwsBase,
     build_v2_jws_b64,
     decode_url_safe_base64,
@@ -102,15 +103,13 @@ def tl_verify(args: VerifyArguments) -> None:
         TlSigningException
     """
     (jws_header, signature) = _parse_tl_signature(args.tl_signature)
-    _verify_header(jws_header)
 
     # order headers
     try:
         header_names = (
-            jws_header["tl_headers"].split(",")
-            if jws_header["tl_headers"] != ""
-            else []
+            jws_header.tl_headers.split(",") if jws_header.tl_headers != "" else []
         )
+
         ordered_headers: OrderedDict[str, str] = OrderedDict()
         for header_name in header_names:
             key = next(
@@ -130,7 +129,12 @@ def tl_verify(args: VerifyArguments) -> None:
     # build the jws paintext
     try:
         _, jws_b64 = build_v2_jws_b64(
-            jws_header, args.method, args.path, ordered_headers.items(), args.body
+            jws_header,
+            args.method,
+            args.path,
+            ordered_headers.items(),
+            args.body,
+            False,
         )
     except UnicodeEncodeError:
         raise TlSigningException("Internal Error")
@@ -163,10 +167,22 @@ def tl_verify(args: VerifyArguments) -> None:
         raise TlSigningException(f"Invalid Key: {e}")
 
     if not verifier.verify(jws_b64, key, signature):  # type: ignore
-        raise TlSigningException("Invalid Signature")
+        (path, slash) = (
+            (args.path[:-1], False) if args.path.endswith("/") else (args.path, True)
+        )
+        _, jws_b64_2 = build_v2_jws_b64(
+            jws_header,
+            args.method,
+            path,
+            ordered_headers.items(),
+            args.body,
+            slash,
+        )
+        if not verifier.verify(jws_b64_2, key, signature):  # type: ignore
+            raise TlSigningException("Invalid Signature")
 
 
-def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
+def extract_jws_header(tl_signature: str) -> JwsHeader:
     """
     Returns the signatures deserialize headers
 
@@ -174,58 +190,39 @@ def extract_jws_header(tl_signature: str) -> Mapping[str, str]:
         - TlSigningException
     """
     try:
-        header, _ = tl_signature.split("..")
+        (header, _) = signature_split(tl_signature)
         header_b64 = header.encode()
         headers: Mapping[str, str] = json.loads(
             decode_url_safe_base64(header_b64).decode()
         )
-        _verify_header(headers)
-        return headers
+        return JwsHeader.from_dict(headers)
     except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError):
         raise TlSigningException("Invalid Signature")
 
 
-def _parse_tl_signature(tl_signature: str) -> Tuple[Mapping[str, str], bytes]:
+def _parse_tl_signature(tl_signature: str) -> Tuple[JwsHeader, bytes]:
     """
     Returns deserialize headers and decoded payload.
 
     Raises:
         - TlSigningException
     """
-    try:
-        header, signature = tl_signature.split("..", maxsplit=1)
-    except ValueError:
-        raise TlSigningException("invalid signature format")
-
-    # decode header
-    try:
-        header_b64 = header.encode()
-        headers = json.loads(decode_url_safe_base64(header_b64).decode())
-    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError) as e:
-        raise TlSigningException(f"header decode failed: {e}")
+    headers = extract_jws_header(tl_signature)
 
     # decode signature
     try:
+        (_, signature) = signature_split(tl_signature)
         signature_b64 = signature.encode()
         raw_signature = decode_url_safe_base64(signature_b64)
-    except (UnicodeEncodeError) as e:
+    except (UnicodeDecodeError, UnicodeEncodeError) as e:
         raise TlSigningException(f"signature decode failed: {e}")
 
     return (headers, raw_signature)
 
 
-def _verify_header(header: Mapping[str, str]) -> None:
-    """
-    Verify the JWT header.
-
-    Raises:
-        - TlSigningException
-    """
-    if any(x not in header.keys() for x in ["alg", "kid", "tl_version", "tl_headers"]):
-        raise TlSigningException("Invaild Header")
-
-    if header["alg"] != "ES512":
-        raise TlSigningException("Unexpected Header Algorithm")
-
-    if header["tl_version"] != "2":
-        raise TlSigningException("Expected tl_version 2")
+def signature_split(tl_signature: str) -> Tuple[str, str]:
+    try:
+        header, signature = tl_signature.split("..", maxsplit=1)
+        return (header, signature)
+    except ValueError:
+        raise TlSigningException("Invalid Signature")

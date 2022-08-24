@@ -301,11 +301,11 @@ def test_flexible_header_case_order_verify():
 def test_extract_jws_header():
     hook_signature = read_file("../test-resources/webhook-signature.txt")
     jws_header = extract_jws_header(hook_signature)
-    assert jws_header["alg"] == "ES512"
-    assert jws_header["kid"] == KID
-    assert jws_header["tl_version"] == "2"
-    assert jws_header["tl_headers"] == "X-Tl-Webhook-Timestamp,Content-Type"
-    assert jws_header["jku"] == "https://webhooks.truelayer.com/.well-known/jwks"
+    assert jws_header.alg == "ES512"
+    assert jws_header.kid == KID
+    assert jws_header.tl_version == "2"
+    assert jws_header.tl_headers == "X-Tl-Webhook-Timestamp,Content-Type"
+    assert jws_header.jku == "https://webhooks.truelayer.com/.well-known/jwks"
 
 
 def test_verify_with_jwks():
@@ -351,3 +351,73 @@ def test_verify_without_http_method():
             .add_header("X-Whatever", "aoitbeh")
             .verify(signature)
         )
+
+
+def test_sign_an_invalid_path():
+    with pytest.raises(TlSigningException):
+        sign_with_pem(KID, PRIVATE_KEY).set_path("https://example.com/the-path")
+
+
+def test_verify_an_invalid_path():
+    with pytest.raises(TlSigningException):
+        verify_with_pem(PUBLIC_KEY).set_path("https://example.com/the-path")
+
+
+def test_tl_sign_set_jku():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+    jku = "https://webhooks.truelayer.com/.well-known/jwks"
+
+    signature = (
+        sign_with_pem(KID, PRIVATE_KEY)
+        .set_path(path)
+        .add_header("Idempotency-Key", idempotency_key)
+        .set_body(body)
+        .set_jku(jku)
+        .sign()
+    )
+
+    jws_header = extract_jws_header(signature)
+
+    assert jws_header.jku == jku
+
+
+def test_verify_without_signed_trailing_slash():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+
+    tl_signature = (
+        sign_with_pem(KID, PRIVATE_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook/")
+        .set_body(body)
+        .sign()
+    )
+
+    (
+        verify_with_pem(PUBLIC_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook")
+        .set_body(body)
+        .verify(tl_signature)
+    )
+
+
+def test_verify_with_unsigned_trailing_slash():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000}'
+
+    tl_signature = (
+        sign_with_pem(KID, PRIVATE_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook")
+        .set_body(body)
+        .sign()
+    )
+
+    (
+        verify_with_pem(PUBLIC_KEY)
+        .set_method(HttpMethod.POST)
+        .set_path("/tl-webhook/")
+        .set_body(body)
+        .verify(tl_signature)
+    )
