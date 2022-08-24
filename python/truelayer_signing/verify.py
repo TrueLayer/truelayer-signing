@@ -214,7 +214,7 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[JwsHeader, bytes]:
         (_, signature) = signature_split(tl_signature)
         signature_b64 = signature.encode()
         raw_signature = decode_url_safe_base64(signature_b64)
-    except (UnicodeEncodeError, UnicodeEncodeError) as e:
+    except (UnicodeDecodeError, UnicodeEncodeError) as e:
         raise TlSigningException(f"signature decode failed: {e}")
 
     return (headers, raw_signature)
