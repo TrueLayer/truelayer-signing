@@ -101,6 +101,13 @@ final class Signer extends AbstractJws implements ISigner
     {
         $tlHeaders = \array_keys(Util::normaliseHeaders($this->requestHeaders));
 
+        // Temporary fix to deal with idempotency key casing
+        $tlHeaders = array_map(function ($key) {
+            return ($key === 'idempotency-key')
+                ? 'Idempotency-Key'
+                : $key;
+        }, $tlHeaders);
+
         $headers = [
             'alg' => TrueLayerSignatures::ALGORITHM,
             'kid' => $this->kid,
