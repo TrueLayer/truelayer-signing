@@ -258,6 +258,29 @@ namespace TrueLayer.Signing.Tests
         }
 
         [Fact]
+        public void SignAndVerify_RequiredHeaderCaseInsensitivity()
+        {
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+            var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Header("Idempotency-Key", idempotency_key)
+                .Body(body)
+                .Sign();
+
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(path)
+                .RequireHeader("IdEmPoTeNcY-KeY")
+                .Header("iDeMpOtEnCy-kEy", idempotency_key)
+                .Body(body)
+                .Verify(tlSignature); // should not throw
+        }
+
+        [Fact]
         public void SignAndVerify_FlexibleHeaderCaseOrderVerify()
         {
             var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";

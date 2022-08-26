@@ -311,6 +311,30 @@ fn full_request_signature_required_header_missing_from_signature() {
 }
 
 #[test]
+fn full_request_signature_required_header_case_insensitive() {
+    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+        .method("post")
+        .path(path)
+        .header("Idempotency-Key", idempotency_key)
+        .body(body)
+        .sign()
+        .expect("sign");
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method("post")
+        .path(path)
+        .require_header("IdEmPoTeNcY-KeY") // case insensitive so should be fine
+        .header("Idempotency-Key", idempotency_key)
+        .body(body)
+        .verify(&tl_signature)
+        .expect("verify should work");
+}
+
+#[test]
 fn flexible_header_case_order_verify() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
