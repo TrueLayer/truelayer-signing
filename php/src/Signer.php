@@ -92,21 +92,14 @@ final class Signer extends AbstractJws implements ISigner
     }
 
     /**
-     * @throws Exceptions\RequestPathNotFoundException
      * @throws Exception
+     * @throws Exceptions\RequestPathNotFoundException
      *
      * @return string
      */
     public function sign(): string
     {
         $tlHeaders = \array_keys(Util::normaliseHeaders($this->requestHeaders));
-
-        // Temporary fix to deal with idempotency key casing
-        $tlHeaders = array_map(function ($key) {
-            return ($key === 'idempotency-key')
-                ? 'Idempotency-Key'
-                : $key;
-        }, $tlHeaders);
 
         $headers = [
             'alg' => TrueLayerSignatures::ALGORITHM,
