@@ -222,7 +222,8 @@ namespace TrueLayer.Signing
                 .Where(h => !string.IsNullOrEmpty(h))
                 .ToList();
 
-            var missingRequired = requiredHeaders.SingleOrDefault(h => !signatureHeaderNames.Contains(h));
+            var signatureHeaderNameSet = new HashSet<string>(signatureHeaderNames, new HeaderNameComparer());
+            var missingRequired = requiredHeaders.SingleOrDefault(h => !signatureHeaderNameSet.Contains(h));
             SignatureException.Ensure(missingRequired == null, $"signature is missing required header {missingRequired}");
 
             var signedHeaders = FilterOrderHeaders(signatureHeaderNames);

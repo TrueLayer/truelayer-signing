@@ -44,7 +44,7 @@ namespace TrueLayer.Signing
             Try(() =>
             {
                 f();
-                return (object?) null;
+                return (object?)null;
             }, message);
         }
 
@@ -150,7 +150,8 @@ namespace TrueLayer.Signing
         /// </summary>
         public static byte[] PrependZeroPad(this byte[] bytes, int length)
         {
-            if (bytes.Length >= length) {
+            if (bytes.Length >= length)
+            {
                 return bytes;
             }
             var padded = new byte[length];
