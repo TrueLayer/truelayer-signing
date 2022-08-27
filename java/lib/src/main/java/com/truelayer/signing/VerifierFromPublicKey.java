@@ -20,7 +20,7 @@ class VerifierFromPublicKey extends Verifier{
         try {
             jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
         } catch (Exception e) {
-            throw new SignatureException("Exception while parsing JWS header", e);
+            throw new SignatureException(e.getMessage(), e);
         }
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
@@ -29,7 +29,7 @@ class VerifierFromPublicKey extends Verifier{
             verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
                     .verify(new ECDSAVerifier(publicKey));
         } catch (Exception e) {
-            throw new SignatureException("Exception while parsing JWS header", e);
+            throw new SignatureException(e.getMessage(), e);
         }
 
         if (!verifiedResult) {
@@ -45,7 +45,7 @@ class VerifierFromPublicKey extends Verifier{
                 verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
                         .verify(new ECDSAVerifier(publicKey));
             } catch (Exception e) {
-                throw new SignatureException("Exception while parsing JWS header", e);
+                throw new SignatureException(e.getMessage(), e);
             }
         }
 

@@ -100,10 +100,11 @@ public class UsageTest {
                 .header("Idempotency-Key", idempotencyKey)
                 .body(body);
 
-        verifier.verify(tlSignature);
 
         expectedEx.expect(SignatureException.class);
         expectedEx.expectMessage("invalid signature");
+
+        verifier.verify(tlSignature);
     }
 
 
@@ -280,7 +281,7 @@ public class UsageTest {
 
         expectedEx.expect(SignatureException.class);
         expectedEx.expectMessage("The payload Base64URL part must be empty");
-        verifier.verify(tlSignature);
+        verifier.verify(signature);
     }
 
     @Test
@@ -299,7 +300,7 @@ public class UsageTest {
 
         expectedEx.expect(SignatureException.class);
         expectedEx.expectMessage("Invalid serialized unsecured/JWS/JWE object: Too many part delimiters");
-        verifier.verify(tlSignature);
+        verifier.verify(signature);
     }
 
     @Test

@@ -255,7 +255,7 @@ public abstract class Verifier {
         }
 
         if (missingHeaders.size() > 0) {
-            throw new SignatureException("missing required headers: " + missingHeaders);
+            throw new SignatureException("missing required header: " + missingHeaders.get(0));
         }
 
         return signedHeaders;

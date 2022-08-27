@@ -25,7 +25,7 @@ class VerifierFromJwks extends Verifier {
         try {
            jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
         } catch (ParseException e) {
-           throw new SignatureException("Exception while parsing the JWS header", e);
+           throw new SignatureException(e.getMessage(), e);
         }
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
@@ -39,7 +39,7 @@ class VerifierFromJwks extends Verifier {
         try {
             publicKey = buildPublicKey(keyByKeyId);
         } catch (Exception e) {
-            throw new SignatureException("Exception thrown while building the public key", e);
+            throw new SignatureException(e.getMessage(), e);
         }
 
 
