@@ -1,5 +1,6 @@
 package com.truelayer.signing;
 
+import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.util.Base64URL;
 
 import javax.xml.bind.DatatypeConverter;
@@ -47,7 +48,10 @@ public class Utils {
                 headerStringBuilder +
                 new String(body);
 
-        String base46payload = DatatypeConverter.printBase64Binary(payload.getBytes(StandardCharsets.UTF_8));
+
+
+        String base46payload = Base64.encode(payload.getBytes(StandardCharsets.UTF_8)).toString();
         return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
+//        return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
     }
 }
