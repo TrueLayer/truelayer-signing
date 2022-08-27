@@ -35,7 +35,7 @@ public class Utils {
             HeaderName name = entry.getKey();
             String val = entry.getValue();
             headerStringBuilder.append(name.getName());
-            headerStringBuilder.append(":");
+            headerStringBuilder.append(": ");
             headerStringBuilder.append(val);
             headerStringBuilder.append("\n");
         }

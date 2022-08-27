@@ -401,8 +401,8 @@ public class UsageTest {
                 .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}");
 
         expectedEx.expect(SignatureException.class);
-        expectedEx.expectMessage("Invalid signature");
-        verifier.verify(tlSignature);
+        expectedEx.expectMessage("invalid signature");
+        verifier.verify(webhookSignature);
     }
 
     @Test
