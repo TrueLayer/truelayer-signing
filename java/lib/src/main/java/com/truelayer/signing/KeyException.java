@@ -5,7 +5,7 @@ package com.truelayer.signing;
  */
 public class KeyException extends RuntimeException {
 
-    private KeyException(String message, Exception e) {
+    public KeyException(String message, Exception e) {
         super(message, e);
     }
 

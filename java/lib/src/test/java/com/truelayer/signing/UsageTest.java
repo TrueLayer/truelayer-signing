@@ -1,12 +1,15 @@
 package com.truelayer.signing;
 
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.HashMap;
 
 import static java.nio.file.Files.readAllBytes;
@@ -23,6 +26,9 @@ public class UsageTest {
     static String tlSignature;
     static String jwks;
 
+    @Rule
+    public ExpectedException expectedEx = ExpectedException.none();
+
     @BeforeClass
     public static void testData() throws IOException {
         privateKey = readAllBytes(testResourcePath("ec512-private.pem"));
@@ -33,7 +39,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullSignature() {
+    public void fullSignature() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -56,7 +62,7 @@ public class UsageTest {
     }
 
     @Test
-    public void verifyStaticSignature() {
+    public void verifyStaticSignature() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000,\"name\":\"Foo???\"}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -70,8 +76,10 @@ public class UsageTest {
                 .verify(tlSignature); // should not throw
     }
 
+
+
     @Test
-    public void fullRequestMethodMismatch() {
+    public void fullRequestMethodMismatch() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -92,14 +100,15 @@ public class UsageTest {
                 .header("Idempotency-Key", idempotencyKey)
                 .body(body);
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(tlSignature));
+        verifier.verify(tlSignature);
 
-        assertEquals("invalid signature", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("Invalid signature");
     }
 
 
     @Test
-    public void fullRequestPathMismatch() {
+    public void fullRequestPathMismatch() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -120,14 +129,14 @@ public class UsageTest {
                 .header("Idempotency-Key", idempotencyKey)
                 .body(body);
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(tlSignature));
-
-        assertEquals("invalid signature", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("Invalid signature");
+        verifier.verify(tlSignature);
     }
 
 
     @Test
-    public void fullRequestHeaderMismatch() {
+    public void fullRequestHeaderMismatch() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -147,13 +156,13 @@ public class UsageTest {
                 .header("Idempotency-Key", "something-else")
                 .body(body);
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(tlSignature));
-
-        assertEquals("invalid signature", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("Invalid signature");
+        verifier.verify(tlSignature);
     }
 
     @Test
-    public void fullRequestBodyMismatch() {
+    public void fullRequestBodyMismatch() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -173,13 +182,13 @@ public class UsageTest {
                 .header("Idempotency-Key", idempotencyKey)
                 .body("{\"max_amount_in_minor\":1234}".getBytes(StandardCharsets.UTF_8));
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(tlSignature));
-
-        assertEquals("invalid signature", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("Invalid signature");
+        verifier.verify(tlSignature);
     }
 
     @Test
-    public void fullRequestMissingSignatureHeader() {
+    public void fullRequestMissingSignatureHeader() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -199,13 +208,13 @@ public class UsageTest {
                 .header("X-Whatever", "aoitbeh")
                 .body(body);
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(tlSignature));
-
-        assertEquals("invalid signature", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("Invalid signature");
+        verifier.verify(tlSignature);
     }
 
     @Test
-    public void flexibleHeaderCaseOrderVerify() {
+    public void flexibleHeaderCaseOrderVerify() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -229,7 +238,7 @@ public class UsageTest {
     }
 
     @Test
-    public void fullRequestRequiredHeaderMissingFromSignature() {
+    public void fullRequestRequiredHeaderMissingFromSignature() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
@@ -250,13 +259,13 @@ public class UsageTest {
                 .requiredHeader("X-required")
                 .body(body);
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(tlSignature));
-
-        assertEquals("missing required header: X-required", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("missing required header: X-required");
+        verifier.verify(tlSignature);
     }
 
     @Test
-    public void invalidButPreAttachedBody() {
+    public void invalidButPreAttachedBody() throws Exception {
         String signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
                 + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
                 + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
@@ -269,13 +278,13 @@ public class UsageTest {
                 .path("/foo")
                 .body("{}".getBytes());
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
-
-        assertEquals("The payload Base64URL part must be empty", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("The payload Base64URL part must be empty");
+        verifier.verify(tlSignature);
     }
 
     @Test
-    public void invalidButPreAttachedBodyTrailingDots() {
+    public void invalidButPreAttachedBodyTrailingDots() throws Exception {
         String signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND"
                 + "ktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV"
                 + "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD"
@@ -288,13 +297,13 @@ public class UsageTest {
                 .path("/foo")
                 .body("{}".getBytes());
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
-
-        assertEquals("Invalid serialized unsecured/JWS/JWE object: Too many part delimiters", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("Invalid serialized unsecured/JWS/JWE object: Too many part delimiters");
+        verifier.verify(tlSignature);
     }
 
     @Test
-    public void signAndVerifyNoHeaders() {
+    public void signAndVerifyNoHeaders() throws Exception {
         byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes();
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
@@ -314,7 +323,7 @@ public class UsageTest {
     // Signing a path with a single trailing slash & trying to verify
     // without that slash should still work. See #80.
     @Test
-    public void signAndVerifySignedTrailingSlash() {
+    public void signAndVerifySignedTrailingSlash() throws Exception {
         byte[] body = "{\"foo\":\"bar\"}".getBytes();
 
         String tlSignature = Signer.from(kid, privateKey)
@@ -333,7 +342,7 @@ public class UsageTest {
     // Verify a path that matches except it has an additional trailing slash
     // should still work. See #80.
     @Test
-    public void signAndVerifyUnsignedTrailingSlash() {
+    public void signAndVerifyUnsignedTrailingSlash() throws Exception {
         byte[] body = "{\"foo\":\"bar\"}".getBytes();
 
         String tlSignature = Signer.from(kid, privateKey)
@@ -352,7 +361,7 @@ public class UsageTest {
     // Verify a path that matches except it has an additional trailing slash
     // should still work. See #80.
     @Test
-    public void verifyJwksUnsignedTrailingSlash() {
+    public void verifyJwksUnsignedTrailingSlash() throws Exception {
         Verifier.verifyWithJwks(jwks)
                 .method("POST")
                 .path("/tl-webhook/")
@@ -365,13 +374,13 @@ public class UsageTest {
     }
 
     @Test
-    public void verifierExtractJku() {
+    public void verifierExtractJku() throws ParseException {
         String jku = Verifier.extractJku(webhookSignature);
         assertEquals("https://webhooks.truelayer.com/.well-known/jwks", jku);
     }
 
     @Test
-    public void verifierJwks() {
+    public void verifierJwks() throws Exception {
         Verifier.verifyWithJwks(jwks)
                 .method("POST")
                 .path("/tl-webhook")
@@ -391,29 +400,25 @@ public class UsageTest {
                 }})
                 .body("{\"event_type\":\"example\",\"event_id\":\"18b2842b-a57b-4887-a0a6-d3c7c36f1020\"}");
 
-        SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(webhookSignature));
-
-        assertEquals("invalid signature", invalidSignatureException.getMessage());
+        expectedEx.expect(SignatureException.class);
+        expectedEx.expectMessage("Invalid signature");
+        verifier.verify(tlSignature);
     }
 
     @Test
     public void signInvalidPath() {
-        IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class, () ->
-                Signer.from(kid, privateKey)
-                        .path("https://example.com/the-path") //invalid path
-        );
-
-        assertEquals("invalid path https://example.com/the-path must start with '/'", illegalArgumentException.getMessage());
+        expectedEx.expect(IllegalArgumentException.class);
+        expectedEx.expectMessage("invalid path https://example.com/the-path must start with '/'");
+        Signer.from(kid, privateKey)
+                .path("https://example.com/the-path");
     }
 
     @Test
-    public void verifyInvalidPath() {
-        IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class, () ->
-                Verifier.from(publicKey)
-                        .path("https://example.com/the-path") //invalid path
-        );
-
-        assertEquals("invalid path https://example.com/the-path must start with '/'", illegalArgumentException.getMessage());
+    public void verifyInvalidPath() throws Exception {
+        expectedEx.expect(IllegalArgumentException.class);
+        expectedEx.expectMessage("invalid path https://example.com/the-path must start with '/'");
+        Verifier.from(publicKey)
+                .path("https://example.com/the-path");
     }
 
     private static Path testResourcePath(String subPath) {

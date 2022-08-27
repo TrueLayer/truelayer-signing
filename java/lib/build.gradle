@@ -10,7 +10,7 @@ repositories {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
+        languageVersion = JavaLanguageVersion.of(7)
     }
 }
 
@@ -19,5 +19,5 @@ apply from: project.file('publish.gradle')
 
 dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
-    implementation("com.nimbusds:nimbus-jose-jwt:9.15.2")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.9")
 }

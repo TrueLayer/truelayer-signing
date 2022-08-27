@@ -1,9 +1,6 @@
 package com.truelayer.signing;
 
-import com.nimbusds.jose.JOSEObject;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
@@ -11,6 +8,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 
 import java.security.interfaces.ECPublicKey;
+import java.text.ParseException;
 import java.util.Map;
 
 class VerifierFromJwks extends Verifier {
@@ -22,8 +20,13 @@ class VerifierFromJwks extends Verifier {
     }
 
     @Override
-    public void verify(String signature) {
-        JWSHeader jwsHeader = SignatureException.evaluate(() -> JWSHeader.parse(JOSEObject.split(signature)[0]));
+    public void verify(String signature) throws SignatureException {
+        JWSHeader jwsHeader;
+        try {
+           jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
+        } catch (ParseException e) {
+           throw new SignatureException("Exception while parsing the JWS header", e);
+        }
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
         String keyID = jwsHeader.getKeyID();
@@ -32,11 +35,21 @@ class VerifierFromJwks extends Verifier {
         JWK keyByKeyId = jwkSet.getKeyByKeyId(keyID);
         SignatureException.ensure(keyByKeyId != null, "no jwk found with kid");
 
-        ECPublicKey publicKey = buildPublicKey(keyByKeyId);
+        ECPublicKey publicKey;
+        try {
+            publicKey = buildPublicKey(keyByKeyId);
+        } catch (Exception e) {
+            throw new SignatureException("Exception thrown while building the public key", e);
+        }
 
-        Boolean verifiedResult = SignatureException.evaluate(() ->
-                JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
-                        .verify(new ECDSAVerifier(publicKey)));
+
+        boolean verifiedResult;
+        try {
+            verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
+                    .verify(new ECDSAVerifier(publicKey));
+        } catch (Exception e) {
+           throw new SignatureException("", e);
+        }
 
         if (!verifiedResult) {
             // try again with/without a trailing slash (#80)
@@ -46,21 +59,21 @@ class VerifierFromJwks extends Verifier {
             } else {
                 path2 = path + "/";
             }
-            verifiedResult = SignatureException.evaluate(() ->
-                    JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
-                            .verify(new ECDSAVerifier(publicKey)));
-        }
 
+            try {
+                verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
+                        .verify(new ECDSAVerifier(publicKey));
+            } catch (Exception e) {
+                throw new SignatureException("", e);
+            }
+        }
         SignatureException.ensure(verifiedResult, "invalid signature");
     }
 
-    private ECPublicKey buildPublicKey(JWK keyByKeyId) {
-        return SignatureException.evaluate(() -> {
-            ECKey ecKey = keyByKeyId.toECKey();
-            SignatureException.ensure(ecKey.getKeyType().getValue().equals("EC"), "unsupported jwk.kty");
-            SignatureException.ensure(ecKey.getCurve().equals(Curve.P_521), "unsupported jwk.crv");
-
-            return ecKey.toECPublicKey();
-        });
+    private ECPublicKey buildPublicKey(JWK keyByKeyId) throws JOSEException {
+        ECKey ecKey = keyByKeyId.toECKey();
+        SignatureException.ensure(ecKey.getKeyType().getValue().equals("EC"), "unsupported jwk.kty");
+        SignatureException.ensure(ecKey.getCurve().equals(Curve.P_521), "unsupported jwk.crv");
+        return ecKey.toECPublicKey();
     }
 }

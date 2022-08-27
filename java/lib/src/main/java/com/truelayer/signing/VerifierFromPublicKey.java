@@ -15,13 +15,22 @@ class VerifierFromPublicKey extends Verifier{
     }
 
     @Override
-    public void verify(String signature) {
-        JWSHeader jwsHeader = SignatureException.evaluate(() -> JWSHeader.parse(JOSEObject.split(signature)[0]));
+    public void verify(String signature) throws SignatureException {
+        JWSHeader jwsHeader;
+        try {
+            jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
+        } catch (Exception e) {
+            throw new SignatureException("Exception while parsing JWS header", e);
+        }
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
-        Boolean verifiedResult = SignatureException.evaluate(() ->
-                JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
-                        .verify(new ECDSAVerifier(publicKey)));
+        boolean verifiedResult;
+        try {
+            verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
+                    .verify(new ECDSAVerifier(publicKey));
+        } catch (Exception e) {
+            throw new SignatureException("Exception while parsing JWS header", e);
+        }
 
         if (!verifiedResult) {
             // try again with/without a trailing slash (#80)
@@ -31,12 +40,18 @@ class VerifierFromPublicKey extends Verifier{
             } else {
                 path2 = path + "/";
             }
-            verifiedResult = SignatureException.evaluate(() ->
-                    JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
-                            .verify(new ECDSAVerifier(publicKey)));
+
+            try {
+                verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
+                        .verify(new ECDSAVerifier(publicKey));
+            } catch (Exception e) {
+                throw new SignatureException("Exception while parsing JWS header", e);
+            }
         }
 
-        SignatureException.ensure(verifiedResult, "invalid signature");
+        if (!verifiedResult) {
+            throw new SignatureException("Invalid signature");
+        }
     }
 
 }
