@@ -20,4 +20,5 @@ apply from: project.file('publish.gradle')
 dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
     implementation("com.nimbusds:nimbus-jose-jwt:9.9")
+    implementation 'commons-codec:commons-codec:1.15'
 }

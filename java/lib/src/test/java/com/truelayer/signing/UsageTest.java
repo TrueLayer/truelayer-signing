@@ -103,7 +103,7 @@ public class UsageTest {
         verifier.verify(tlSignature);
 
         expectedEx.expect(SignatureException.class);
-        expectedEx.expectMessage("Invalid signature");
+        expectedEx.expectMessage("invalid signature");
     }
 
 
@@ -130,7 +130,7 @@ public class UsageTest {
                 .body(body);
 
         expectedEx.expect(SignatureException.class);
-        expectedEx.expectMessage("Invalid signature");
+        expectedEx.expectMessage("invalid signature");
         verifier.verify(tlSignature);
     }
 
@@ -157,7 +157,7 @@ public class UsageTest {
                 .body(body);
 
         expectedEx.expect(SignatureException.class);
-        expectedEx.expectMessage("Invalid signature");
+        expectedEx.expectMessage("invalid signature");
         verifier.verify(tlSignature);
     }
 
@@ -183,7 +183,7 @@ public class UsageTest {
                 .body("{\"max_amount_in_minor\":1234}".getBytes(StandardCharsets.UTF_8));
 
         expectedEx.expect(SignatureException.class);
-        expectedEx.expectMessage("Invalid signature");
+        expectedEx.expectMessage("invalid signature");
         verifier.verify(tlSignature);
     }
 
@@ -209,7 +209,7 @@ public class UsageTest {
                 .body(body);
 
         expectedEx.expect(SignatureException.class);
-        expectedEx.expectMessage("Invalid signature");
+        expectedEx.expectMessage("invalid signature");
         verifier.verify(tlSignature);
     }
 

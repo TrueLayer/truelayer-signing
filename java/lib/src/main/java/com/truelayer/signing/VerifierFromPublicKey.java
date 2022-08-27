@@ -50,7 +50,7 @@ class VerifierFromPublicKey extends Verifier{
         }
 
         if (!verifiedResult) {
-            throw new SignatureException("Invalid signature");
+            throw new SignatureException("invalid signature");
         }
     }
 

@@ -1,9 +1,7 @@
 package com.truelayer.signing;
 
-import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.util.Base64URL;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +11,7 @@ public class Utils {
     protected static Map<String, Object> jwsHeaderMap(String kid, Map<HeaderName, String> headers) {
         StringBuilder sb = new StringBuilder();
         int counter = 0;
-        for (Map.Entry<HeaderName, String> entry: headers.entrySet()) {
+        for (Map.Entry<HeaderName, String> entry : headers.entrySet()) {
             HeaderName name = entry.getKey();
             sb.append(name.getName());
             if (counter < headers.size() - 1)
@@ -32,7 +30,7 @@ public class Utils {
     public static Base64URL buildPayload(Map<HeaderName, String> headers, String method, String path, byte[] body) {
 
         StringBuilder headerStringBuilder = new StringBuilder();
-        for (Map.Entry<HeaderName, String> entry: headers.entrySet()) {
+        for (Map.Entry<HeaderName, String> entry : headers.entrySet()) {
             HeaderName name = entry.getKey();
             String val = entry.getValue();
             headerStringBuilder.append(name.getName());
@@ -49,9 +47,9 @@ public class Utils {
                 new String(body);
 
 
-
-        String base46payload = Base64.encode(payload.getBytes(StandardCharsets.UTF_8)).toString();
-        return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
+        String base46payload = new String(org.apache.commons.codec.binary.Base64.encodeBase64(payload.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+        return Base64URL.from(base46payload.replace("/", "_").substring(0, base46payload.length() - 1));
+//        return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
 //        return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
     }
 }
