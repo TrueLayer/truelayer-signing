@@ -47,6 +47,7 @@ public class Utils {
                 headerStringBuilder +
                 new String(body);
 
-        return Base64URL.from(DatatypeConverter.printBase64Binary(payload.getBytes(StandardCharsets.UTF_8)));
+        String base46payload = DatatypeConverter.printBase64Binary(payload.getBytes(StandardCharsets.UTF_8));
+        return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
     }
 }

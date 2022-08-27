@@ -235,8 +235,6 @@ public abstract class Verifier {
     }
 
     private List<String> validateSignatureHeaders(JWSHeader jwsHeader, HashSet<String> requiredHeaders) throws SignatureException {
-        System.out.println(jwsHeader);
-        System.out.println(requiredHeaders);
         SignatureException.ensure(jwsHeader.getAlgorithm().equals(JWSAlgorithm.ES512), "unsupported jws alg");
         SignatureException.ensure(jwsHeader.getCustomParam("tl_version").toString().equals("2"), "unsupported jws tl_version");
 
