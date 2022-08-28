@@ -202,7 +202,7 @@ final public class Signer {
         try {
             jwsHeader = JWSHeader.parse(jwsHeaderMap(this.kid, this.headers));
         } catch (ParseException e) {
-            throw new SignatureException(e.getMessage(), e);
+            throw new SignatureException(e);
         }
 
         JWSObject jwsObject = new JWSObject(

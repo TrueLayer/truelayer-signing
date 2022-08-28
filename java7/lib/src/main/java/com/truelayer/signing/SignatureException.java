@@ -13,19 +13,12 @@ public class SignatureException extends RuntimeException {
         super(message, e);
     }
 
+    public SignatureException(Exception e) {
+        super(e);
+    }
+
     protected static void ensure(boolean condition, String failureMessage) {
         if (!condition)
             throw new SignatureException(failureMessage);
     }
-
-    protected static <T> T evaluate(CheckedSupplier<T> f) {
-        try {
-            return f.get();
-        } catch (SignatureException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new SignatureException(e.getMessage(), e);
-        }
-    }
-
 }

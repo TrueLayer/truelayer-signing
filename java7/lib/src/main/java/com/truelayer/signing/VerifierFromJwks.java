@@ -25,7 +25,7 @@ class VerifierFromJwks extends Verifier {
         try {
            jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
         } catch (ParseException e) {
-           throw new SignatureException(e.getMessage(), e);
+           throw new SignatureException(e);
         }
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
@@ -39,7 +39,7 @@ class VerifierFromJwks extends Verifier {
         try {
             publicKey = buildPublicKey(keyByKeyId);
         } catch (Exception e) {
-            throw new SignatureException(e.getMessage(), e);
+            throw new SignatureException(e);
         }
 
 
@@ -48,7 +48,7 @@ class VerifierFromJwks extends Verifier {
             verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
                     .verify(new ECDSAVerifier(publicKey));
         } catch (Exception e) {
-           throw new SignatureException("", e);
+           throw new SignatureException(e);
         }
 
         if (!verifiedResult) {
@@ -64,7 +64,7 @@ class VerifierFromJwks extends Verifier {
                 verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
                         .verify(new ECDSAVerifier(publicKey));
             } catch (Exception e) {
-                throw new SignatureException("", e);
+                throw new SignatureException(e);
             }
         }
         SignatureException.ensure(verifiedResult, "invalid signature");
