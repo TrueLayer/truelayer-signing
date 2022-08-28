@@ -1,5 +1,6 @@
 package com.truelayer.signing;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.Payload;
@@ -8,6 +9,7 @@ import com.nimbusds.jose.jwk.ECKey;
 
 import java.nio.charset.StandardCharsets;
 import java.security.interfaces.ECPrivateKey;
+import java.text.ParseException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -138,8 +140,12 @@ final public class Signer {
         if (kid == null || privateKeyPem == null)
             throw new IllegalArgumentException("kid and privateKey must not be null");
 
-        ECPrivateKey privateKey = KeyException.evaluate(() ->
-                ECKey.parseFromPEMEncodedObjects(new String(privateKeyPem)).toECKey().toECPrivateKey());
+        ECPrivateKey privateKey;
+        try {
+            privateKey = ECKey.parseFromPEMEncodedObjects(new String(privateKeyPem)).toECKey().toECPrivateKey();
+        } catch (Exception e) {
+            throw new KeyException("Exception thrown while parsing private key", e);
+        }
 
         return new Signer(kid, privateKey);
     }
@@ -158,8 +164,12 @@ final public class Signer {
         if (kid == null || privateKeyPem == null)
             throw new IllegalArgumentException("kid and privateKey must not be null");
 
-        ECPrivateKey privateKey = KeyException.evaluate(() ->
-                ECKey.parseFromPEMEncodedObjects(privateKeyPem).toECKey().toECPrivateKey());
+        ECPrivateKey privateKey;
+        try {
+            privateKey = ECKey.parseFromPEMEncodedObjects(privateKeyPem).toECKey().toECPrivateKey();
+        } catch (Exception e) {
+            throw new KeyException("Exception thrown while parsing private key", e);
+        }
 
         return new Signer(kid, privateKey);
     }
@@ -187,19 +197,25 @@ final public class Signer {
      * @return a JWS `Tl-Signature` v2 header value
      * @throws SignatureException if signature fails
      */
-    public String sign() {
-        return SignatureException.evaluate(() -> {
-                    JWSHeader jwsHeader = JWSHeader.parse(jwsHeaderMap(this.kid, this.headers));
+    public String sign() throws SignatureException {
+        JWSHeader jwsHeader;
+        try {
+            jwsHeader = JWSHeader.parse(jwsHeaderMap(this.kid, this.headers));
+        } catch (ParseException e) {
+            throw new SignatureException(e.getMessage(), e);
+        }
 
-                    JWSObject jwsObject = new JWSObject(
-                            jwsHeader,
-                            new Payload(Utils.buildPayload(headers, method, path, body))
-                    );
-
-                    jwsObject.sign(new ECDSASigner(this.ecPrivateKey));
-
-                    return jwsObject.serialize(true);
-                }
+        JWSObject jwsObject = new JWSObject(
+                jwsHeader,
+                new Payload(Utils.buildPayload(headers, method, path, body))
         );
+
+        try {
+            jwsObject.sign(new ECDSASigner(this.ecPrivateKey));
+        } catch (JOSEException e) {
+            throw new SignatureException("Exception thrown while signing the JWS object", e);
+        }
+
+        return jwsObject.serialize(true);
     }
 }

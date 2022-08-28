@@ -15,22 +15,13 @@ class VerifierFromPublicKey extends Verifier{
     }
 
     @Override
-    public void verify(String signature) throws SignatureException {
-        JWSHeader jwsHeader;
-        try {
-            jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
-        } catch (Exception e) {
-            throw new SignatureException(e.getMessage(), e);
-        }
+    public void verify(String signature) {
+        JWSHeader jwsHeader = SignatureException.evaluate(() -> JWSHeader.parse(JOSEObject.split(signature)[0]));
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
-        boolean verifiedResult;
-        try {
-            verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
-                    .verify(new ECDSAVerifier(publicKey));
-        } catch (Exception e) {
-            throw new SignatureException(e.getMessage(), e);
-        }
+        Boolean verifiedResult = SignatureException.evaluate(() ->
+                JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
+                        .verify(new ECDSAVerifier(publicKey)));
 
         if (!verifiedResult) {
             // try again with/without a trailing slash (#80)
@@ -40,18 +31,12 @@ class VerifierFromPublicKey extends Verifier{
             } else {
                 path2 = path + "/";
             }
-
-            try {
-                verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
-                        .verify(new ECDSAVerifier(publicKey));
-            } catch (Exception e) {
-                throw new SignatureException(e.getMessage(), e);
-            }
+            verifiedResult = SignatureException.evaluate(() ->
+                    JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path2, body)))
+                            .verify(new ECDSAVerifier(publicKey)));
         }
 
-        if (!verifiedResult) {
-            throw new SignatureException("invalid signature");
-        }
+        SignatureException.ensure(verifiedResult, "invalid signature");
     }
 
 }

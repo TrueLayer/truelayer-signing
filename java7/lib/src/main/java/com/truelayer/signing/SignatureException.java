@@ -5,7 +5,7 @@ package com.truelayer.signing;
  */
 public class SignatureException extends RuntimeException {
 
-    private SignatureException(String failureMessage) {
+    public SignatureException(String failureMessage) {
         super(failureMessage);
     }
 

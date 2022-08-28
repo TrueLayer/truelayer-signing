@@ -1,0 +1,106 @@
+name: Java7
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'java/**'
+      - 'test-resources/**'
+    tags-ignore:
+      - '**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'java7/**'
+      - 'test-resources/**'
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        java: [ 7 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'adopt'
+          cache: gradle
+      - name: Validate gradle wrapper
+        uses: gradle/wrapper-validation-action@v1.0.4
+      - name: Test
+        run: cd java && ./gradlew test
+
+  set-release-version:
+    name: Prepare version to tag and release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2 #we need to make a git diff of the last 2 commits
+      - name: Get project version
+        id: get_project_version
+        run: |
+          cd java && PROJECT_VERSION=$(./gradlew properties | grep "version:" | awk '{print $2}')
+          echo "::set-output name=project_version::$PROJECT_VERSION"
+      - name: Get changed version from last two commits
+        id: get_changed_version
+        run: |
+          CHANGED_VERSION=$(git diff HEAD^ -- ./java/gradle.properties | grep +version= | awk -F "=" '{print $2}')
+          echo "::set-output name=changed_version::$CHANGED_VERSION"
+      - name: Print changed version from last two commits
+        run: echo ${{ steps.get_changed_version.outputs.changed_version }}
+    outputs:
+      project_version: ${{ steps.get_project_version.outputs.project_version }}
+      changed_version: ${{ steps.get_changed_version.outputs.changed_version }}
+
+  publish:
+    name: Publish to Sonatype and Maven Central
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && needs.set-release-version.outputs.changed_version != ''
+    needs: [build-and-test, set-release-version]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup JDK 7
+        uses: actions/setup-java@v2
+        with:
+          java-version: '7'
+          distribution: 'adopt'
+          cache: gradle
+      - name: Validate gradle wrapper
+        uses: gradle/wrapper-validation-action@v1.0.4
+      - name: Publish to Sonatype and Maven Central
+        # run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: cd java && ./gradlew publishToSonatype closeSonatypeStagingRepository #manual release from Nexus UI for now
+        env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_GPG_KEY: ${{ secrets.SONATYPE_GPG_KEY }}
+          SONATYPE_GPG_PASSPHRASE: ${{ secrets.SONATYPE_GPG_PASSPHRASE }}
+
+  create_github_release:
+    name: Create Github Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !contains(needs.set-release-version.outputs.project_version, 'SNAPSHOT')
+    needs: [publish]
+    steps:
+      - name: Create tag
+        id: create_tag
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ needs.set-release-version.outputs.project_version }}
+          tag_prefix: 'java-v'
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.create_tag.outputs.new_tag }}
+          generate_release_notes: false

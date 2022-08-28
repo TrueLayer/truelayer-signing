@@ -1,5 +1,6 @@
 package com.truelayer.signing;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
@@ -9,10 +10,8 @@ import com.nimbusds.jose.jwk.JWKSet;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.interfaces.ECPublicKey;
+import java.text.ParseException;
 import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Builder to verify a request against a `Tl-Signature` header using a public key.
@@ -36,14 +35,11 @@ public abstract class Verifier {
      *
      * @param tlSignature unverified jws Tl-Signature
      * @return jku (JSON Web Key URL)
-     * @throws SignatureException if the signature is invalid
+     * @throws ParseException if the signature is invalid
      */
-    public static String extractJku(String tlSignature) {
-        return SignatureException.evaluate(() -> {
-                    URI uri = JWSObject.parse(tlSignature).getHeader().getJWKURL();
-                    return uri.toString();
-                }
-        );
+    public static String extractJku(String tlSignature) throws ParseException  {
+        URI uri = JWSObject.parse(tlSignature).getHeader().getJWKURL();
+        return uri.toString();
     }
 
     /**
@@ -164,11 +160,11 @@ public abstract class Verifier {
      * @throws KeyException             it the provided key is invalid
      * @throws IllegalArgumentException if the provided param is null
      */
-    public static Verifier from(byte[] publicKeyPem) {
+    public static Verifier from(byte[] publicKeyPem) throws KeyException, JOSEException {
         if (publicKeyPem == null)
             throw new IllegalArgumentException("the publicKey must not be null");
 
-        ECPublicKey publicKey = KeyException.evaluate(() -> ECKey.parseFromPEMEncodedObjects(new String(publicKeyPem)).toECKey().toECPublicKey());
+        ECPublicKey publicKey = ECKey.parseFromPEMEncodedObjects(new String(publicKeyPem)).toECKey().toECPublicKey();
         return new VerifierFromPublicKey(publicKey);
     }
 
@@ -180,11 +176,11 @@ public abstract class Verifier {
      * @throws KeyException             it the provided key is invalid
      * @throws IllegalArgumentException if the provided param is null
      */
-    public static Verifier from(String publicKeyPem) {
+    public static Verifier from(String publicKeyPem) throws JOSEException {
         if (publicKeyPem == null)
             throw new IllegalArgumentException("the publicKey must not be null");
 
-        ECPublicKey publicKey = KeyException.evaluate(() -> ECKey.parseFromPEMEncodedObjects(publicKeyPem).toECKey().toECPublicKey());
+        ECPublicKey publicKey = ECKey.parseFromPEMEncodedObjects(publicKeyPem).toECKey().toECPublicKey();
         return new VerifierFromPublicKey(publicKey);
     }
 
@@ -210,8 +206,8 @@ public abstract class Verifier {
      * @return the Verifier instance
      * @throws SignatureException if the provided jwks is invalid
      */
-    public static Verifier verifyWithJwks(String jwks) {
-        JWKSet jwkSet = SignatureException.evaluate(() -> JWKSet.parse(jwks));
+    public static Verifier verifyWithJwks(String jwks) throws ParseException {
+        JWKSet jwkSet = JWKSet.parse(jwks);
         return new VerifierFromJwks(jwkSet);
     }
 
@@ -228,33 +224,40 @@ public abstract class Verifier {
         List<String> validSignatureHeaders = validateSignatureHeaders(jwsHeader, requiredHeaders);
 
         LinkedHashMap<HeaderName, String> orderedHeaders = new LinkedHashMap<>();
-        validSignatureHeaders.forEach(h -> {
-            String value = headers.get(new HeaderName(h));
-            if (value != null)
-                orderedHeaders.put(new HeaderName(h), value);
-        });
+
+        for (String header: validSignatureHeaders) {
+            String val = headers.get(new HeaderName(header));
+            if (val != null)
+                orderedHeaders.put(new HeaderName(header), val);
+        }
 
         return orderedHeaders;
     }
 
-    private List<String> validateSignatureHeaders(JWSHeader jwsHeader, HashSet<String> requiredHeaders) {
+    private List<String> validateSignatureHeaders(JWSHeader jwsHeader, HashSet<String> requiredHeaders) throws SignatureException {
         SignatureException.ensure(jwsHeader.getAlgorithm().equals(JWSAlgorithm.ES512), "unsupported jws alg");
         SignatureException.ensure(jwsHeader.getCustomParam("tl_version").toString().equals("2"), "unsupported jws tl_version");
 
-        Supplier<Stream<String>> tl_headers =
-                () -> Arrays.stream(jwsHeader.getCustomParam("tl_headers").toString().split(",")).map(String::trim);
+        List<String> signedHeaders = Arrays.asList(jwsHeader.getCustomParam("tl_headers").toString().split(","));
 
-        Optional<String> missingRequiredHeader = requiredHeaders.stream()
-                .filter(rHeader -> tl_headers.get().noneMatch(tlHeader -> tlHeader.toLowerCase().contains(rHeader.toLowerCase())))
-                .findAny();
+        List<String> missingHeaders = new ArrayList<>();
+        for (String h: requiredHeaders) {
+            boolean found = false;
+            for (String sh: signedHeaders) {
+               if (sh.equals(h)) {
+                   found = true;
+                   break;
+               }
+            }
+            if (!found) {
+                missingHeaders.add(h);
+            }
+        }
 
-        SignatureException.ensure(
-                !missingRequiredHeader.isPresent(),
-                "missing required header: " + missingRequiredHeader.orElse("")
-        );
+        if (missingHeaders.size() > 0) {
+            throw new SignatureException("missing required header: " + missingHeaders.get(0));
+        }
 
-        return tl_headers.get().collect(Collectors.toList());
+        return signedHeaders;
     }
-
-
 }
