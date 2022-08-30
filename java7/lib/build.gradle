@@ -4,13 +4,18 @@ plugins {
     id 'signing'
 }
 
+compileJava   {
+    sourceCompatibility = '1.7'
+    targetCompatibility = '1.7'
+}
+
 repositories {
     mavenCentral()
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(7)
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
