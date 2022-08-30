@@ -1,9 +1,6 @@
 package com.truelayer.signing;
 
 import com.nimbusds.jose.util.Base64URL;
-import org.apache.commons.codec.binary.Base64;
-
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;

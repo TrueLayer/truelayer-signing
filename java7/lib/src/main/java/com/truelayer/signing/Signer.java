@@ -57,7 +57,7 @@ final public class Signer {
     public Signer path(String path) {
         if (path == null)
             throw new IllegalArgumentException("the path must not be null");
-        if(!path.startsWith("/"))
+        if (!path.startsWith("/"))
             throw new IllegalArgumentException("invalid path " + path + " must start with '/'");
         this.path = path;
         return this;
@@ -113,7 +113,7 @@ final public class Signer {
      * Add a Map of headers.
      * Warning: Only a single value per header name is supported.
      *
-     * @param headers  - must not be null
+     * @param headers - must not be null
      * @return the Signer instance
      * @throws IllegalArgumentException if the provided params are null
      */

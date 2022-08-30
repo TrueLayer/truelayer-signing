@@ -37,7 +37,7 @@ public abstract class Verifier {
      * @return jku (JSON Web Key URL)
      * @throws ParseException if the signature is invalid
      */
-    public static String extractJku(String tlSignature) throws SignatureException  {
+    public static String extractJku(String tlSignature) throws SignatureException {
         URI uri;
         try {
             uri = JWSObject.parse(tlSignature).getHeader().getJWKURL();
@@ -72,7 +72,7 @@ public abstract class Verifier {
     public Verifier path(String path) {
         if (path == null)
             throw new IllegalArgumentException("the path must not be null");
-        if(!path.startsWith("/"))
+        if (!path.startsWith("/"))
             throw new IllegalArgumentException("invalid path " + path + " must start with '/'");
         this.path = path;
         return this;
@@ -112,7 +112,7 @@ public abstract class Verifier {
      * Add a Map of headers.
      * Warning: Only a single value per header name is supported.
      *
-     * @param headers  - must not be null
+     * @param headers - must not be null
      * @return the Verifier instance
      * @throws IllegalArgumentException if the provided params are null
      */
@@ -241,7 +241,7 @@ public abstract class Verifier {
 
         LinkedHashMap<HeaderName, String> orderedHeaders = new LinkedHashMap<>();
 
-        for (String header: validSignatureHeaders) {
+        for (String header : validSignatureHeaders) {
             String val = headers.get(new HeaderName(header));
             if (val != null)
                 orderedHeaders.put(new HeaderName(header), val);
@@ -257,13 +257,13 @@ public abstract class Verifier {
         List<String> signedHeaders = Arrays.asList(jwsHeader.getCustomParam("tl_headers").toString().split(","));
 
         List<String> missingHeaders = new ArrayList<>();
-        for (String h: requiredHeaders) {
+        for (String h : requiredHeaders) {
             boolean found = false;
-            for (String sh: signedHeaders) {
-               if (sh.equals(h)) {
-                   found = true;
-                   break;
-               }
+            for (String sh : signedHeaders) {
+                if (sh.equals(h)) {
+                    found = true;
+                    break;
+                }
             }
             if (!found) {
                 missingHeaders.add(h);

@@ -1,12 +1,15 @@
 package com.truelayer.signing;
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.JOSEObject;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 
 import java.security.interfaces.ECPublicKey;
-import java.util.*;
+import java.util.Map;
 
-class VerifierFromPublicKey extends Verifier{
+class VerifierFromPublicKey extends Verifier {
 
     private final ECPublicKey publicKey;
 

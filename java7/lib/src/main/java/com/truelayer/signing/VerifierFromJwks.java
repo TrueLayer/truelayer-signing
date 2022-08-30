@@ -23,9 +23,9 @@ class VerifierFromJwks extends Verifier {
     public void verify(String signature) throws SignatureException {
         JWSHeader jwsHeader;
         try {
-           jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
+            jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
         } catch (ParseException e) {
-           throw new SignatureException(e);
+            throw new SignatureException(e);
         }
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
@@ -48,7 +48,7 @@ class VerifierFromJwks extends Verifier {
             verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
                     .verify(new ECDSAVerifier(publicKey));
         } catch (Exception e) {
-           throw new SignatureException(e);
+            throw new SignatureException(e);
         }
 
         if (!verifiedResult) {
