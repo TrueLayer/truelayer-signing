@@ -1,0 +1,48 @@
+// Package javadoc and sources
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+// Configure publishing repositories and publications
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from(components.java)
+
+            pom {
+                name = rootProject.project_name
+                artifactId = rootProject.artifact_id
+                packaging = 'jar'
+                description = rootProject.project_description
+                url = rootProject.project_url
+                scm {
+                    connection = rootProject.project_scm
+                    developerConnection = rootProject.project_scm
+                    url = rootProject.project_url
+                }
+                licenses {
+                    license {
+                        name = rootProject.project_license_name
+                        url = rootProject.project_license_url
+                    }
+                }
+                developers {
+                    developer {
+                        id = rootProject.project_developer
+                        name = rootProject.project_developer
+                    }
+                }
+            }
+        }
+    }
+}
+
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+signing {
+    def signingKey = System.getenv('SONATYPE_GPG_KEY')
+    def signingPassword = System.getenv('SONATYPE_GPG_PASSPHRASE')
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.mavenJava
+    required { isReleaseVersion && gradle.taskGraph.hasTask("publish") }
+}

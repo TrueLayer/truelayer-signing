@@ -1,0 +1,16 @@
+plugins {
+    //    // nexus publishing
+    id "io.github.gradle-nexus.publish-plugin"  version "1.1.0"
+
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl = uri(sonatype_repository_url)
+            snapshotRepositoryUrl = uri(sonatype_snapshot_repository_url)
+            username = System.getenv("SONATYPE_USERNAME")
+            password = System.getenv("SONATYPE_PASSWORD")
+        }
+    }
+}

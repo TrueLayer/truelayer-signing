@@ -1,0 +1,29 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+compileJava   {
+    sourceCompatibility = '1.7'
+    targetCompatibility = '1.7'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+apply from: project.file('test.gradle')
+apply from: project.file('publish.gradle')
+
+dependencies {
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.9")
+    implementation 'commons-codec:commons-codec:1.15'
+}
