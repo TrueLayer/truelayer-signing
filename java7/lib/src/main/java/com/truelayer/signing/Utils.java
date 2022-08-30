@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString;
+
 public class Utils {
 
     protected static Map<String, Object> jwsHeaderMap(String kid, Map<HeaderName, String> headers) {
@@ -49,7 +51,7 @@ public class Utils {
                 new String(body);
 
 
-        String base64payload = Base64.encodeBase64URLSafeString(payload.getBytes(StandardCharsets.UTF_8));
+        String base64payload = encodeBase64URLSafeString(payload.getBytes(StandardCharsets.UTF_8));
         return Base64URL.from(base64payload);
     }
 }
