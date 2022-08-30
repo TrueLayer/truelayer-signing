@@ -4,13 +4,6 @@ java {
     withSourcesJar()
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(7)
-    }
-}
-
-
 // Configure publishing repositories and publications
 publishing {
     publications {

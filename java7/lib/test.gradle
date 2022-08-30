@@ -1,9 +1,3 @@
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(7)
-    }
-}
-
 tasks.named('test') {
     testLogging {
         events "passed", "skipped", "failed" //, "standardOut", "standardError"
