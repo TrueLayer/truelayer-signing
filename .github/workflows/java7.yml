@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'java/**'
+      - 'java7/**'
       - 'test-resources/**'
     tags-ignore:
       - '**'
@@ -21,13 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        java: [ 7 ]
+        java: [ 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v3
       - name: Setup JDK
-        uses: joschi/setup-jdk@v2
+        uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
           distribution: 'adopt'
@@ -35,7 +35,7 @@ jobs:
       - name: Validate gradle wrapper
         uses: gradle/wrapper-validation-action@v1.0.4
       - name: Test
-        run: cd java && ./gradlew test
+        run: cd java7 && ./gradlew test
 
   set-release-version:
     name: Prepare version to tag and release
@@ -49,12 +49,12 @@ jobs:
       - name: Get project version
         id: get_project_version
         run: |
-          cd java && PROJECT_VERSION=$(./gradlew properties | grep "version:" | awk '{print $2}')
+          cd java7 && PROJECT_VERSION=$(./gradlew properties | grep "version:" | awk '{print $2}')
           echo "::set-output name=project_version::$PROJECT_VERSION"
       - name: Get changed version from last two commits
         id: get_changed_version
         run: |
-          CHANGED_VERSION=$(git diff HEAD^ -- ./java/gradle.properties | grep +version= | awk -F "=" '{print $2}')
+          CHANGED_VERSION=$(git diff HEAD^ -- ./java7/gradle.properties | grep +version= | awk -F "=" '{print $2}')
           echo "::set-output name=changed_version::$CHANGED_VERSION"
       - name: Print changed version from last two commits
         run: echo ${{ steps.get_changed_version.outputs.changed_version }}
@@ -69,17 +69,17 @@ jobs:
     needs: [build-and-test, set-release-version]
     steps:
       - uses: actions/checkout@v3
-      - name: Setup JDK 7
+      - name: Setup JDK 8
         uses: actions/setup-java@v2
         with:
-          java-version: '7'
+          java-version: '8'
           distribution: 'adopt'
           cache: gradle
       - name: Validate gradle wrapper
         uses: gradle/wrapper-validation-action@v1.0.4
       - name: Publish to Sonatype and Maven Central
         # run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
-        run: cd java && ./gradlew publishToSonatype closeSonatypeStagingRepository #manual release from Nexus UI for now
+        run: cd java7 && ./gradlew publishToSonatype closeSonatypeStagingRepository #manual release from Nexus UI for now
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
