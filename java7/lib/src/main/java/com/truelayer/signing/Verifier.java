@@ -35,7 +35,7 @@ public abstract class Verifier {
      *
      * @param tlSignature unverified jws Tl-Signature
      * @return jku (JSON Web Key URL)
-     * @throws ParseException if the signature is invalid
+     * @throws SignatureException if the signature is invalid
      */
     public static String extractJku(String tlSignature) throws SignatureException {
         URI uri;
@@ -222,8 +222,14 @@ public abstract class Verifier {
      * @return the Verifier instance
      * @throws SignatureException if the provided jwks is invalid
      */
-    public static Verifier verifyWithJwks(String jwks) throws ParseException {
-        JWKSet jwkSet = JWKSet.parse(jwks);
+    public static Verifier verifyWithJwks(String jwks) throws SignatureException {
+        JWKSet jwkSet;
+        try {
+            jwkSet = JWKSet.parse(jwks);
+        } catch (ParseException e) {
+            throw new KeyException(e);
+        }
+
         return new VerifierFromJwks(jwkSet);
     }
 

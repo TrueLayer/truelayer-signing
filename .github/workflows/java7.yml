@@ -98,7 +98,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ needs.set-release-version.outputs.project_version }}
-          tag_prefix: 'java-v'
+          tag_prefix: 'java7-v'
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
