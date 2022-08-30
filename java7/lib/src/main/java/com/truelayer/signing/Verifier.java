@@ -37,8 +37,13 @@ public abstract class Verifier {
      * @return jku (JSON Web Key URL)
      * @throws ParseException if the signature is invalid
      */
-    public static String extractJku(String tlSignature) throws ParseException  {
-        URI uri = JWSObject.parse(tlSignature).getHeader().getJWKURL();
+    public static String extractJku(String tlSignature) throws SignatureException  {
+        URI uri;
+        try {
+            uri = JWSObject.parse(tlSignature).getHeader().getJWKURL();
+        } catch (ParseException e) {
+            throw new SignatureException(e);
+        }
         return uri.toString();
     }
 
@@ -160,11 +165,17 @@ public abstract class Verifier {
      * @throws KeyException             it the provided key is invalid
      * @throws IllegalArgumentException if the provided param is null
      */
-    public static Verifier from(byte[] publicKeyPem) throws KeyException, JOSEException {
+    public static Verifier from(byte[] publicKeyPem) throws KeyException {
         if (publicKeyPem == null)
             throw new IllegalArgumentException("the publicKey must not be null");
 
-        ECPublicKey publicKey = ECKey.parseFromPEMEncodedObjects(new String(publicKeyPem)).toECKey().toECPublicKey();
+        ECPublicKey publicKey;
+        try {
+            publicKey = ECKey.parseFromPEMEncodedObjects(new String(publicKeyPem)).toECKey().toECPublicKey();
+        } catch (JOSEException e) {
+            throw new KeyException(e);
+        }
+
         return new VerifierFromPublicKey(publicKey);
     }
 
@@ -176,11 +187,16 @@ public abstract class Verifier {
      * @throws KeyException             it the provided key is invalid
      * @throws IllegalArgumentException if the provided param is null
      */
-    public static Verifier from(String publicKeyPem) throws JOSEException {
+    public static Verifier from(String publicKeyPem) throws KeyException {
         if (publicKeyPem == null)
             throw new IllegalArgumentException("the publicKey must not be null");
 
-        ECPublicKey publicKey = ECKey.parseFromPEMEncodedObjects(publicKeyPem).toECKey().toECPublicKey();
+        ECPublicKey publicKey;
+        try {
+            publicKey = ECKey.parseFromPEMEncodedObjects(publicKeyPem).toECKey().toECPublicKey();
+        } catch (JOSEException e) {
+            throw new KeyException(e);
+        }
         return new VerifierFromPublicKey(publicKey);
     }
 

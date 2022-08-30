@@ -2,6 +2,7 @@ package com.truelayer.signing;
 
 import com.nimbusds.jose.util.Base64URL;
 
+import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,9 +48,7 @@ public class Utils {
                 new String(body);
 
 
-        String base46payload = new String(org.apache.commons.codec.binary.Base64.encodeBase64(payload.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+        String base46payload = DatatypeConverter.printBase64Binary(payload.getBytes(StandardCharsets.UTF_8));
         return Base64URL.from(base46payload.replace("/", "_").substring(0, base46payload.length() - 1));
-//        return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
-//        return Base64URL.from(base46payload.substring(0, base46payload.length() - 1));
     }
 }

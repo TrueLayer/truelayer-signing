@@ -143,8 +143,8 @@ final public class Signer {
         ECPrivateKey privateKey;
         try {
             privateKey = ECKey.parseFromPEMEncodedObjects(new String(privateKeyPem)).toECKey().toECPrivateKey();
-        } catch (Exception e) {
-            throw new KeyException("Exception thrown while parsing private key", e);
+        } catch (JOSEException e) {
+            throw new KeyException(e);
         }
 
         return new Signer(kid, privateKey);
@@ -167,8 +167,8 @@ final public class Signer {
         ECPrivateKey privateKey;
         try {
             privateKey = ECKey.parseFromPEMEncodedObjects(privateKeyPem).toECKey().toECPrivateKey();
-        } catch (Exception e) {
-            throw new KeyException("Exception thrown while parsing private key", e);
+        } catch (JOSEException e) {
+            throw new KeyException(e);
         }
 
         return new Signer(kid, privateKey);
