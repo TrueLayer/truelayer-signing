@@ -1,4 +1,4 @@
-rootProject.name = "truelayer-signing"
+rootProject.name = "truelayer-signing-java7"
 include 'lib'
 include 'examples:webhook-server'
 include 'examples:sign-request'

@@ -9,6 +9,7 @@ They can then be verified using the associated public key.
 * [Node.js](./nodejs)
 * [Go](./go)
 * [Java](./java)
+* [Java 7](./java7)
 * [PHP](./php)
 * [Python](./python)
 
