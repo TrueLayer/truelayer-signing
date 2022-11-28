@@ -16,7 +16,7 @@ dependencies {
     implementation("io.javalin:javalin:4.4.0")
     implementation project(':lib')
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.9.3'
-    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.8.0-beta4'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.5'
 }
 
 application {
