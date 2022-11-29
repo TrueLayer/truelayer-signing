@@ -317,6 +317,16 @@ namespace TrueLayer.Signing.Tests
         }
 
         [Fact]
+        public void VerifierExtractKid_FromInvalidSignature_ShouldThrowException()
+        {
+            Action action = () => { Verifier.ExtractKid("an-invalid-signature"); };
+            action
+                .Should()
+                .Throw<SignatureException>()
+                .WithMessage("Failed to parse JWS's header as JSON");
+        }
+
+        [Fact]
         public void Verifier_ExtractJku()
         {
             var tlSignature = File.ReadAllText(TestResourcePath("webhook-signature.txt")).Trim();
