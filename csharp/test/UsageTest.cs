@@ -317,7 +317,7 @@ namespace TrueLayer.Signing.Tests
         }
 
         [Fact]
-        public void VerifierExtractKid_FromInvalidSignature_ShouldThrowException()
+        public void VerifierExtractKid_FromInvalidSignature_ShouldThrowSignatureException()
         {
             Action action = () => { Verifier.ExtractKid("an-invalid-signature"); };
             action
@@ -331,6 +331,16 @@ namespace TrueLayer.Signing.Tests
         {
             var tlSignature = File.ReadAllText(TestResourcePath("webhook-signature.txt")).Trim();
             Verifier.ExtractJku(tlSignature).Should().Be("https://webhooks.truelayer.com/.well-known/jwks");
+        }
+
+        [Fact]
+        public void VerifierExtractJku_FromInvalidSignature_ShouldThrowSignatureException()
+        {
+            Action action = () => { Verifier.ExtractJku("an-invalid-signature"); };
+            action
+                .Should()
+                .Throw<SignatureException>()
+                .WithMessage("Failed to parse JWS's header as JSON");
         }
 
         [Fact]
@@ -356,6 +366,21 @@ namespace TrueLayer.Signing.Tests
                 .Verify(tlSignature);
 
             verify.Should().Throw<SignatureException>();
+        }
+
+        [Fact]
+        public void VerifierVerify_InvalidSignature_ShouldThrowSignatureException()
+        {
+            Action action = () => Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path("/bar")
+                .Body("{}")
+                .Verify("an-invalid-signature");
+
+            action
+                .Should()
+                .Throw<SignatureException>()
+                .WithMessage("Failed to parse JWS's header as JSON");
         }
 
         public sealed class TestCase
