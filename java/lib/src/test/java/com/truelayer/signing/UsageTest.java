@@ -371,6 +371,15 @@ public class UsageTest {
     }
 
     @Test
+    public void verifierExtractJku_InvalidSignature_ThrowsSignatureException() {
+        Exception e = assertThrows(
+                SignatureException.class,
+                () -> Verifier.extractJku("an-invalid-signature")
+        );
+        assertEquals("Failed to parse JWS as JSON", e.getMessage());
+    }
+
+    @Test
     public void verifierJwks() {
         Verifier.verifyWithJwks(jwks)
                 .method("POST")
@@ -394,6 +403,19 @@ public class UsageTest {
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(webhookSignature));
 
         assertEquals("invalid signature", invalidSignatureException.getMessage());
+    }
+
+    @Test
+    public void verifierVerify_InvalidSignature_ThrowsSignatureException() {
+        Exception e = assertThrows(
+                SignatureException.class,
+                () -> Verifier.verifyWithJwks(jwks)
+                        .method("POST")
+                        .path("/bar")
+                        .body("{}")
+                        .verify("an-invalid-signature")
+        );
+        assertEquals("Failed to parse JWS as JSON", e.getMessage());
     }
 
     @Test
