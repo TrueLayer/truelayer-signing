@@ -434,9 +434,24 @@ describe('extractKid', () => {
   });
 });
 
+describe('extractKidInvalidSignature', () => {
+  it('should throw using an invalid signature', () => {
+    const fn = () => extractKid("an-invalid-signature")
+    expect(fn).toThrow(new SignatureError("Failed to parse JWS as JSON"));
+  });
+});
+
 describe('extractJku', () => {
   it('should produce a jku from a valid tl signature', () => {
     const jku = extractJku(WEBHOOK_SIGNATURE);
     expect(jku).toEqual('https://webhooks.truelayer.com/.well-known/jwks');
+  });
+});
+
+
+describe('extractJkuInvalidSignature', () => {
+  it('should throw using an invalid signature', () => {
+    const fn = () => extractJku("an-invalid-signature")
+    expect(fn).toThrow(new SignatureError("Failed to parse JWS as JSON"));
   });
 });

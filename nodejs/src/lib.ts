@@ -97,8 +97,18 @@ type JOSEHeader = {
 const parseSignature = (signature: string) => {
   try {
     const [header, _, footer] = signature.split(".");
-    const headerJson = JSON.parse(Base64.decode(header)) as JOSEHeader;
 
+    // TODO: extract to a function
+    let headerJson: JOSEHeader | undefined = undefined;
+    try {
+      headerJson = JSON.parse(Base64.decode(header)) as JOSEHeader;
+    } catch (error) {
+      throw new SignatureError("Failed to parse JWS as JSON");
+    }
+    if (headerJson === undefined) {
+      throw new SignatureError("something...");
+    }
+    
     SignatureError.ensure(headerJson.alg === "ES512", "unsupported header alg");
     SignatureError.ensure(
       headerJson.tl_version === "2",
