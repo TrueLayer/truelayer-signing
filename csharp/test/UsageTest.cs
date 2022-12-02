@@ -323,7 +323,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS's header as JSON");
+                .WithMessage("Failed to parse JWS as JSON");
         }
 
         [Fact]
@@ -340,7 +340,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS's header as JSON");
+                .WithMessage("Failed to parse JWS as JSON");
         }
 
         [Fact]
@@ -380,7 +380,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS's header as JSON");
+                .WithMessage("Failed to parse JWS as JSON");
         }
 
         public sealed class TestCase

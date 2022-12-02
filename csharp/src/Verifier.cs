@@ -67,7 +67,7 @@ namespace TrueLayer.Signing
         {
             var jwsHeaders = SignatureException.Try(
                 () => Jose.JWT.Headers(tlSignature),
-                "Failed to parse JWS's header as JSON");
+                "Failed to parse JWS as JSON");
             var kid = jwsHeaders.GetString("kid");
             if (kid == null)
             {
@@ -85,7 +85,7 @@ namespace TrueLayer.Signing
         {
             var jwsHeaders = SignatureException.Try(
                 () => Jose.JWT.Headers(tlSignature),
-                "Failed to parse JWS's header as JSON");
+                "Failed to parse JWS as JSON");
             var jku = jwsHeaders.GetString("jku");
             if (jku == null)
             {
@@ -210,7 +210,7 @@ namespace TrueLayer.Signing
         {
             var jwsHeaders = SignatureException.Try(
                 () => Jose.JWT.Headers(tlSignature),
-                "Failed to parse JWS's header as JSON");
+                "Failed to parse JWS as JSON");
 
             if (jwks is Jwks jwkeys)
             {
