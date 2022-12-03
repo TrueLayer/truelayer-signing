@@ -319,11 +319,11 @@ namespace TrueLayer.Signing.Tests
         [Fact]
         public void VerifierExtractKid_FromInvalidSignature_ShouldThrowSignatureException()
         {
-            Action action = () => { Verifier.ExtractKid("an-invalid-signature"); };
+            Action action = () => { Verifier.ExtractKid("an-invalid..signature"); };
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS as JSON");
+                .WithMessage("Failed to parse JWS's header as JSON");
         }
 
         [Fact]
@@ -340,7 +340,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS as JSON");
+                .WithMessage("Failed to parse JWS's header as JSON");
         }
 
         [Fact]
@@ -380,7 +380,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS as JSON");
+                .WithMessage("Failed to parse JWS's header as JSON");
         }
 
         public sealed class TestCase
