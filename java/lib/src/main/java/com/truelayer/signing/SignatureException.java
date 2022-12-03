@@ -26,7 +26,7 @@ public class SignatureException extends RuntimeException {
         } catch (SignatureException e) {
             throw e;
         } catch (ParseException e) {
-            throw new SignatureException("Failed to parse JWS as JSON", e);
+            throw new SignatureException("Failed to parse JWS's header as JSON", e);
         } catch (Exception e) {
             throw new SignatureException(e.getMessage(), e);
         }

@@ -271,7 +271,7 @@ public class UsageTest {
 
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
 
-        assertEquals("The payload Base64URL part must be empty", invalidSignatureException.getMessage());
+        assertEquals("Failed to parse JWS's header as JSON", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -290,7 +290,7 @@ public class UsageTest {
 
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
 
-        assertEquals("Invalid serialized unsecured/JWS/JWE object: Too many part delimiters", invalidSignatureException.getMessage());
+        assertEquals("Failed to parse JWS's header as JSON", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -374,9 +374,9 @@ public class UsageTest {
     public void verifierExtractJku_InvalidSignature_ThrowsSignatureException() {
         Exception e = assertThrows(
                 SignatureException.class,
-                () -> Verifier.extractJku("an-invalid-signature")
+                () -> Verifier.extractJku("an-invalid..signature")
         );
-        assertEquals("Failed to parse JWS as JSON", e.getMessage());
+        assertEquals("Failed to parse JWS's header as JSON", e.getMessage());
     }
 
     @Test
@@ -415,7 +415,7 @@ public class UsageTest {
                         .body("{}")
                         .verify("an-invalid-signature")
         );
-        assertEquals("Failed to parse JWS as JSON", e.getMessage());
+        assertEquals("Failed to parse JWS's header as JSON", e.getMessage());
     }
 
     @Test
