@@ -98,7 +98,16 @@ const parseSignature = (signature: string) => {
   try {
     const [header, _, footer] = signature.split(".");
 
-    const headerJson = parseHeader(header);
+    // TODO: extract to a function
+    let headerJson: JOSEHeader | undefined = undefined;
+    try {
+      headerJson = JSON.parse(Base64.decode(header)) as JOSEHeader;
+    } catch (error) {
+      throw new SignatureError("Failed to parse JWS as JSON");
+    }
+    if (headerJson === undefined) {
+      throw new SignatureError("something...");
+    }
     
     SignatureError.ensure(headerJson.alg === "ES512", "unsupported header alg");
     SignatureError.ensure(
@@ -126,19 +135,6 @@ type SignArguments = {
   headers?: Record<string, string>;
   body?: string;
 };
-
-function parseHeader(header: string) {
-  let headerJson: JOSEHeader | undefined = undefined;
-  try {
-    headerJson = JSON.parse(Base64.decode(header)) as JOSEHeader;
-  } catch (error) {
-    throw new SignatureError("Failed to parse JWS's header as JSON");
-  }
-  if (headerJson === undefined) {
-    throw new SignatureError("Failed to parse JWS's header as JSON");
-  }
-  return headerJson;
-}
 
 /** Sign/verification error
  * SignatureError: SignatureError,
