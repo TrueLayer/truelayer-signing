@@ -336,7 +336,7 @@ namespace TrueLayer.Signing.Tests
         [Fact]
         public void VerifierExtractJku_FromInvalidSignature_ShouldThrowSignatureException()
         {
-            Action action = () => { Verifier.ExtractJku("an-invalid-signature"); };
+            Action action = () => { Verifier.ExtractJku("an-invalid..signature"); };
             action
                 .Should()
                 .Throw<SignatureException>()
@@ -375,7 +375,7 @@ namespace TrueLayer.Signing.Tests
                 .Method("POST")
                 .Path("/bar")
                 .Body("{}")
-                .Verify("an-invalid-signature");
+                .Verify("an-invalid..signature");
 
             action
                 .Should()
