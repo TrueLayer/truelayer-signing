@@ -436,7 +436,7 @@ describe('extractKid', () => {
 
 describe('extractKidInvalidSignature', () => {
   it('should throw using an invalid signature', () => {
-    const fn = () => extractKid("an-invalid-signature")
+    const fn = () => extractKid("an-invalid..signature")
     expect(fn).toThrow(new SignatureError("Failed to parse JWS as JSON"));
   });
 });
@@ -451,7 +451,7 @@ describe('extractJku', () => {
 
 describe('extractJkuInvalidSignature', () => {
   it('should throw using an invalid signature', () => {
-    const fn = () => extractJku("an-invalid-signature")
+    const fn = () => extractJku("an-invalid..signature")
     expect(fn).toThrow(new SignatureError("Failed to parse JWS as JSON"));
   });
 });
