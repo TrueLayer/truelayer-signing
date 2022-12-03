@@ -413,7 +413,7 @@ public class UsageTest {
                         .method("POST")
                         .path("/bar")
                         .body("{}")
-                        .verify("an-invalid-signature")
+                        .verify("an-invalid..signature")
         );
         assertEquals("Failed to parse JWS's header as JSON", e.getMessage());
     }
