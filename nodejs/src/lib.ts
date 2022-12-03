@@ -135,7 +135,7 @@ function parseHeader(header: string): JOSEHeader {
     throw new SignatureError("Failed to parse JWS as JSON");
   }
   if (headerJson === undefined) {
-    throw new SignatureError("something...");
+    throw new SignatureError("Failed to parse JWS as JSON");
   }
   return headerJson;
 }
