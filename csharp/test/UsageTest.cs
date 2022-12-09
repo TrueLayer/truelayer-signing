@@ -326,7 +326,7 @@ namespace TrueLayer.Signing.Tests
 #if (NETCOREAPP3_1 || NETCOREAPP3_1_OR_GREATER)
                 .WithMessage("Failed to parse JWS: 'j' is an invalid start of a value. Path: $ | LineNumber: 0 | BytePositionInLine: 0.");
 #else
-                .WithMessage("Failed to parse JWS: Failed to parse JWS: Unexpected character encountered while parsing value: j. Path '', line 0, position 0.");
+                .WithMessage("Failed to parse JWS: Unexpected character encountered while parsing value: j. Path '', line 0, position 0.");
 #endif
         }
 
