@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.2;netcoreapp3.1;net5.0</TargetFrameworks>
+<!--    <TargetFrameworks>net6.0</TargetFrameworks>-->
+<!--      <TargetFrameworks>netcoreapp2.2;netcoreapp3.1;net5.0</TargetFrameworks>-->
+      <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>8</LangVersion>
     <WarningsAsErrors>CS8600;CS8602;CS8603;CS8604;CS8618</WarningsAsErrors>
