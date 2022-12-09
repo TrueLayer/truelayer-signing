@@ -70,7 +70,7 @@ namespace TrueLayer.Signing
             {
                 jwsHeaders = Jose.JWT.Headers(tlSignature);
             }
-            catch (JsonException e)
+            catch (Exception e)
             {
                 throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
             }
@@ -94,7 +94,7 @@ namespace TrueLayer.Signing
             {
                 jwsHeaders = Jose.JWT.Headers(tlSignature);
             }
-            catch (JsonException e)
+            catch (Exception e)
             {
                 throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
             }
@@ -225,7 +225,7 @@ namespace TrueLayer.Signing
             {
                 jwsHeaders = Jose.JWT.Headers(tlSignature);
             }
-            catch (JsonException e)
+            catch (Exception e)
             {
                 throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
             }
