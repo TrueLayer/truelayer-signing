@@ -132,10 +132,14 @@ function parseHeader(header: string): JOSEHeader {
   try {
     headerJson = JSON.parse(Base64.decode(header)) as JOSEHeader;
   } catch (error) {
-    throw new SignatureError("Failed to parse JWS as JSON");
+    if (error instanceof Error) {
+      throw new SignatureError("Failed to parse JWS: " + error.message);
+    } else {
+      throw new SignatureError("Failed to parse JWS");
+    }
   }
   if (headerJson === undefined) {
-    throw new SignatureError("Failed to parse JWS as JSON");
+    throw new SignatureError("Failed to parse JWS");
   }
   return headerJson;
 }
