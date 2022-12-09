@@ -42,7 +42,7 @@ public abstract class Verifier {
         try {
             uri = JWSObject.parse(tlSignature).getHeader().getJWKURL();
         } catch (ParseException e) {
-            throw new SignatureException(e);
+            throw new SignatureException("Failed to parse JWS: " + e.getMessage(), e);
         }
         return uri.toString();
     }
