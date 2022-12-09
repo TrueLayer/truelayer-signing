@@ -65,9 +65,15 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public static string ExtractKid(string tlSignature)
         {
-            var jwsHeaders = SignatureException.Try(
-                () => Jose.JWT.Headers(tlSignature),
-                "Failed to parse JWS's header as JSON");
+            IDictionary<string, object>? jwsHeaders;
+            try
+            {
+                jwsHeaders = Jose.JWT.Headers(tlSignature);
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
             var kid = jwsHeaders.GetString("kid");
             if (kid == null)
             {
@@ -83,9 +89,15 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public static string ExtractJku(string tlSignature)
         {
-            var jwsHeaders = SignatureException.Try(
-                () => Jose.JWT.Headers(tlSignature),
-                "Failed to parse JWS's header as JSON");
+            IDictionary<string, object>? jwsHeaders;
+            try
+            {
+                jwsHeaders = Jose.JWT.Headers(tlSignature);
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
             var jku = jwsHeaders.GetString("jku");
             if (jku == null)
             {
@@ -208,10 +220,15 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public void Verify(string tlSignature)
         {
-            var jwsHeaders = SignatureException.Try(
-                () => Jose.JWT.Headers(tlSignature),
-                "Failed to parse JWS's header as JSON");
-
+            IDictionary<string, object>? jwsHeaders;
+            try
+            {
+                jwsHeaders = Jose.JWT.Headers(tlSignature);
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
             if (jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data

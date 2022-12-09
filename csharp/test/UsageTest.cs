@@ -323,7 +323,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS's header as JSON");
+                .WithMessage("Failed to parse JWS: 'j' is an invalid start of a value. Path: $ | LineNumber: 0 | BytePositionInLine: 0.");
         }
 
         [Fact]
@@ -340,7 +340,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS's header as JSON");
+                .WithMessage("Failed to parse JWS: 'j' is an invalid start of a value. Path: $ | LineNumber: 0 | BytePositionInLine: 0.");
         }
 
         [Fact]
@@ -380,7 +380,7 @@ namespace TrueLayer.Signing.Tests
             action
                 .Should()
                 .Throw<SignatureException>()
-                .WithMessage("Failed to parse JWS's header as JSON");
+                .WithMessage("Failed to parse JWS: 'j' is an invalid start of a value. Path: $ | LineNumber: 0 | BytePositionInLine: 0.");
         }
 
         public sealed class TestCase
