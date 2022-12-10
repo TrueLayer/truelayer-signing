@@ -102,6 +102,24 @@ def test_mismatched_signature_with_attached_valid_body_trailing_dots():
         )
 
 
+def test_verify_with_invalaid_signature_should_raise_exception():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    with pytest.raises(TlSigningException) as ex:
+        (
+            verify_with_pem(PUBLIC_KEY)
+            .set_method(HttpMethod.POST)
+            .set_path(path)
+            .add_header("X-Whatever-2", "t2345d")
+            .add_header("Idempotency-Key", idempotency_key)
+            .set_body(body)
+            .verify("an-invalid..signature")
+        )
+    assert ex.value.args[0] == "Failed to parse JWS: 'utf-8' codec can't decode byte 0xa2 in position 2: invalid start byte"
+
+
 def test_signature_no_headers():
     body = '{"currency":"GBP","max_amount_in_minor":5000000}'
     path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
