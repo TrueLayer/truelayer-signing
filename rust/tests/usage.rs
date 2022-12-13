@@ -130,6 +130,8 @@ fn verify_with_invalid_signature_should_error() {
         .expect_err("should error with an invalid signature");
 
     // TODO: how can I assert on the error's message?
+    // Something like:
+    // assert_eq!(error.message, "jws signing/verification failed: ...");
 }
 
 /// Signing a path with a single trailing slash & trying to verify
