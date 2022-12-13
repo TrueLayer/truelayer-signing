@@ -114,6 +114,24 @@ fn verify_full_request_static_signature() {
         .expect("verify");
 }
 
+#[test]
+fn verify_with_invalid_signature_should_error() {
+    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}"#;
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    let error = truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method("POST")
+        .path(path)
+        .header("X-Whatever-2", b"t2345d")
+        .header("Idempotency-Key", idempotency_key)
+        .body(body)
+        .verify("an-invalid..signature")
+        .expect_err("should error with an invalid signature");
+
+    // TODO: how can I assert on the error's message?
+}
+
 /// Signing a path with a single trailing slash & trying to verify
 /// without that slash should still work. See #80.
 #[test]
