@@ -102,7 +102,7 @@ func TestVerifyStaticSignature(t *testing.T) {
 	assert.Nilf(err, "signature verification should not fail: %v", err)
 }
 
-func TestVerify_WithInvalidSignature_ShouldReturnError(t *testing.T) {
+func TestVerifyWithInvalidSignatureShouldReturnError(t *testing.T) {
 	assert := assert.New(t)
 
 	_, publicKeyBytes := getTestKeys(assert)
@@ -118,6 +118,7 @@ func TestVerify_WithInvalidSignature_ShouldReturnError(t *testing.T) {
 		Header("Idempotency-Key", idempotencyKey).
 		Body(body).
 		Verify("an-invalid..signature")
+
 	assert.NotNilf(err, "signature verification should not fail: %v", err)
 	assert.EqualError(err, "jws signing/verification failed: signature parsing failed: signature base64 decode failed: illegal base64 data at input byte 8")
 	assert.ErrorAs(&errors.JwsError{}, &err, "error should be a JwsError")
