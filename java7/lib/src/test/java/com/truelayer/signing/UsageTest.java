@@ -1,6 +1,5 @@
 package com.truelayer.signing;
 
-import org.hamcrest.core.StringContains;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -384,8 +383,8 @@ public class UsageTest {
     public void verifierExtractJku_InvalidSignature_ThrowsSignatureException() {
         expectedEx.expect(SignatureException.class);
         // uses two assertions (to emulate a Regex) because the message contains non UTF-16 characters
-        expectedEx.expectMessage(StringContains.containsString("Failed to parse JWS: Invalid JWS header: Invalid JSON: Unexpected token"));
-        expectedEx.expectMessage(StringContains.containsString("at position 7."));
+        expectedEx.expectMessage("Failed to parse JWS: Invalid JWS header: Invalid JSON: Unexpected token");
+        expectedEx.expectMessage("at position 7.");
         Verifier.extractJku("an-invalid..signature");
     }
 
@@ -419,8 +418,8 @@ public class UsageTest {
     public void verifierVerify_InvalidSignature_ThrowsSignatureException() {
         expectedEx.expect(SignatureException.class);
         // uses two assertions (to emulate a Regex) because the message contains non UTF-16 characters
-        expectedEx.expectMessage(StringContains.containsString("Failed to parse JWS: Invalid JSON: Unexpected token"));
-        expectedEx.expectMessage(StringContains.containsString("at position 7."));
+        expectedEx.expectMessage("Failed to parse JWS: Invalid JSON: Unexpected token");
+        expectedEx.expectMessage("at position 7.");
         Verifier.verifyWithJwks(jwks)
                 .method("POST")
                 .path("/bar")
