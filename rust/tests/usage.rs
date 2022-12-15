@@ -1,3 +1,6 @@
+use anyhow::anyhow;
+use truelayer_signing::Error;
+
 const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem");
 const PRIVATE_KEY: &[u8] = include_bytes!("../../test-resources/ec512-private.pem");
 const KID: &str = "45fc75cf-5649-4134-84b3-192c2c78e990";
@@ -126,8 +129,9 @@ fn verify_with_invalid_signature_should_error() {
         .header("X-Whatever-2", b"t2345d")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
-        .verify("an-invalid..signature")
-        .expect_err("should error with an invalid signature");
+        .verify("an-invalid..signature");
+
+    assert!(matches!(error, Err(Error::JwsError(_))));
 }
 
 /// Signing a path with a single trailing slash & trying to verify
