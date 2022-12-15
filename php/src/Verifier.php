@@ -193,7 +193,7 @@ final class Verifier extends AbstractJws implements IVerifier
         try {
             $jws = $this->serializerManager->unserialize($signature);
         } catch (Exception $e) {
-            throw new InvalidSignatureException('Failed to parse JWS: ' . $e->getMessage());
+            throw new InvalidSignatureException('Failed to parse JWS: ' . $e->getMessage(), 0, $e);
         }
 
         if (!\is_null($jws->getPayload())) {
