@@ -126,7 +126,7 @@ def tl_verify(args: VerifyArguments) -> None:
         missing_headers = " ".join(header_diff)
         raise TlSigningException(f"Missing Required Header(s): {missing_headers}")
 
-    # build the jws paintext
+    # build the jws plaintext
     try:
         _, jws_b64 = build_v2_jws_b64(
             jws_header,
@@ -196,8 +196,8 @@ def extract_jws_header(tl_signature: str) -> JwsHeader:
             decode_url_safe_base64(header_b64).decode()
         )
         return JwsHeader.from_dict(headers)
-    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError):
-        raise TlSigningException("Invalid Signature")
+    except (UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError) as e:
+        raise TlSigningException(f"Failed to parse JWS: {e}", e)
 
 
 def _parse_tl_signature(tl_signature: str) -> Tuple[JwsHeader, bytes]:

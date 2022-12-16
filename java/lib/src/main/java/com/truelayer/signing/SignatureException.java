@@ -1,5 +1,7 @@
 package com.truelayer.signing;
 
+import java.text.ParseException;
+
 /**
  * Sign/verification error
  */
@@ -23,6 +25,8 @@ public class SignatureException extends RuntimeException {
             return f.get();
         } catch (SignatureException e) {
             throw e;
+        } catch (ParseException e) {
+            throw new SignatureException("Failed to parse JWS: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new SignatureException(e.getMessage(), e);
         }

@@ -65,7 +65,16 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public static string ExtractKid(string tlSignature)
         {
-            var kid = Jose.JWT.Headers(tlSignature).GetString("kid");
+            IDictionary<string, object>? jwsHeaders;
+            try
+            {
+                jwsHeaders = Jose.JWT.Headers(tlSignature);
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
+            var kid = jwsHeaders.GetString("kid");
             if (kid == null)
             {
                 throw new SignatureException("missing kid");
@@ -80,7 +89,16 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public static string ExtractJku(string tlSignature)
         {
-            var jku = Jose.JWT.Headers(tlSignature).GetString("jku");
+            IDictionary<string, object>? jwsHeaders;
+            try
+            {
+                jwsHeaders = Jose.JWT.Headers(tlSignature);
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
+            var jku = jwsHeaders.GetString("jku");
             if (jku == null)
             {
                 throw new SignatureException("missing jku");
@@ -202,8 +220,15 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public void Verify(string tlSignature)
         {
-            var jwsHeaders = SignatureException.Try(() => Jose.JWT.Headers(tlSignature));
-
+            IDictionary<string, object>? jwsHeaders;
+            try
+            {
+                jwsHeaders = Jose.JWT.Headers(tlSignature);
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
             if (jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data

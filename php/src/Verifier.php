@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
+use Exception;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
@@ -189,8 +190,11 @@ final class Verifier extends AbstractJws implements IVerifier
      */
     public function verify(string $signature): void
     {
-        $jws = $this->serializerManager
-            ->unserialize($signature);
+        try {
+            $jws = $this->serializerManager->unserialize($signature);
+        } catch (Exception $e) {
+            throw new InvalidSignatureException('Failed to parse JWS: ' . $e->getMessage(), 0, $e);
+        }
 
         if (!\is_null($jws->getPayload())) {
             throw new SignatureMustUseDetachedPayloadException();

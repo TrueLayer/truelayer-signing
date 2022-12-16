@@ -103,6 +103,21 @@ use TrueLayer\Signing\Verifier;
         ->verify($signature);
 })->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class);
 
+\it('should throw when the signature has an invalid format', function () {
+    $kid = Uuid::uuid4()->toString();
+    $keys = MockData::generateKeyPair($kid);
+    $verifier = Verifier::verifyWithKey($keys['public']);
+
+    $verifier->method('PUT')
+        ->path('/wrong-path')
+        ->header('X-Idempotency-Key', 'idempotency-test')
+        ->body('{"random-key": "random-value"}')
+        ->requireHeaders([
+            'X-Idempotency-Key',
+        ])
+        ->verify('an-invalid..signature');
+})->throws(\TrueLayer\Signing\Exceptions\InvalidSignatureException::class, 'Failed to parse JWS: Unsupported input.');
+
 \it('should verify header order/casing flexibility', function () {
     $kid = Uuid::uuid4()->toString();
     $keys = MockData::generateKeyPair($kid);

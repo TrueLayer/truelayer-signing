@@ -25,7 +25,7 @@ class VerifierFromJwks extends Verifier {
         try {
             jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
         } catch (ParseException e) {
-            throw new SignatureException(e);
+            throw new SignatureException("Failed to parse JWS: " + e.getMessage(), e);
         }
         Map<HeaderName, String> orderedHeaders = validateSignatureHeader(jwsHeader);
 
