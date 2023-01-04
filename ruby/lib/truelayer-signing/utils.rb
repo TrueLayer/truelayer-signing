@@ -7,8 +7,8 @@ module TrueLayerSigning
         if TrueLayerSigning.certificate_id.nil? ||
           TrueLayerSigning.certificate_id.empty?
 
-      @alg = TrueLayerSigning.algorithm
-      @kid = TrueLayerSigning.certificate_id
+      @alg = args[:alg] || TrueLayerSigning.algorithm
+      @kid = args[:kid] || TrueLayerSigning.certificate_id
       @tl_version = TrueLayerSigning.version
       @tl_headers = retrieve_headers(args[:tl_headers])
       @jku = args[:jku] || nil
@@ -41,7 +41,7 @@ module TrueLayerSigning
   end
 
   class JwsBase
-    attr_reader :method, :path, :headers, :body, :jws_jku
+    attr_reader :method, :path, :headers, :body
 
     def initialize(args = {})
       @method = "POST"
@@ -72,11 +72,6 @@ module TrueLayerSigning
 
     def set_body(body)
       @body = body
-      self
-    end
-
-    def set_jku(jku)
-      @jws_jku = jku
       self
     end
 

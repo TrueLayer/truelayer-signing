@@ -1,5 +1,7 @@
 module TrueLayerSigning
   class Signer < JwsBase
+    attr_reader :jws_jku
+
     def sign
       ensure_signer_config!
 
@@ -11,6 +13,11 @@ module TrueLayerSigning
       header, _, signature = jwt.split(".")
 
       "#{header}..#{signature}"
+    end
+
+    def set_jku(jku)
+      @jws_jku = jku
+      self
     end
 
     private def ensure_signer_config!

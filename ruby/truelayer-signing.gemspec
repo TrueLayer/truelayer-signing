@@ -20,6 +20,6 @@ Gem::Specification.new do |s|
   s.files = Dir["./**/*"]
   s.require_paths = ["lib"]
 
-  s.required_ruby_version = ">= 2.6"
+  s.required_ruby_version = ">= 2.7"
   s.add_runtime_dependency("jwt",  "2.6")
 end
