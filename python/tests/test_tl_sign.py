@@ -117,7 +117,11 @@ def test_verify_with_invalaid_signature_should_raise_exception():
             .set_body(body)
             .verify("an-invalid..signature")
         )
-    assert ex.value.args[0] == "Failed to parse JWS: 'utf-8' codec can't decode byte 0xa2 in position 2: invalid start byte"
+
+    assert ex.value.args[0] == (
+        "Failed to parse JWS: "
+        "'utf-8' codec can't decode byte 0xa2 in position 2: invalid start byte"
+    )
 
 
 def test_signature_no_headers():
