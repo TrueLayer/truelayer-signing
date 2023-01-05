@@ -4,7 +4,7 @@ from __future__ import annotations
 import base64
 import json
 from dataclasses import asdict, dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Dict, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
 
 # local imports
@@ -17,7 +17,7 @@ P = TypeVar("P", str, Union[str, Mapping[str, str]])
 T = TypeVar("T", bound="TlJwsBase")  # type: ignore
 
 
-class HttpMethod(str, Enum):
+class HttpMethod(StrEnum):
     POST = "POST"
     GET = "GET"
     PATCH = "PATCH"
