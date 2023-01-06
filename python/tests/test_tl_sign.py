@@ -8,7 +8,7 @@ from truelayer_signing import (
     extract_jws_header,
 )
 from truelayer_signing.errors import TlSigningException
-from truelayer_signing.utils import HttpMethod
+from truelayer_signing.utils import HttpMethod, build_v2_signing_payload
 
 
 def read_file(path: str) -> str:
@@ -443,3 +443,20 @@ def test_verify_with_unsigned_trailing_slash():
         .set_body(body)
         .verify(tl_signature)
     )
+
+
+def test_payload_builder():
+    payload = (
+        "POST /test-signature\n"
+        "Idempotency-Key: 619410b3-b00c-406e-bb1b-2982f97edb8b\n"
+        '{"bar":123}'
+    )
+
+    test = build_v2_signing_payload(
+        HttpMethod.POST,
+        "/test-signature",
+        [("Idempotency-Key", "619410b3-b00c-406e-bb1b-2982f97edb8b")],
+        '{"bar":123}',
+    )
+
+    assert payload == test
