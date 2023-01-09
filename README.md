@@ -12,6 +12,7 @@ They can then be verified using the associated public key.
 * [Node.js](./nodejs)
 * [PHP](./php)
 * [Python](./python)
+* [Ruby](./ruby)
 * [Rust](./rust)
 
 ## Request signing specification
