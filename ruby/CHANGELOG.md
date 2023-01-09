@@ -11,5 +11,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] – 2023-01-09
 
-- Add `TrueLayerSigning.sign_with_pem`, `TrueLayerSigning.verify_with_pem(pem)`,
-    `TrueLayerSigning.verify_with_jwks(jwks)` and `TrueLayerSigning.extract_jws_header(signature)`.
+- Add `TrueLayerSigning.sign_with_pem` and `TrueLayerSigning.verify_with_pem(pem)`.

@@ -29,15 +29,7 @@ module TrueLayerSigning
     end
 
     def verify_with_pem(pem)
-      Verifier.new(key_type: :pem, key_value: pem)
-    end
-
-    def verify_with_jwks(jwks)
-      Verifier.new(key_type: :jwks, key_value: jwks)
-    end
-
-    def extract_jws_header(signature)
-      Verifier.parse_tl_signature(signature).first
+      Verifier.new(key_value: pem)
     end
   end
 end

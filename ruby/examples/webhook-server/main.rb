@@ -1,4 +1,3 @@
-require "http"
 require "socket"
 require "truelayer-signing"
 
@@ -6,6 +5,11 @@ class TrueLayerSigningExamples
   # Note: the webhook path can be whatever is configured for your application.
   # Here a unique path is used, matching the example signature in the README.
   WEBHOOK_PATH = "/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b".freeze
+  PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\n" +
+    "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBJ6ET9XeVCyMy+yOetZaNNCXPhwr5\n" +
+    "BlyDDg1CLmyNM5SvqOs8RveL6dYl4lpPur4xrPQl04ggYlVd9wnHkZnp3jcBlXw8\n" +
+    "Lc5phyYF1q2/QV/5wp2WHIhKDqUiXC0TvlE8d7MdTAN9yolcwrh6aWZ3kesTMZif\n" +
+    "BgItyT6PXUab8mMdI8k=\n-----END PUBLIC KEY-----"
 
   class << self
     def run_webhook_server
@@ -60,19 +64,8 @@ class TrueLayerSigningExamples
 
       return ["400", "Bad Request – Header `Tl-Signature` missing"] unless tl_signature
 
-      jku = TrueLayerSigning.extract_jws_header(tl_signature).jku
-
-      return ["400", "Bad Request – Signature missing `jku`"] unless jku
-      return ["401", "Unauthorized – Unpermitted `jku`"] \
-        unless jku == "https://webhooks.truelayer.com/.well-known/jwks" ||
-          jku == "https://webhooks.truelayer-sandbox.com/.well-known/jwks"
-
-      jwks = HTTP.get(jku)
-
-      return ["401", "Unauthorized – Unavailable `jwks` resource"] unless jwks.status.success?
-
       begin
-        TrueLayerSigning.verify_with_jwks(jwks.to_s)
+        TrueLayerSigning.verify_with_pem(PUBLIC_KEY_PEM)
           .set_method(:post)
           .set_path(path)
           .set_headers(headers)

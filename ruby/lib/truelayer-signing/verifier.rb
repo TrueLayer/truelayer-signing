@@ -1,10 +1,9 @@
 module TrueLayerSigning
   class Verifier < JwsBase
-    attr_reader :required_headers, :key_type, :key_value
+    attr_reader :required_headers, :key_value
 
     def initialize(args)
       super
-      @key_type = args[:key_type]
       @key_value = args[:key_value]
     end
 
@@ -12,7 +11,7 @@ module TrueLayerSigning
       ensure_verifier_config!
 
       jws_header, jws_header_b64, signature_b64 = self.class.parse_tl_signature(tl_signature)
-      public_key = retrieve_public_key(key_type, key_value, jws_header)
+      public_key = OpenSSL::PKey.read(key_value)
 
       raise(Error, "Unexpected `alg` header value") if jws_header.alg != TrueLayerSigning.algorithm
 
@@ -70,29 +69,7 @@ module TrueLayerSigning
       [jws_header, jws_header_b64, signature_b64]
     end
 
-    private def retrieve_public_key(key_type, key_value, jws_header)
-      case key_type
-      when :pem
-        OpenSSL::PKey.read(key_value)
-      when :jwks
-        jwks_hash = JSON.parse(key_value, symbolize_names: true)
-        jwk = jwks_hash[:keys].find { |key| key[:kid] == jws_header.kid }
-
-        raise(Error, "JWKS does not include given `kid` value") unless jwk
-        raise(Error, "Matching JWK has unsupported `kty` value") unless jwk[:kty] == "EC"
-        raise(Error, "Matching JWK has unsupported `crv` value") unless jwk[:crv] == "P-521"
-
-        # Could not use `.public_key` due to the following error:
-        # NoMethodError: undefined method `dsa_verify_asn1' for #<OpenSSL::PKey::EC::Point:[...]>>`
-        # See https://github.com/jwt/ruby-jwt/issues/208#issuecomment-1215099330
-        JWT::JWK::EC.import(jwk).keypair
-      else
-        raise(Error, "Type of public key not recognised")
-      end
-    end
-
     private def ensure_verifier_config!
-      raise(Error, "Key type missing") unless key_type
       raise(Error, "Key value missing") unless key_value
     end
   end
