@@ -79,6 +79,8 @@ module TrueLayerSigning
         jwk = jwks_hash[:keys].find { |key| key[:kid] == jws_header.kid }
 
         raise(Error, "JWKS does not include given `kid` value") unless jwk
+        raise(Error, "Matching JWK has unsupported `kty` value") unless jwk[:kty] == "EC"
+        raise(Error, "Matching JWK has unsupported `crv` value") unless jwk[:crv] == "P-521"
 
         # Could not use `.public_key` due to the following error:
         # NoMethodError: undefined method `dsa_verify_asn1' for #<OpenSSL::PKey::EC::Point:[...]>>`
