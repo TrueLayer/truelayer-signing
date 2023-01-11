@@ -16,7 +16,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.x'
@@ -31,9 +31,22 @@ jobs:
   examples:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '6.0.x'
     - run: cd csharp/examples/webhook-server && dotnet build
     - run: cd csharp/examples/sign-request && dotnet build
+  
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: |
+        dotnet pack src/truelayer-signing.csproj \
+          --configuration Release \
+          --include-source \
+          -property:SymbolPackageFormat=snupkg
+        dotnet nuget push src/bin/Release/TrueLayer.Signing.*.nupkg \
+          --source https://api.nuget.org/v3/index.json \
+          --api-key ${{ secrets.NUGET_API_KEY }}
