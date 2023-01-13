@@ -40,8 +40,7 @@ jobs:
   
   publish:
     runs-on: ubuntu-latest
-    # TODO: temporarily commented to test the pipeline without merging into main
-    #if: github.ref == 'refs/heads/main'  # Runs only on commit on main branch
+    if: github.ref == 'refs/heads/main'  # Runs only on commit on main branch
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
