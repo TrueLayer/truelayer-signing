@@ -46,5 +46,3 @@ __all__ = [
     "verify_with_jwks",
 ]
 
-
-# TODO: delete me
