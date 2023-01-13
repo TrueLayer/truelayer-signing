@@ -57,6 +57,7 @@ jobs:
           -property:SymbolPackageFormat=snupkg
     - name: Push to NuGet
       run: |
+        cd csharp
         dotnet nuget push src/bin/Release/TrueLayer.Signing.*.nupkg \
           --source https://api.nuget.org/v3/index.json \
           --api-key ${{ secrets.NUGET_API_KEY }}
