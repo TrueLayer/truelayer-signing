@@ -24,7 +24,15 @@ See [request-signing-v2.md](./request-signing-v2.md) for an explanation of how r
 TrueLayer webhooks include a `Tl-Signature` header similar to request signatures but signed by a TrueLayer private key.
 See per-language examples on how to properly verify webhooks.
 
-#### License
+## Contributing
+
+Contributions are always welcome!
+
+See our [contributing guide](./CONTRIBUTING.md) and our [wiki](https://github.com/TrueLayer/truelayer-signing/wiki).
+
+Please adhere to this project's [code of conduct](CODE_OF_CONDUCT.md).
+
+## License
 
 <sup>
 Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
