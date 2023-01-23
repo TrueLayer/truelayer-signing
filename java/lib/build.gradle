@@ -19,5 +19,5 @@ apply from: project.file('publish.gradle')
 
 dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
-    implementation("com.nimbusds:nimbus-jose-jwt:9.25")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.29")
 }
