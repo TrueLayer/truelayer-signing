@@ -4,10 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Mapping, Optional
 
-# third party imports
-from jwt.algorithms import ECAlgorithm
-
 # local imports
+from .crypto import Ec512
 from .errors import TlSigningException
 from .utils import (
     SIGNING_ALGORITHM,
@@ -100,10 +98,8 @@ def tl_sign(args: SignArguments) -> str:
         )
 
         # sign the jws
-        signer = ECAlgorithm(ECAlgorithm.SHA512)  # type: ignore
-
-        key = signer.prepare_key(args.pkey)  # type: ignore
-        jws_signed = signer.sign(jws_header_and_payload, key)  # type: ignore
+        signer = Ec512.load_from_pem(args.pkey.encode())
+        jws_signed = signer.sign(jws_header_and_payload)
         jws_signed_b64 = to_url_safe_base64(jws_signed)
 
         # return url safe criptext
