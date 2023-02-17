@@ -50,7 +50,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
+    # if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
     defaults:
       run:
         working-directory: ./python
