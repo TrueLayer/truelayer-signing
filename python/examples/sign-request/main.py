@@ -3,7 +3,9 @@ import os
 from uuid import uuid4
 
 # third-party imports
+import json
 import requests
+
 from requests import Response
 from truelayer_signing import HttpMethod, sign_with_pem
 
@@ -26,13 +28,25 @@ TL_BASE_URL: str = "https://api.truelayer-sandbox.com"
 def test_signature_endpoint():
     url = f"{TL_BASE_URL}/test-signature"
     idempotency_key = str(uuid4())
-    body = f"body-{idempotency_key}"
+
+    # the request payload
+    payload = {
+        "amount_in_minor": 1,
+        "currency": "GBP",
+    }
+
+    # Note: the body given to signaute must match the body given to the request.
+    # to ensure the same body is used in both we convert to a string.
+    body = json.dumps(payload, separators=(",", ":"))
 
     signature = (
         sign_with_pem(KID, PRIVATE_KEY)
         .set_method(HttpMethod.POST)
         .set_path("/test-signature")
+        # Note: the Idempotency-Key header is required by tl
         .add_header("Idempotency-Key", idempotency_key)
+        # This is a dummy header. All headers in the signature must be present
+        # in the request.
         .add_header("X-Bar-Header", "abc123")
         .set_body(body)
         .sign()
@@ -40,6 +54,8 @@ def test_signature_endpoint():
 
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
+        # because we are supplying a string as the body to the request we must
+        # explicitly let requests know that the content type is json
         "Content-Type": "application/json",
         "Idempotency-Key": idempotency_key,
         "X-Bar-Header": "abc123",
