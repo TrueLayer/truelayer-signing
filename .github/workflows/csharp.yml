@@ -2,12 +2,12 @@ name: C#
 
 on:
   push:
-    branches: [ * ]
+    branches: [ '*' ]
     paths:
       - 'csharp/**'
       - 'test-resources/**'
   pull_request:
-    branches: [ * ]
+    branches: [ '*' ]
     paths:
       - 'csharp/**'
       - 'test-resources/**'
