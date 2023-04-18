@@ -2,7 +2,7 @@ name: C#
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, lboy2:patch-1 ]
     paths:
       - 'csharp/**'
       - 'test-resources/**'
