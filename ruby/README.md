@@ -59,10 +59,20 @@ See full example of [request signing].
 
 ## Verifying webhooks
 
-The `verify_with_pem` method may be used to verify webhook `Tl-Signature` header signatures.
+The `verify_with_jwks` method may be used to verify webhook `Tl-Signature` header signatures.
 
 ```ruby
-TrueLayerSigning.verify_with_pem(pem)
+# The `jku` field is included in webhook signatures
+jku = TrueLayerSigning.extract_jws_header(webhook_signature).jku
+
+# You should check that the `jku` is a valid TrueLayer URL (not provided by this library)
+ensure_jku_allowed(jku)
+
+# Then fetch JSON Web Key Set from the public URL (not provided by this library)
+jwks = fetch_jwks(jku)
+
+# The raw JWKS value may be used directly to verify a signature
+TrueLayerSigning.verify_with_jwks(jwks)
   .set_method(method)
   .set_path(path)
   .set_headers(headers)

@@ -1,9 +1,10 @@
 module TrueLayerSigning
   class Verifier < JwsBase
-    attr_reader :required_headers, :key_value
+    attr_reader :required_headers, :key_type, :key_value
 
     def initialize(args)
       super
+      @key_type = args[:key_type]
       @key_value = args[:key_value]
     end
 
@@ -11,7 +12,6 @@ module TrueLayerSigning
       ensure_verifier_config!
 
       jws_header, jws_header_b64, signature_b64 = self.class.parse_tl_signature(tl_signature)
-      public_key = OpenSSL::PKey.read(key_value)
 
       raise(Error, "Unexpected `alg` header value") if jws_header.alg != TrueLayerSigning.algorithm
 
@@ -22,24 +22,7 @@ module TrueLayerSigning
       raise(Error, "Signature missing required header(s)") if required_headers &&
         required_headers.any? { |key| !normalised_headers.has_key?(key.downcase) }
 
-      payload_b64 = Base64.urlsafe_encode64(build_signing_payload(ordered_headers), padding: false)
-      full_signature = [jws_header_b64, payload_b64, signature_b64].join(".")
-      jwt_options = { algorithm: TrueLayerSigning.algorithm }
-
-      begin
-        JWT.truelayer_decode(full_signature, public_key, true, jwt_options)
-      rescue JWT::VerificationError
-        @path = path.end_with?("/") && path[0...-1] || path + "/"
-        payload_b64 = Base64.urlsafe_encode64(build_signing_payload(ordered_headers),
-                                              padding: false)
-        full_signature = [jws_header_b64, payload_b64, signature_b64].join(".")
-
-        begin
-          JWT.truelayer_decode(full_signature, public_key, true, jwt_options)
-        rescue
-          raise(Error, "Signature verification failed")
-        end
-      end
+      verify_signature_flex(ordered_headers, jws_header, jws_header_b64, signature_b64)
     end
 
     def require_header(name)
@@ -67,6 +50,57 @@ module TrueLayerSigning
       end
 
       [jws_header, jws_header_b64, signature_b64]
+    end
+
+    private def verify_signature_flex(ordered_headers, jws_header, jws_header_b64, signature_b64)
+      full_signature = build_full_signature(ordered_headers, jws_header_b64, signature_b64)
+
+      begin
+        verify_signature(jws_header, full_signature)
+      rescue JWT::VerificationError
+        @path = path.end_with?("/") && path[0...-1] || path + "/"
+        full_signature = build_full_signature(ordered_headers, jws_header_b64, signature_b64)
+
+        begin
+          verify_signature(jws_header, full_signature)
+        rescue JWT::VerificationError
+          raise(Error, "Signature verification failed")
+        end
+      end
+    end
+
+    private def build_full_signature(ordered_headers, jws_header_b64, signature_b64)
+      payload_b64 = Base64.urlsafe_encode64(build_signing_payload(ordered_headers), padding: false)
+
+      [jws_header_b64, payload_b64, signature_b64].join(".")
+    end
+
+    private def verify_signature(jws_header, full_signature)
+      case key_type
+      when :pem
+        public_key = OpenSSL::PKey.read(key_value)
+      when :jwks
+        public_key = retrieve_public_key(:jwks, key_value, jws_header)
+      end
+
+      jwt_options = { algorithm: TrueLayerSigning.algorithm }
+      JWT.truelayer_decode(full_signature, public_key, true, jwt_options)
+    end
+
+    private def retrieve_public_key(key_type, key_value, jws_header)
+      case key_type
+      when :pem
+        OpenSSL::PKey.read(key_value)
+      when :jwks
+        jwks_hash = JSON.parse(key_value, symbolize_names: true)
+        jwk = jwks_hash[:keys].find { |key| key[:kid] == jws_header.kid }
+
+        raise(Error, "JWKS does not include given `kid` value") unless jwk
+
+        JWT::JWK::EC.import(jwk).public_key
+      else
+        raise(Error, "Type of public key not recognised")
+      end
     end
 
     private def ensure_verifier_config!

@@ -26,6 +26,6 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby-version }}
       - name: Build and install gem
-        run: gem build truelayer-signing.gemspec && gem install ./truelayer-signing-0.1.2.gem
+        run: gem build truelayer-signing.gemspec && gem install ./truelayer-signing-0.2.0.gem
       - name: Run tests
         run: rake test
