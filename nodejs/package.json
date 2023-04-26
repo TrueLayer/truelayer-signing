@@ -8,7 +8,6 @@
     "test": "jest --config jestconfig.json",
     "build": "tsc --p tsconfig.prod.json",
     "prepare": "yarn run build",
-    "prepublishOnly": "yarn test",
     "version": "git add -A src",
     "postversion": "git push && git push --tags"
   },
