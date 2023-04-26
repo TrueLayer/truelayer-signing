@@ -50,6 +50,7 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: cd nodejs
     - run: yarn
+    - run: yarn version --new-version 0.1.5 --no-git-tag-version
     - run: yarn publish
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
