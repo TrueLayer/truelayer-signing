@@ -24,3 +24,15 @@ jobs:
       with:
         node-version: 'lts/*'
     - run: cd nodejs && yarn --frozen-lockfile && yarn test
+  
+  publish:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
+    steps:
+    - uses: actions/checkout@v3
+    - name: Publish to NPM registry
+      run: |
+        cd nodejs
+        npm set //registry.npmjs.org/:_authToken=${{ secrets.NUGET_API_KEY }}
+        npm version 0.1.5
+        npm publish
