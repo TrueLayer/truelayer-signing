@@ -48,6 +48,7 @@ jobs:
       with:
         node-version: 'lts/*'
         registry-url: 'https://registry.npmjs.org'
+    - run: cd nodejs
     - run: yarn
     - run: yarn publish
       env:
