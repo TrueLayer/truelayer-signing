@@ -36,5 +36,4 @@ jobs:
       run: |
         cd nodejs
         npm set //registry.npmjs.org/:_authToken=${{ secrets.NUGET_API_KEY }}
-        npm --no-git-tag-version version 0.1.5
         npm publish
