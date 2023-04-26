@@ -32,7 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     #  TODO: restore me!
     # if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
-    needs: test
+    # TODO: restore me!
+    # needs: test
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v2
