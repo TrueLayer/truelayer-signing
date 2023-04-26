@@ -42,11 +42,16 @@ jobs:
       id: regex-match
       with:
         text: ${{ github.ref_name }}
+        # matches tags starting with "nodejs/v" and uses the rest of the string as the version
         regex: 'nodejs\/v(.*)'
     - name: Publish to npm
       run: |
         cd nodejs
         yarn --frozen-lockfile
         npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-        npm version ${{ steps.regex-match.outputs.group1 }}
+
+        VERSION = ${{ steps.regex-match.outputs.group1 }}
+
+        # npm version ${{ steps.regex-match.outputs.group1 }}
+        npm version $VERSION
         npm publish
