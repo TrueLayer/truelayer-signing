@@ -18,22 +18,20 @@ on:
     - 'test-resources/**'
 
 jobs:
-  # TODO: restore me!
-  # test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - uses: actions/setup-node@v2
-  #     with:
-  #       node-version: 'lts/*'
-  #   - run: cd nodejs && yarn --frozen-lockfile && yarn test
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 'lts/*'
+    - run: cd nodejs && yarn --frozen-lockfile && yarn test
   
   publish:
     runs-on: ubuntu-latest
     #  TODO: restore me!
     # if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
-    # TODO: restore me!
-    # needs: test
+    needs: test
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v2
