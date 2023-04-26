@@ -50,7 +50,9 @@ jobs:
         yarn --frozen-lockfile
         npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
 
-        VERSION = ${{ steps.regex-match.outputs.group1 }}
+        echo "before"
+        VERSION=${{ steps.regex-match.outputs.group1 }}
+        echo "after"
 
         # npm version ${{ steps.regex-match.outputs.group1 }}
         npm version $VERSION
