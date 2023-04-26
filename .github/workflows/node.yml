@@ -27,7 +27,8 @@ jobs:
   
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
+    #  TODO: restore me!
+    # if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
     steps:
     - uses: actions/checkout@v3
     - name: Publish to NPM registry
