@@ -39,12 +39,12 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 'lts/*'
-    - name: get version from tag
-      id: get-version-from-tag
-      run: |
-        # Removes "nodejs/" from tag name
-        TAG=${GITHUB_REF//tags\/nodejs\//tags\/}
-        echo "::set-output name=NEW_TAG::$TAG"
+    # - name: get version from tag
+    #   id: get-version-from-tag
+    #   run: |
+    #     # Removes "nodejs/" from tag name
+    #     TAG=${GITHUB_REF//tags\/nodejs\//tags\/}
+    #     echo "::set-output name=NEW_TAG::$TAG"
     - uses: actions-ecosystem/action-regex-match@v2
       id: regex-match
       with:
@@ -52,14 +52,12 @@ jobs:
         regex: 'nodejs\/v(.*)'
     - name: Publish to npm
       run: |
-        echo "From action-ecosystem: " ${{ steps.regex-match.outputs.group1 }}
-        echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-        echo "Tag name from github.ref_name: ${{ github.ref_name }}"
+        # echo "From action-ecosystem: " ${{ steps.regex-match.outputs.group1 }}
+        # echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+        # echo "Tag name from github.ref_name: ${{ github.ref_name }}"
 
-        # cd nodejs
-        # yarn --frozen-lockfile
-        # npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-        # # TODO: get version from tag
-        # # npm version 0.1.5
-        # npm version ${{ steps.get-version-from-tag.outputs.NEW_TAG }}
-        # npm publish
+        cd nodejs
+        yarn --frozen-lockfile
+        npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+        npm version ${{ steps.regex-match.outputs.group1 }}
+        npm publish
