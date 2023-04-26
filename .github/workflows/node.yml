@@ -49,12 +49,3 @@ jobs:
         VERSION=${{ steps.regex-match.outputs.group1 }}
         npm version $VERSION
         npm publish
-  
-  prova:
-    runs-on: ubuntu-latest
-    steps:
-    - name: echoes
-      run: |
-        echo "event_name: ${{ github.event_name }}"
-        echo "ref: ${{ github.ref }}"
-        echo "base_ref: ${{ github.base_ref }}"
