@@ -45,8 +45,11 @@ jobs:
         node-version: 'lts/*'
     - name: Publish to npm
       run: |
-        cd nodejs
-        echo ${{ steps.get-version-from-tag.outputs.NEW_TAG }}
+        # echo ${{ steps.get-version-from-tag.outputs.NEW_TAG }}
+        echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+        echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+
+        # cd nodejs
         # yarn --frozen-lockfile
         # npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
         # # TODO: get version from tag
