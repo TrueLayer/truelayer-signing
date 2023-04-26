@@ -2,10 +2,7 @@ name: Node
 
 on:
   push:
-    # TODO: restore me!
-    # branches: [ main ]
-    branches:
-      - '**'
+    branches: [ main ]
     tags:
       - "nodejs/v**"
     paths:
@@ -29,8 +26,7 @@ jobs:
   
   publish:
     runs-on: ubuntu-latest
-    #  TODO: restore me!
-    # if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
+    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
     needs: test
     steps:
     - uses: actions/checkout@v3
