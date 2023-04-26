@@ -41,4 +41,4 @@ jobs:
         npm set //registry.npmjs.org/:_authToken=${{ secrets.NUGET_API_KEY }}
         # TODO: get version from tag
         npm version 0.1.5
-        # npm publish
+        npm publish
