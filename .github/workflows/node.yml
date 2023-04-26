@@ -32,25 +32,24 @@ jobs:
     needs: test
     steps:
     - uses: actions/checkout@v3
-    # - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 'lts/*'
+    - name: Publish to NPM registry
+      run: |
+        cd nodejs
+        yarn --frozen-lockfile
+        npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+        # TODO: get version from tag
+        npm version 0.1.5
+        npm publish
+    # - uses: actions/setup-node@v3
     #   with:
     #     node-version: 'lts/*'
     #     registry-url: 'https://registry.npmjs.org'
-    # - name: Publish to NPM registry
-    #   run: |
-    #     cd nodejs
-    #     yarn --frozen-lockfile
-    #     npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-    #     # TODO: get version from tag
-    #     npm version 0.1.5
-    #     npm publish
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 'lts/*'
-        registry-url: 'https://registry.npmjs.org'
-    - run: cd nodejs
-    - run: yarn
-    - run: yarn version --new-version 0.1.5 --no-git-tag-version
-    - run: yarn publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    # - run: cd nodejs
+    # - run: yarn
+    # - run: yarn version --new-version 0.1.5 --no-git-tag-version
+    # - run: yarn publish
+    #   env:
+    #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
