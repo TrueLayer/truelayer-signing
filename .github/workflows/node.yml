@@ -2,7 +2,10 @@ name: Node
 
 on:
   push:
-    branches: [ main ]
+    # TODO: restore me!
+    # branches: [ main ]
+    branches:
+      - '**'
     paths:
     - 'nodejs/**'
     - 'test-resources/**'
