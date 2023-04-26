@@ -1,15 +1,12 @@
 {
   "name": "truelayer-signing",
-  "version": "0.1.5",
   "description": "Produce & verify TrueLayer API requests signatures",
   "main": "lib/lib.js",
   "types": "lib/lib.d.ts",
   "scripts": {
     "test": "jest --config jestconfig.json",
     "build": "tsc --p tsconfig.prod.json",
-    "prepare": "yarn run build",
-    "version": "git add -A src",
-    "postversion": "git push && git push --tags"
+    "prepare": "yarn run build"
   },
   "repository": {
     "type": "git",
