@@ -20,7 +20,7 @@
   "bugs": {
     "url": "https://github.com/TrueLayer/truelayer-signing/issues"
   },
-  "homepage": "https://github.com/TrueLayer/truelayer-signing/tree/main/javascript#readme",
+  "homepage": "https://github.com/TrueLayer/truelayer-signing/tree/main/nodejs#readme",
   "dependencies": {
     "@types/jwk-to-pem": "^2.0.1",
     "js-base64": "^3.7.2",
