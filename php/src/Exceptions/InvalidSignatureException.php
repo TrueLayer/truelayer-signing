@@ -2,8 +2,6 @@
 
 namespace TrueLayer\Signing\Exceptions;
 
-use Exception;
-
-class InvalidSignatureException extends Exception
+class InvalidSignatureException extends \Exception
 {
 }

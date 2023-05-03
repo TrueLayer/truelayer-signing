@@ -2,8 +2,6 @@
 
 namespace TrueLayer\Signing\Exceptions;
 
-use Exception;
-
-class InvalidAlgorithmException extends Exception
+class InvalidAlgorithmException extends \Exception
 {
 }

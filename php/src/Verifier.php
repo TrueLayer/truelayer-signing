@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
-use Exception;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
@@ -192,7 +191,7 @@ final class Verifier extends AbstractJws implements IVerifier
     {
         try {
             $jws = $this->serializerManager->unserialize($signature);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             throw new InvalidSignatureException('Failed to parse JWS: ' . $e->getMessage(), 0, $e);
         }
 
@@ -214,7 +213,10 @@ final class Verifier extends AbstractJws implements IVerifier
             throw new InvalidSignatureException('The kid is missing from the signature headers');
         }
 
-        $tlHeaders = !empty($jwsHeaders['tl_headers']) ? \explode(',', $jwsHeaders['tl_headers']) : [];
+        $tlHeaders = [];
+        if (!empty($jwsHeaders['tl_headers']) && \is_string($jwsHeaders['tl_headers'])) {
+            $tlHeaders = \explode(',', $jwsHeaders['tl_headers']);
+        }
 
         if (!empty($this->requestHeaders)) {
             $lowercaseTlHeaders = \array_map('strtolower', $tlHeaders);
