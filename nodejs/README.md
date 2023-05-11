@@ -7,7 +7,11 @@ npm install --save truelayer-signing
 yarn add truelayer-signing
 ```
 
-### Usage
+## Signing with private key PEM
+
+See [full example](./examples/sign-request/).
+
+### Javascript Usage
 ```javascript
 const tlSigning = require('truelayer-signing');
 
@@ -22,8 +26,6 @@ const signature = tlSigning.sign({
 });
 ```
 
-See [full example](./examples/sign-request/).
-
 ### TypeScript usage
 ```typescript
 import * as tlSigning from 'truelayer-signing';
@@ -36,6 +38,46 @@ const signature = tlSigning.sign({
   path: "/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
+});
+```
+
+## Signing using a private key managed by a KMS/HSM
+
+See [full example](./examples/aws-kms-sign/).
+
+### Javascript Usage
+```javascript
+const tlSigning = require('truelayer-signing');
+
+// `Tl-Signature` value to send with the request.
+const signature = tlSigning.sign({
+  kid,
+  method: "POST",
+  path: "/payouts",
+  headers: { "Idempotency-Key": idempotencyKey },
+  body,
+  sign: async (message) => {
+    const signatureInJoseFormat = await callMyKmsToSignWithMyPrivateKey(message);
+    return signatureInJoseFormat;
+  },
+});
+```
+
+### TypeScript usage
+```typescript
+import * as tlSigning from 'truelayer-signing';
+
+// `Tl-Signature` value to send with the request.
+const signature = tlSigning.sign({
+  kid,
+  method: tlSigning.HttpMethod.Post,
+  path: "/payouts",
+  headers: { "Idempotency-Key": idempotencyKey },
+  body,
+  sign: async (message: string): Promise<string> => {
+    const signatureInJoseFormat = await callMyKmsToSignWithMyPrivateKey(message);
+    return signatureInJoseFormat;
+  },
 });
 ```
 
