@@ -51,11 +51,27 @@ const buildV2SigningPayload = ({
   return payload;
 };
 
-type SignPayloadConfig = {
-  privateKeyPem: string;
+type SignPayloadConfigCommon = {
   kid: string;
   payload: string;
   headerNames: string[];
+};
+
+type SignPayloadConfig = SignPayloadConfigCommon & {
+  privateKeyPem: string;
+};
+
+type SignPayloadWithCallbackConfig = SignPayloadConfigCommon & {
+  signCallback: (payload: string) => Promise<string>;
+};
+
+const createJwsHeader = (kid: string, headerNames: string[]): jws.Header => {
+  return {
+    alg: "ES512",
+    kid,
+    tl_version: "2",
+    tl_headers: headerNames.join(","),
+  };
 };
 
 const signPayload = ({
@@ -67,18 +83,34 @@ const signPayload = ({
   try {
     const [header, _, signature] = jws
       .sign({
-        header: {
-          alg: "ES512",
-          kid,
-          tl_version: "2",
-          tl_headers: headerNames.join(","),
-        },
+        header: createJwsHeader(kid, headerNames),
         payload,
         privateKey: privateKeyPem,
       })
       .split(".");
 
     return `${header}..${signature}`;
+  } catch (e: unknown) {
+    const message = hasMessage(e) ? e.message : "Signature error";
+
+    throw new SignatureError(message);
+  }
+};
+
+const signPayloadWithCallback = async ({
+  signCallback,
+  kid,
+  payload,
+  headerNames,
+}: SignPayloadWithCallbackConfig): Promise<string> => {
+  try {
+    const jwsComponents = {
+      header: Base64.encodeURI(JSON.stringify(createJwsHeader(kid, headerNames))),
+      payload: Base64.encodeURI(payload),
+    };
+    const jwsSigningMessage = `${jwsComponents.header}.${jwsComponents.payload}`;
+    const signature = await signCallback(jwsSigningMessage);
+    return `${jwsComponents.header}..${signature}`;
   } catch (e: unknown) {
     const message = hasMessage(e) ? e.message : "Signature error";
 
@@ -118,13 +150,20 @@ const parseSignature = (signature: string) => {
   }
 };
 
-type SignArguments = {
+type SignArgumentsCommon = {
   kid: string;
-  privateKeyPem: string;
   method?: HttpMethod;
   path: string;
   headers?: Record<string, string>;
   body?: string;
+};
+
+type SignArguments = SignArgumentsCommon & {
+  privateKeyPem: string;
+};
+
+type SignWithCallbackArguments = SignArgumentsCommon & {
+  signCallback: (payload: string) => Promise<string>;
 };
 
 function parseHeader(header: string): JOSEHeader {
@@ -170,6 +209,38 @@ export function sign(args: SignArguments) {
 
   return signPayload({
     privateKeyPem,
+    kid,
+    payload,
+    headerNames: headers.names(),
+  });
+}
+
+/** Sign/verification error
+ * SignatureError: SignatureError,
+ * Produce a JWS `Tl-Signature` v2 header value.
+ * @param {Object} args - Arguments.
+ * @param {string} args.signCallback - Callback to sign using a KMS/HSM.
+ * @param {string} args.kid - Private key kid.
+ * @param {string} [args.method="POST"] - Request method, e.g. "POST".
+ * @param {string} args.path - Request path, e.g. "/payouts".
+ * @param {string} [args.body=""] - Request body.
+ * @param {Object} [args.headers={}] - Request headers to be signed.
+ * Warning: Only a single value per header name is supported.
+ * @returns {Promise<string>} Tl-Signature header value.
+ * @throws {SignatureError} Will throw if signing fails.
+ */
+export function signWithCallback(args: SignWithCallbackArguments): Promise<string> {
+  const kid = requireArg(args.kid, "kid");
+  const signCallback = requireArg(args.signCallback, "signCallback");
+  const method = (args.method || HttpMethod.Post).toUpperCase() as HttpMethod;
+  const path = requireArg(args.path, "path");
+  const headers = new Headers(args.headers || {}).validated();
+  const body = args.body || "";
+
+  const payload = buildV2SigningPayload({ method, path, headers, body });
+
+  return signPayloadWithCallback({
+    signCallback,
     kid,
     payload,
     headerNames: headers.names(),
