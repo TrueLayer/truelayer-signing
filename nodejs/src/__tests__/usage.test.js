@@ -8,7 +8,7 @@ const PRIVATE_KEY = readFileSync("../test-resources/ec512-private.pem", "utf8");
 const WEBHOOK_SIGNATURE = readFileSync("../test-resources/webhook-signature.txt", "utf8").trim();
 const JWKS_JSON = readFileSync("../test-resources/jwks.json", "utf8");
 const KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
-const SIGN_CALLBACK = (message) => {
+const SIGN_FUNCTION = (message) => {
   const algo = jwa('ES512');
   const signature = algo.sign(message, PRIVATE_KEY);
   return Promise.resolve(signature);
@@ -60,7 +60,7 @@ describe('sign', () => {
   });
 });
 
-describe('sign with callback', () => {
+describe('sign with function', () => {
   it("should sign a full request which can be successfully verified (verify won't throw)", async () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -68,7 +68,7 @@ describe('sign with callback', () => {
 
     const signature = await sign({
       kid: KID,
-      signCallback: SIGN_CALLBACK,
+      sign: SIGN_FUNCTION,
       method: "post",
       path,
       headers: { "Idempotency-Key": idempotencyKey },
@@ -95,7 +95,7 @@ describe('sign with callback', () => {
 
     const fn = () => sign({
       kid: KID,
-      signCallback: SIGN_CALLBACK,
+      sign: SIGN_FUNCTION,
       method: "post",
       path,
       headers: { "Idempotency-Key": idempotencyKey },

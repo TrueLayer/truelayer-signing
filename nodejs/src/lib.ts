@@ -61,8 +61,8 @@ type SignPayloadConfig = SignPayloadConfigCommon & {
   privateKeyPem: string;
 };
 
-type SignPayloadWithCallbackConfig = SignPayloadConfigCommon & {
-  signCallback: (payload: string) => Promise<string>;
+type SignPayloadWithFunctionConfig = SignPayloadConfigCommon & {
+  sign: (message: string) => Promise<string>;
 };
 
 const createJwsHeader = (kid: string, headerNames: string[]): jws.Header => {
@@ -97,19 +97,19 @@ const signPayloadWithPem = ({
   }
 };
 
-const signPayloadWithCallback = async ({
-  signCallback,
+const signPayloadWithFunction = async ({
+  sign,
   kid,
   payload,
   headerNames,
-}: SignPayloadWithCallbackConfig): Promise<string> => {
+}: SignPayloadWithFunctionConfig): Promise<string> => {
   try {
     const jwsComponents = {
       header: Base64.encodeURI(JSON.stringify(createJwsHeader(kid, headerNames))),
       payload: Base64.encodeURI(payload),
     };
     const jwsSigningMessage = `${jwsComponents.header}.${jwsComponents.payload}`;
-    const signature = await signCallback(jwsSigningMessage);
+    const signature = await sign(jwsSigningMessage);
     return `${jwsComponents.header}..${signature}`;
   } catch (e: unknown) {
     const message = hasMessage(e) ? e.message : "Signature error";
@@ -189,19 +189,19 @@ export type SignWithPemArguments = SignBaseArguments & {
 };
 
 /**
- * @typedef {Object} SignWithCallbackArguments
+ * @typedef {Object} SignWithFunctionArguments
  * @property {string} kid - Private key kid.
  * @property {string} [method="POST"] - Request method, e.g. "POST".
  * @property {string} path - Request path, e.g. "/payouts".
  * @property {Record<string, string>} [headers={}] - Request headers to be signed.
  * @property {string} [body=""] - Request body.
- * @property {(string) => Promise<string>} signCallback - Callback to sign using a KMS/HSM.
+ * @property {(string) => Promise<string>} sign - Function to sign using a KMS/HSM.
  */
-export type SignWithCallbackArguments = SignBaseArguments & {
-  signCallback: (payload: string) => Promise<string>;
+export type SignWithFunctionArguments = SignBaseArguments & {
+  sign: (message: string) => Promise<string>;
 };
 
-export type SignArguments = SignWithPemArguments | SignWithCallbackArguments;
+export type SignArguments = SignWithPemArguments | SignWithFunctionArguments;
 
 function isSignWithPemArguments(args: SignArguments): args is SignWithPemArguments {
   return 'privateKeyPem' in (args as SignWithPemArguments);
@@ -218,11 +218,11 @@ export function sign(args: SignWithPemArguments): string;
 /** Sign/verification error
  * SignatureError: SignatureError,
  * Produce a JWS `Tl-Signature` v2 header value.
- * @param {SignWithCallbackArguments} args - Arguments.
+ * @param {SignWithFunctionArguments} args - Arguments.
  * @returns {Promise<string>} Tl-Signature header value.
  * @throws {SignatureError} Will throw if signing fails.
  */
-export function sign(args: SignWithCallbackArguments): Promise<string>;
+export function sign(args: SignWithFunctionArguments): Promise<string>;
 export function sign(args: SignArguments): any {
   const kid = requireArg(args.kid, "kid");
   const method = (args.method || HttpMethod.Post).toUpperCase() as HttpMethod;
@@ -241,9 +241,9 @@ export function sign(args: SignArguments): any {
       headerNames: headers.names(),
     });
   } else {
-    const signCallback = requireArg(args.signCallback, "signCallback");
-    return signPayloadWithCallback({
-      signCallback,
+    const sign = requireArg(args.sign, "sign");
+    return signPayloadWithFunction({
+      sign,
       kid,
       payload,
       headerNames: headers.names(),
