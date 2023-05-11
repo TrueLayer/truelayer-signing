@@ -74,7 +74,7 @@ const createJwsHeader = (kid: string, headerNames: string[]): jws.Header => {
   };
 };
 
-const signPayload = ({
+const signPayloadWithPem = ({
   privateKeyPem,
   kid,
   payload,
@@ -150,22 +150,6 @@ const parseSignature = (signature: string) => {
   }
 };
 
-type SignArgumentsCommon = {
-  kid: string;
-  method?: HttpMethod;
-  path: string;
-  headers?: Record<string, string>;
-  body?: string;
-};
-
-export type SignArguments = SignArgumentsCommon & {
-  privateKeyPem: string;
-};
-
-export type SignWithCallbackArguments = SignArgumentsCommon & {
-  signCallback: (payload: string) => Promise<string>;
-};
-
 function parseHeader(header: string): JOSEHeader {
   let headerJson: JOSEHeader | undefined = undefined;
   try {
@@ -183,55 +167,64 @@ function parseHeader(header: string): JOSEHeader {
   return headerJson;
 }
 
-/** Sign/verification error
- * SignatureError: SignatureError,
- * Produce a JWS `Tl-Signature` v2 header value.
- * @param {Object} args - Arguments.
- * @param {string} args.privateKeyPem - Private key pem.
- * @param {string} args.kid - Private key kid.
- * @param {string} [args.method="POST"] - Request method, e.g. "POST".
- * @param {string} args.path - Request path, e.g. "/payouts".
- * @param {string} [args.body=""] - Request body.
- * @param {Object} [args.headers={}] - Request headers to be signed.
- * Warning: Only a single value per header name is supported.
- * @returns {string} Tl-Signature header value.
- * @throws {SignatureError} Will throw if signing fails.
+type SignBaseArguments = {
+  kid: string;
+  method?: HttpMethod;
+  path: string;
+  headers?: Record<string, string>;
+  body?: string;
+};
+
+/**
+ * @typedef {Object} SignWithPemArguments
+ * @property {string} kid - Private key kid.
+ * @property {string} [method="POST"] - Request method, e.g. "POST".
+ * @property {string} path - Request path, e.g. "/payouts".
+ * @property {Record<string, string>} [headers={}] - Request headers to be signed.
+ * @property {string} [body=""] - Request body.
+ * @property {string} privateKeyPem - Private key pem.
  */
-export function sign(args: SignArguments) {
-  const kid = requireArg(args.kid, "kid");
-  const privateKeyPem = requireArg(args.privateKeyPem, "privateKeyPem");
-  const method = (args.method || HttpMethod.Post).toUpperCase() as HttpMethod;
-  const path = requireArg(args.path, "path");
-  const headers = new Headers(args.headers || {}).validated();
-  const body = args.body || "";
+export type SignWithPemArguments = SignBaseArguments & {
+  privateKeyPem: string;
+};
 
-  const payload = buildV2SigningPayload({ method, path, headers, body });
+/**
+ * @typedef {Object} SignWithCallbackArguments
+ * @property {string} kid - Private key kid.
+ * @property {string} [method="POST"] - Request method, e.g. "POST".
+ * @property {string} path - Request path, e.g. "/payouts".
+ * @property {Record<string, string>} [headers={}] - Request headers to be signed.
+ * @property {string} [body=""] - Request body.
+ * @property {(string) => Promise<string>} signCallback - Callback to sign using a KMS/HSM.
+ */
+export type SignWithCallbackArguments = SignBaseArguments & {
+  signCallback: (payload: string) => Promise<string>;
+};
 
-  return signPayload({
-    privateKeyPem,
-    kid,
-    payload,
-    headerNames: headers.names(),
-  });
+export type SignArguments = SignWithPemArguments | SignWithCallbackArguments;
+
+function isSignWithPemArguments(args: SignArguments): args is SignWithPemArguments {
+  return 'privateKeyPem' in (args as SignWithPemArguments);
 }
 
 /** Sign/verification error
  * SignatureError: SignatureError,
  * Produce a JWS `Tl-Signature` v2 header value.
- * @param {Object} args - Arguments.
- * @param {string} args.signCallback - Callback to sign using a KMS/HSM.
- * @param {string} args.kid - Private key kid.
- * @param {string} [args.method="POST"] - Request method, e.g. "POST".
- * @param {string} args.path - Request path, e.g. "/payouts".
- * @param {string} [args.body=""] - Request body.
- * @param {Object} [args.headers={}] - Request headers to be signed.
- * Warning: Only a single value per header name is supported.
+ * @param {SignWithPemArguments} args - Arguments.
+ * @returns {string} Tl-Signature header value.
+ * @throws {SignatureError} Will throw if signing fails.
+ */
+export function sign(args: SignWithPemArguments): string;
+/** Sign/verification error
+ * SignatureError: SignatureError,
+ * Produce a JWS `Tl-Signature` v2 header value.
+ * @param {SignWithCallbackArguments} args - Arguments.
  * @returns {Promise<string>} Tl-Signature header value.
  * @throws {SignatureError} Will throw if signing fails.
  */
-export function signWithCallback(args: SignWithCallbackArguments): Promise<string> {
+export function sign(args: SignWithCallbackArguments): Promise<string>;
+export function sign(args: SignArguments): any {
   const kid = requireArg(args.kid, "kid");
-  const signCallback = requireArg(args.signCallback, "signCallback");
   const method = (args.method || HttpMethod.Post).toUpperCase() as HttpMethod;
   const path = requireArg(args.path, "path");
   const headers = new Headers(args.headers || {}).validated();
@@ -239,12 +232,23 @@ export function signWithCallback(args: SignWithCallbackArguments): Promise<strin
 
   const payload = buildV2SigningPayload({ method, path, headers, body });
 
-  return signPayloadWithCallback({
-    signCallback,
-    kid,
-    payload,
-    headerNames: headers.names(),
-  });
+  if (isSignWithPemArguments(args)) {
+    const privateKeyPem = requireArg(args.privateKeyPem, "privateKeyPem");
+    return signPayloadWithPem({
+      privateKeyPem,
+      kid,
+      payload,
+      headerNames: headers.names(),
+    });
+  } else {
+    const signCallback = requireArg(args.signCallback, "signCallback");
+    return signPayloadWithCallback({
+      signCallback,
+      kid,
+      payload,
+      headerNames: headers.names(),
+    });
+  }
 }
 
 

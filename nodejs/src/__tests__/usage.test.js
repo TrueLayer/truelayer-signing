@@ -1,4 +1,4 @@
-const { sign, verify, signWithCallback } = require("../lib");
+const { sign, verify } = require("../lib");
 const { readFileSync } = require("fs");
 const jwa = require("jwa");
 
@@ -60,13 +60,13 @@ describe('sign', () => {
   });
 });
 
-describe('signWithCallback', () => {
+describe('sign with callback', () => {
   it("should sign a full request which can be successfully verified (verify won't throw)", async () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-    const signature = await signWithCallback({
+    const signature = await sign({
       kid: KID,
       signCallback: SIGN_CALLBACK,
       method: "post",
@@ -93,7 +93,7 @@ describe('signWithCallback', () => {
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
     const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-    const fn = () => signWithCallback({
+    const fn = () => sign({
       kid: KID,
       signCallback: SIGN_CALLBACK,
       method: "post",

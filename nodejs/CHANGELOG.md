@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Add `signWithCallback` method to allow signing using a KMS/HSM managed key.
+- Add `sign` method overload to allow signing using a KMS/HSM managed key.
 
 ## [0.1.6]
 ### Fixed
