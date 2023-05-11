@@ -158,11 +158,11 @@ type SignArgumentsCommon = {
   body?: string;
 };
 
-type SignArguments = SignArgumentsCommon & {
+export type SignArguments = SignArgumentsCommon & {
   privateKeyPem: string;
 };
 
-type SignWithCallbackArguments = SignArgumentsCommon & {
+export type SignWithCallbackArguments = SignArgumentsCommon & {
   signCallback: (payload: string) => Promise<string>;
 };
 
