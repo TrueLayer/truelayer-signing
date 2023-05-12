@@ -601,6 +601,11 @@
     jest-matcher-utils "^27.0.0"
     pretty-format "^27.0.0"
 
+"@types/jwa@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/jwa/-/jwa-2.0.0.tgz#321310068d96ef40974cebe7dbfbee36feae4ed9"
+  integrity sha512-QNXIKUQYD1v4qX1UksUM79ySMAjZjPOvDW3Y3lKqfM5wGeEicP67dVi1dbKQ0xmNdLdWcIlVzaYINNoj1pzR4g==
+
 "@types/jwk-to-pem@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@types/jwk-to-pem/-/jwk-to-pem-2.0.1.tgz#ba6949f447e02cb7bebf101551e3a4dea5f4fde4"

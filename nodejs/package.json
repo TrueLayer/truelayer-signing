@@ -29,13 +29,16 @@
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
+    "@types/jwa": "^2.0.0",
     "@types/jws": "^3.2.4",
     "jest": "^27.3.1",
+    "jwa": "^2.0.0",
     "ts-jest": "^27.0.7",
     "tsc": "^2.0.3",
     "typescript": "^4.4.4"
   },
   "files": [
     "lib/**/*"
-  ]
+  ],
+  "version": "0.0.1"
 }
