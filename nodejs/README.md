@@ -56,7 +56,7 @@ const signature = tlSigning.sign({
   path: "/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
-  sign: async (message) => {
+  signingFunction: async (message) => {
     const signatureInJoseFormat = await callMyKmsToSignWithMyPrivateKey(message);
     return signatureInJoseFormat;
   },
@@ -74,7 +74,7 @@ const signature = tlSigning.sign({
   path: "/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
-  sign: async (message: string): Promise<string> => {
+  signingFunction: async (message: string): Promise<string> => {
     const signatureInJoseFormat = await callMyKmsToSignWithMyPrivateKey(message);
     return signatureInJoseFormat;
   },
