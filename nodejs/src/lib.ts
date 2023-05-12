@@ -62,7 +62,7 @@ type SignPayloadConfig = SignPayloadConfigCommon & {
 };
 
 type SignPayloadWithFunctionConfig = SignPayloadConfigCommon & {
-  sign: (message: string) => Promise<string>;
+  signingFunction: (message: string) => Promise<string>;
 };
 
 const createJwsHeader = (kid: string, headerNames: string[]): jws.Header => {
@@ -98,7 +98,7 @@ const signPayloadWithPem = ({
 };
 
 const signPayloadWithFunction = async ({
-  sign,
+  signingFunction,
   kid,
   payload,
   headerNames,
@@ -109,7 +109,7 @@ const signPayloadWithFunction = async ({
       payload: Base64.encodeURI(payload),
     };
     const jwsSigningMessage = `${jwsComponents.header}.${jwsComponents.payload}`;
-    const signature = await sign(jwsSigningMessage);
+    const signature = await signingFunction(jwsSigningMessage);
     return `${jwsComponents.header}..${signature}`;
   } catch (e: unknown) {
     const message = hasMessage(e) ? e.message : "Signature error";
@@ -195,10 +195,10 @@ export type SignWithPemArguments = SignBaseArguments & {
  * @property {string} path - Request path, e.g. "/payouts".
  * @property {Record<string, string>} [headers={}] - Request headers to be signed.
  * @property {string} [body=""] - Request body.
- * @property {(string) => Promise<string>} sign - Function to sign using a KMS/HSM.
+ * @property {(string) => Promise<string>} signingFunction - Function to sign using a KMS/HSM.
  */
 export type SignWithFunctionArguments = SignBaseArguments & {
-  sign: (message: string) => Promise<string>;
+  signingFunction: (message: string) => Promise<string>;
 };
 
 export type SignArguments = SignWithPemArguments | SignWithFunctionArguments;
@@ -241,9 +241,9 @@ export function sign(args: SignArguments): any {
       headerNames: headers.names(),
     });
   } else {
-    const sign = requireArg(args.sign, "sign");
+    const signingFunction = requireArg(args.signingFunction, "signingFunction");
     return signPayloadWithFunction({
-      sign,
+      signingFunction,
       kid,
       payload,
       headerNames: headers.names(),

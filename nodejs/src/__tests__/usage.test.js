@@ -8,7 +8,7 @@ const PRIVATE_KEY = readFileSync("../test-resources/ec512-private.pem", "utf8");
 const WEBHOOK_SIGNATURE = readFileSync("../test-resources/webhook-signature.txt", "utf8").trim();
 const JWKS_JSON = readFileSync("../test-resources/jwks.json", "utf8");
 const KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
-const SIGN_FUNCTION = (message) => {
+const SIGNING_FUNCTION = (message) => {
   const algo = jwa('ES512');
   const signature = algo.sign(message, PRIVATE_KEY);
   return Promise.resolve(signature);
@@ -68,7 +68,7 @@ describe('sign with function', () => {
 
     const signature = await sign({
       kid: KID,
-      sign: SIGN_FUNCTION,
+      signingFunction: SIGNING_FUNCTION,
       method: "post",
       path,
       headers: { "Idempotency-Key": idempotencyKey },
@@ -95,7 +95,7 @@ describe('sign with function', () => {
 
     const fn = () => sign({
       kid: KID,
-      sign: SIGN_FUNCTION,
+      signingFunction: SIGNING_FUNCTION,
       method: "post",
       path,
       headers: { "Idempotency-Key": idempotencyKey },

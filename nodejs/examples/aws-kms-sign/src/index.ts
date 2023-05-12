@@ -35,7 +35,7 @@ var tlSignature = await tlSigning.sign({
   path: REQUEST_DATA.path,
   headers: REQUEST_DATA.headers,
   body: REQUEST_DATA.body,
-  sign: signWithKms,
+  signingFunction: signWithKms,
 });
 
 console.log(`TL-Signature: ${tlSignature}`);
