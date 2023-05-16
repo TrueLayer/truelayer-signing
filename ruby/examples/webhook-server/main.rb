@@ -1,57 +1,54 @@
-require "socket"
-require "truelayer-signing"
+require 'securerandom'
+require 'truelayer-signing'
+require 'webrick'
 
 class TrueLayerSigningExamples
   # Note: the webhook path can be whatever is configured for your application.
   # Here a unique path is used, matching the example signature in the README.
   WEBHOOK_PATH = "/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b".freeze
-  PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\n" +
-    "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBJ6ET9XeVCyMy+yOetZaNNCXPhwr5\n" +
-    "BlyDDg1CLmyNM5SvqOs8RveL6dYl4lpPur4xrPQl04ggYlVd9wnHkZnp3jcBlXw8\n" +
-    "Lc5phyYF1q2/QV/5wp2WHIhKDqUiXC0TvlE8d7MdTAN9yolcwrh6aWZ3kesTMZif\n" +
-    "BgItyT6PXUab8mMdI8k=\n-----END PUBLIC KEY-----"
+  PUBLIC_KEY_PEM = <<~TXT.freeze
+    -----BEGIN PUBLIC KEY-----
+    MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBJ6ET9XeVCyMy+yOetZaNNCXPhwr5
+    BlyDDg1CLmyNM5SvqOs8RveL6dYl4lpPur4xrPQl04ggYlVd9wnHkZnp3jcBlXw8
+    Lc5phyYF1q2/QV/5wp2WHIhKDqUiXC0TvlE8d7MdTAN9yolcwrh6aWZ3kesTMZif
+    BgItyT6PXUab8mMdI8k=
+    -----END PUBLIC KEY-----
+  TXT
 
   class << self
     def run_webhook_server
-      server = TCPServer.new(4567)
+      TrueLayerSigning.certificate_id ||= SecureRandom.uuid
+      server = WEBrick::HTTPServer.new(Port: 4567)
 
       puts "Server running at http://localhost:4567"
 
-      loop do
-        Thread.start(server.accept) do |client|
-          begin
-            request = parse_request(client)
-            status, body = handle_request.call(request)
-            headers = { "Content-Type" => "text/plain" }
+      server.mount_proc('/') do |req, res|
+        request = parse_request(req)
+        status, body = handle_request.call(request)
+        headers = { "Content-Type" => "text/plain" }
 
-            send_response(client, status, headers, body)
-          rescue => error
-            puts error
-          ensure
-            client.close
-          end
-        end
+        send_response(res, status, headers, body)
+      rescue => error
+        puts error
       end
+
+      server.start
+    ensure
+      server.shutdown
     end
 
-    private def parse_request(client)
-      request = client.gets
-      headers, body = client.readpartial(2048).split("\r\n\r\n", 2)
-      method, remainder = request.split(" ", 2)
-      url = remainder.split(" ").first
-      path, _query_strings = url.split("?", 2)
-
+    private def parse_request(request)
       {
-        method: method,
-        path: path,
-        headers: headers_to_hash(headers),
-        body: body
+        method: request.request_method,
+        path: request.path,
+        headers: headers_to_hash(request.header),
+        body: request.body
       }
     end
 
     private def handle_request
       Proc.new do |request|
-        if request[:method] == "POST" and request[:path] == WEBHOOK_PATH
+        if request[:method] == "POST" && request[:path] == WEBHOOK_PATH
           verify_webhook(request[:path], request[:headers], request[:body])
         else
           ["403", "Forbidden"]
@@ -65,7 +62,8 @@ class TrueLayerSigningExamples
       return ["400", "Bad Request – Header `Tl-Signature` missing"] unless tl_signature
 
       begin
-        TrueLayerSigning.verify_with_pem(PUBLIC_KEY_PEM)
+        TrueLayerSigning
+          .verify_with_pem(PUBLIC_KEY_PEM)
           .set_method(:post)
           .set_path(path)
           .set_headers(headers)
@@ -73,24 +71,22 @@ class TrueLayerSigningExamples
           .verify(tl_signature)
 
         ["202", "Accepted"]
-      rescue TrueLayerSigning::Error
+      rescue TrueLayerSigning::Error => error
+        puts error
+
         ["401", "Unauthorized"]
       end
     end
 
-    private def send_response(client, status, headers, body)
-      client.print("HTTP/1.1 #{status}\r\n")
-      headers.each { |key, value| client.print("#{key}: #{value}\r\n") }
-      client.print("\r\n#{body}")
+    private def headers_to_hash(headers)
+      headers.transform_keys { |key| key.to_s.strip.downcase }.transform_values(&:first)
     end
 
-    private def headers_to_hash(headers_string, hash = Hash.new)
-      headers_string.split("\r\n").each do |line|
-        pair = line.split(":")
-        hash[pair.first.to_s.strip.downcase] = pair.last.to_s.strip
-      end
-
-      hash
+    private def send_response(response, status, headers, body)
+      response.status = status
+      response.header.merge!(headers)
+      response.body = body
+      response
     end
   end
 end
