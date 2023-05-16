@@ -1,5 +1,5 @@
-require 'truelayer-signing'
 require 'securerandom'
+require 'truelayer-signing'
 require 'webrick'
 
 class TrueLayerSigningExamples
