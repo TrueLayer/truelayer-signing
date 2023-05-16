@@ -17,8 +17,7 @@ class TrueLayerSigningExamples
 
   class << self
     def run_webhook_server
-      ensure_certificate_id_present!
-
+      TrueLayerSigning.certificate_id ||= SecureRandom.uuid
       server = WEBrick::HTTPServer.new(Port: 4567)
 
       puts "Server running at http://localhost:4567"
@@ -38,9 +37,7 @@ class TrueLayerSigningExamples
       server.shutdown
     end
 
-    private
-
-    def parse_request(request)
+    private def parse_request(request)
       {
         method: request.request_method,
         path: request.path,
@@ -49,7 +46,7 @@ class TrueLayerSigningExamples
       }
     end
 
-    def handle_request
+    private def handle_request
       Proc.new do |request|
         if request[:method] == "POST" && request[:path] == WEBHOOK_PATH
           verify_webhook(request[:path], request[:headers], request[:body])
@@ -59,7 +56,7 @@ class TrueLayerSigningExamples
       end
     end
 
-    def verify_webhook(path, headers, body)
+    private def verify_webhook(path, headers, body)
       tl_signature = headers["tl-signature"]
 
       return ["400", "Bad Request – Header `Tl-Signature` missing"] unless tl_signature
@@ -74,24 +71,22 @@ class TrueLayerSigningExamples
           .verify(tl_signature)
 
         ["202", "Accepted"]
-      rescue TrueLayerSigning::Error
+      rescue TrueLayerSigning::Error => error
+        puts error
+
         ["401", "Unauthorized"]
       end
     end
 
-    def headers_to_hash(headers)
+    private def headers_to_hash(headers)
       headers.transform_keys { |key| key.to_s.strip.downcase }.transform_values(&:first)
     end
 
-    def send_response(response, status, headers, body)
+    private def send_response(response, status, headers, body)
       response.status = status
       response.header.merge!(headers)
       response.body = body
       response
-    end
-
-    def ensure_certificate_id_present!
-      TrueLayerSigning.certificate_id || (TrueLayerSigning.certificate_id = SecureRandom.uuid)
     end
   end
 end
