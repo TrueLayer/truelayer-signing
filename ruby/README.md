@@ -1,5 +1,9 @@
 # truelayer-signing
 
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/TrueLayer/truelayer-signing/ruby.yml?branch=main)
+![Gem](https://img.shields.io/gem/v/truelayer-signing)
+![Gem](https://img.shields.io/gem/dt/truelayer-signing)
+
 Ruby gem to produce and verify TrueLayer API requests signatures.
 
 ## Installation
