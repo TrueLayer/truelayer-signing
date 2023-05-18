@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ...
 
+## [0.1.2] – 2023-05-19
+
+- Fix conflict with JWT library
+
 ## [0.1.1] – 2023-05-17
 
 - Fix webhook server example
