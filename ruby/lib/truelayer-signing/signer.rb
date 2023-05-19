@@ -9,7 +9,8 @@ module TrueLayerSigning
       jws_header_args = { tl_headers: headers }
       jws_header_args[:jku] = jws_jku if jws_jku
       jws_header = TrueLayerSigning::JwsHeader.new(jws_header_args).to_h
-      jwt = JWT.encode(build_signing_payload, private_key, TrueLayerSigning.algorithm, jws_header)
+      jwt = JWT.truelayer_encode(build_signing_payload, private_key, TrueLayerSigning.algorithm,
+        jws_header)
       header, _, signature = jwt.split(".")
 
       "#{header}..#{signature}"

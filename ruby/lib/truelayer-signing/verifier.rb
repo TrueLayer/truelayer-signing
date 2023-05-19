@@ -27,7 +27,7 @@ module TrueLayerSigning
       jwt_options = { algorithm: TrueLayerSigning.algorithm }
 
       begin
-        JWT.decode(full_signature, public_key, true, jwt_options)
+        JWT.truelayer_decode(full_signature, public_key, true, jwt_options)
       rescue JWT::VerificationError
         @path = path.end_with?("/") && path[0...-1] || path + "/"
         payload_b64 = Base64.urlsafe_encode64(build_signing_payload(ordered_headers),
@@ -35,7 +35,7 @@ module TrueLayerSigning
         full_signature = [jws_header_b64, payload_b64, signature_b64].join(".")
 
         begin
-          JWT.decode(full_signature, public_key, true, jwt_options)
+          JWT.truelayer_decode(full_signature, public_key, true, jwt_options)
         rescue
           raise(Error, "Signature verification failed")
         end

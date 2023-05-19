@@ -369,4 +369,58 @@ class TrueLayerSigningTest < Minitest::Test
     assert(result.first
       .start_with?("POST /merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping\n"))
   end
+
+  # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
+  def test_jwt_encode_and_decode_should_succeed
+    payload_object = { currency: "GBP", max_amount_in_minor: 50_000_00 }
+    token_when_object = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW" +
+      "91bnRfaW5fbWlub3IiOjUwMDAwMDB9.SjbwZCqTl6G7LQNs_M6oQhwl3a9rbqO7p3cVncLtgZY"
+    token_when_json = "eyJhbGciOiJIUzI1NiJ9.IntcImN1cnJlbmN5XCI6XCJHQlBcIixcIm1h" +
+      "eF9hbW91bnRfaW5fbWlub3JcIjo1MDAwMDAwfSI.rvCcgu-JevsNxbjUwJiFOuTd0hzVKvPK5RvGmaoDc7E"
+
+    # succeeds with a hash object
+    assert_equal(token_when_object, JWT.encode(payload_object, "12345", "HS256", {}))
+    assert_equal(
+      [{ "currency" => "GBP", "max_amount_in_minor" => 50_000_00 }, { "alg" => "HS256" }],
+      JWT.decode(token_when_object, "12345", true, algorithm: "HS256")
+    )
+
+    # succeeds with a JSON string
+    assert_equal(token_when_json, JWT.encode(payload_object.to_json, "12345", "HS256", {}))
+    assert_equal(
+      ["{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}", { "alg" => "HS256" }],
+      JWT.decode(token_when_json, "12345", true, algorithm: "HS256")
+    )
+  end
+
+  # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
+  def test_jwt_truelayer_encode_and_decode_when_given_json_should_succeed
+    payload_json = { currency: "GBP", max_amount_in_minor: 50_000_00 }.to_json
+    token_when_json = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW9" +
+      "1bnRfaW5fbWlub3IiOjUwMDAwMDB9.SjbwZCqTl6G7LQNs_M6oQhwl3a9rbqO7p3cVncLtgZY"
+
+    assert_equal(token_when_json, JWT.truelayer_encode(payload_json, "12345", "HS256", {}))
+    assert_equal(
+      ["{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}", { "alg" => "HS256" }],
+      JWT.truelayer_decode(token_when_json, "12345", true, algorithm: "HS256")
+    )
+  end
+
+  # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
+  def test_jwt_truelayer_encode_when_given_a_hash_should_not_succeed
+    payload_object = { currency: "GBP", max_amount_in_minor: 50_000_00 }
+    error = assert_raises(TypeError) { JWT.truelayer_encode(payload_object, "12345", "HS256", {}) }
+    assert_equal("no implicit conversion of Hash into String", error.message)
+  end
+
+  # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
+  def test_jwt_truelayer_decode_when_given_a_hash_should_succeed
+    token_when_object = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW" +
+      "91bnRfaW5fbWlub3IiOjUwMDAwMDB9.SjbwZCqTl6G7LQNs_M6oQhwl3a9rbqO7p3cVncLtgZY"
+
+    assert_equal(
+      ["{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}", { "alg" => "HS256" }],
+      JWT.truelayer_decode(token_when_object, "12345", true, algorithm: "HS256")
+    )
+  end
 end
