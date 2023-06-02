@@ -11,7 +11,7 @@ keywords = ["truelayer"]
 include = ["LICENSE-APACHE", "LICENSE-MIT"]
 
 [tool.poetry.dependencies]
-cryptography = "^39.0.0"
+cryptography = ">=39,<42"
 python = "^3.8.1"
 
 [tool.poetry.group.dev.dependencies]
