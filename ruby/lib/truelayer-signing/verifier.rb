@@ -1,5 +1,7 @@
 module TrueLayerSigning
   class Verifier < JwsBase
+    EXPECTED_COORDS_LENGTH = 66.freeze
+
     attr_reader :required_headers, :key_type, :key_value
 
     def initialize(args)
@@ -97,10 +99,26 @@ module TrueLayerSigning
 
         raise(Error, "JWKS does not include given `kid` value") unless jwk
 
-        JWT::JWK::EC.import(jwk).public_key
+        valid_jwk = apply_zero_padding_as_needed(jwk)
+
+        JWT::JWK::EC.import(valid_jwk).public_key
       else
         raise(Error, "Type of public key not recognised")
       end
+    end
+
+    private def apply_zero_padding_as_needed(jwk)
+      valid_jwk = jwk.clone
+
+      %i(x y).each do |elem|
+        coords = Base64.urlsafe_decode64(valid_jwk[elem])
+        length = coords.length
+        diff = EXPECTED_COORDS_LENGTH - length
+
+        valid_jwk[elem] = Base64.urlsafe_encode64(("\x00" * diff) + coords) if diff > 0
+      end
+
+      valid_jwk
     end
 
     private def ensure_verifier_config!
