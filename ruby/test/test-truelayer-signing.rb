@@ -414,6 +414,31 @@ class TrueLayerSigningTest < Minitest::Test
       .verify(hook_signature)
   end
 
+  def test_verify_with_jwks_with_zero_padding_missing_should_succeed
+    jwks = read_file("resources/missing-zero-padding-test-jwks.json")
+
+    # JWKS with EC key missing zero padded coords is not supported by `jwt` gem
+
+    jwks_as_json = JSON.parse(jwks, symbolize_names: true)
+    jwk_missing_padding = jwks_as_json[:keys].find { |e| e[:kty] == "EC" }
+    imported_jwk = JWT::JWK::EC.import(jwk_missing_padding)
+
+    error = assert_raises(OpenSSL::PKey::EC::Point::Error) { imported_jwk.public_key.check_key }
+    assert_equal("EC_POINT_bn2point: invalid encoding", error.message)
+
+    # But supported by `truelayer-signing` using zero padding (prepend)
+
+    payload = read_file("resources/missing-zero-padding-test-payload.json")
+    body = JSON.parse(payload).to_json
+
+    TrueLayerSigning.verify_with_jwks(jwks)
+      .set_method(:post)
+      .set_path("/a147f26a-f07e-47e3-9526-d52f1f1fdd55")
+      .add_header("x-tl-webhook-timestamp", "2023-06-09T15:40:30Z")
+      .set_body(body)
+      .verify(read_file("resources/missing-zero-padding-test-signature.txt"))
+  end
+
   def test_verify_with_jwks_with_wrong_timestamp_should_fail
     hook_signature = read_file("../../test-resources/webhook-signature.txt")
     jwks = read_file("../../test-resources/jwks.json")
