@@ -1,6 +1,4 @@
 require "http"
-require "securerandom"
-require "socket"
 require "truelayer-signing"
 require "webrick"
 
@@ -11,7 +9,6 @@ class TrueLayerSigningExamples
 
   class << self
     def run_webhook_server
-      TrueLayerSigning.certificate_id ||= SecureRandom.uuid
       server = WEBrick::HTTPServer.new(Port: 4567)
 
       puts "Server running at http://localhost:4567"
