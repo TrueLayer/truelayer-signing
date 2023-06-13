@@ -1,11 +1,13 @@
 require "minitest/autorun"
 require "truelayer-signing"
 
+def read_file(path)
+  File.read(File.expand_path(path, File.dirname(__FILE__)))
+end
+
 CERTIFICATE_ID = "45fc75cf-5649-4134-84b3-192c2c78e990".freeze
-PRIVATE_KEY = File.read(File.expand_path("../../test-resources/ec512-private.pem",
-                                         File.dirname(__FILE__))).freeze
-PUBLIC_KEY = File.read(File.expand_path("../../test-resources/ec512-public.pem",
-                                        File.dirname(__FILE__))).freeze
+PRIVATE_KEY = read_file("../../test-resources/ec512-private.pem").freeze
+PUBLIC_KEY = read_file("../../test-resources/ec512-public.pem").freeze
 
 TrueLayerSigning.certificate_id = CERTIFICATE_ID.freeze
 TrueLayerSigning.private_key = PRIVATE_KEY.freeze
@@ -59,6 +61,24 @@ class TrueLayerSigningTest < Minitest::Test
     refute(result.first.include?("\nIdempotency-Key: "))
   end
 
+  def test_full_request_signature_without_method_should_default_to_post_and_succeed
+    body = { currency: "GBP", max_amount_in_minor: 50_000_00 }.to_json
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature = TrueLayerSigning.sign_with_pem
+      .set_path(path)
+      .set_body(body)
+      .sign
+
+    result = TrueLayerSigning.verify_with_pem(PUBLIC_KEY)
+      .set_path(path)
+      .set_body(body)
+      .verify(tl_signature)
+
+    assert(result.first
+      .start_with?("POST /merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping\n"))
+  end
+
   def test_mismatched_signature_with_attached_valid_body_should_fail
     # Signature for `/bar` but with a valid jws-body pre-attached.
     # If we run a simple jws verify on this unchanged, it'll work!
@@ -101,8 +121,7 @@ class TrueLayerSigningTest < Minitest::Test
     body = { currency: "GBP", max_amount_in_minor: 50_000_00, name: "Foo???" }.to_json
     idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
     path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
-    tl_signature = File.read(File.expand_path("../../test-resources/tl-signature.txt",
-                                              File.dirname(__FILE__)))
+    tl_signature = read_file("../../test-resources/tl-signature.txt")
 
     result = TrueLayerSigning.verify_with_pem(PUBLIC_KEY)
       .set_method(:post)
@@ -368,6 +387,99 @@ class TrueLayerSigningTest < Minitest::Test
 
     assert(result.first
       .start_with?("POST /merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping\n"))
+  end
+
+  def test_extract_jws_header_should_succeed
+    hook_signature = read_file("../../test-resources/webhook-signature.txt")
+    jws_header = TrueLayerSigning.extract_jws_header(hook_signature)
+
+    assert_equal("ES512", jws_header.alg)
+    assert_equal(CERTIFICATE_ID, jws_header.kid)
+    assert_equal("2", jws_header.tl_version)
+    assert_equal("X-Tl-Webhook-Timestamp,Content-Type", jws_header.tl_headers)
+    assert_equal("https://webhooks.truelayer.com/.well-known/jwks", jws_header.jku)
+  end
+
+  def test_verify_with_jwks_should_succeed
+    hook_signature = read_file("../../test-resources/webhook-signature.txt")
+    jwks = read_file("../../test-resources/jwks.json")
+    body = { event_type: "example", event_id: "18b2842b-a57b-4887-a0a6-d3c7c36f1020" }.to_json
+
+    TrueLayerSigning.verify_with_jwks(jwks)
+      .set_method(:post)
+      .set_path("/tl-webhook")
+      .add_header("x-tl-webhook-timestamp", "2021-11-29T11:42:55Z")
+      .add_header("content-type", "application/json")
+      .set_body(body)
+      .verify(hook_signature)
+  end
+
+  def test_verify_with_jwks_with_zero_padding_missing_should_succeed
+    jwks = read_file("resources/missing-zero-padding-test-jwks.json")
+
+    # JWKS with EC key missing zero padded coords is not supported by `jwt` gem
+
+    jwks_as_json = JSON.parse(jwks, symbolize_names: true)
+    jwk_missing_padding = jwks_as_json[:keys].find { |e| e[:kty] == "EC" }
+    imported_jwk = JWT::JWK::EC.import(jwk_missing_padding)
+
+    error = assert_raises(OpenSSL::PKey::EC::Point::Error) { imported_jwk.public_key.check_key }
+    assert_equal("EC_POINT_bn2point: invalid encoding", error.message)
+
+    # But supported by `truelayer-signing` using zero padding (prepend)
+
+    payload = read_file("resources/missing-zero-padding-test-payload.json")
+    body = JSON.parse(payload).to_json
+
+    TrueLayerSigning.verify_with_jwks(jwks)
+      .set_method(:post)
+      .set_path("/a147f26a-f07e-47e3-9526-d52f1f1fdd55")
+      .add_header("x-tl-webhook-timestamp", "2023-06-09T15:40:30Z")
+      .set_body(body)
+      .verify(read_file("resources/missing-zero-padding-test-signature.txt"))
+  end
+
+  def test_verify_with_jwks_with_wrong_timestamp_should_fail
+    hook_signature = read_file("../../test-resources/webhook-signature.txt")
+    jwks = read_file("../../test-resources/jwks.json")
+    body = { event_type: "example", event_id: "18b2842b-a57b-4887-a0a6-d3c7c36f1020" }.to_json
+
+    verifier = TrueLayerSigning.verify_with_jwks(jwks)
+      .set_method(:post)
+      .set_path("/tl-webhook")
+      .add_header("x-tl-webhook-timestamp", "2021-12-29T11:42:55Z")
+      .add_header("content-type", "application/json")
+      .set_body(body)
+
+    error = assert_raises(TrueLayerSigning::Error) { verifier.verify(hook_signature) }
+    assert_equal("Signature verification failed", error.message)
+  end
+
+  def test_sign_with_pem_and_custom_jku_should_succeed
+    body = { currency: "GBP", max_amount_in_minor: 50_000_00 }.to_json
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    tl_signature_1 = TrueLayerSigning.sign_with_pem
+      .set_path(path)
+      .add_header("Idempotency-Key", idempotency_key)
+      .set_body(body)
+      .sign
+
+    jws_header_1 = TrueLayerSigning.extract_jws_header(tl_signature_1)
+
+    assert_nil(jws_header_1.jku)
+
+    tl_signature_2 = TrueLayerSigning.sign_with_pem
+      .set_path(path)
+      .add_header("Idempotency-Key", idempotency_key)
+      .set_body(body)
+      .set_jku("https://webhooks.truelayer.com/.well-known/jwks")
+      .sign
+
+    jws_header_2 = TrueLayerSigning.extract_jws_header(tl_signature_2)
+
+    assert_equal("https://webhooks.truelayer.com/.well-known/jwks", jws_header_2.jku)
   end
 
   # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
