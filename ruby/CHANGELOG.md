@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ...
 
+## [0.2.1] – 2023-06-22
+
+- Add which header is missing from the signature
+
 ## [0.2.0] – 2023-06-13
 
 - Add support for signature verification using a JWKS: `TrueLayerSigning.verify_with_jwks(jwks)`
