@@ -34,7 +34,7 @@ public class UsageTest {
 
     @Test
     public void fullSignature() {
-        byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
+        byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000,\"name\":\"Foo? & É?\"}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
@@ -206,7 +206,7 @@ public class UsageTest {
 
     @Test
     public void flexibleHeaderCaseOrderVerify() {
-        byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes(StandardCharsets.UTF_8);
+        byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000,\"name\":\"Foo? & É?\"}".getBytes(StandardCharsets.UTF_8);
         String idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
@@ -295,7 +295,7 @@ public class UsageTest {
 
     @Test
     public void signAndVerifyNoHeaders() {
-        byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}".getBytes();
+        byte[] body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000,\"name\":\"Foo? & É?\"}".getBytes(StandardCharsets.UTF_8);
         String path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
         String tlSignature = Signer.from(kid, privateKey)
