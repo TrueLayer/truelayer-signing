@@ -29,7 +29,7 @@ public class Utils {
                 .append("\n")
                 .append(headersString)
                 .append("\n")
-                .append(new String(body))
+                .append(new String(body, StandardCharsets.UTF_8))
                 .toString();
 
         return Base64URL.from(Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
