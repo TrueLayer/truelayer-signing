@@ -29,7 +29,7 @@ module JWT
     ).segments
   end
 
-  def truelayer_decode(jwt, key, verify, options, &keyfinder)
+  def truelayer_decode(jwt, key, verify = true, options, &keyfinder)
     TrueLayerDecode.new(
       jwt,
       key,

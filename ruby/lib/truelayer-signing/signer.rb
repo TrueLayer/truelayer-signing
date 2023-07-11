@@ -7,7 +7,9 @@ module TrueLayerSigning
 
       private_key = OpenSSL::PKey.read(TrueLayerSigning.private_key)
       jws_header_args = { tl_headers: headers }
+
       jws_header_args[:jku] = jws_jku if jws_jku
+
       jws_header = TrueLayerSigning::JwsHeader.new(jws_header_args).to_h
       jwt = JWT.truelayer_encode(build_signing_payload, private_key, TrueLayerSigning.algorithm,
         jws_header)
@@ -18,6 +20,7 @@ module TrueLayerSigning
 
     def set_jku(jku)
       @jws_jku = jku
+
       self
     end
 
