@@ -29,7 +29,7 @@ module TrueLayerSigning
       ordered_headers = required_header_keys.map do |key|
         value = normalised_headers[key.downcase]
 
-        raise(Error, "Missing header(s) declared in signature") unless value
+        raise(Error, "Missing header declared in signature: #{key.downcase}") unless value
 
         [key, value]
       end
