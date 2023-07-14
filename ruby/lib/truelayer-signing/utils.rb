@@ -16,12 +16,14 @@ module TrueLayerSigning
 
     def to_h
       hash = instance_variables.map { |var| [var[1..-1].to_sym, instance_variable_get(var)] }.to_h
+
       hash.reject { |key, _value| hash[key].nil? }
     end
 
     def filter_headers(headers)
       required_header_keys = tl_headers.split(",").reject { |key| key.empty? }
       normalised_headers = {}
+
       headers.to_a.each { |header| normalised_headers[header.first.downcase] = header.last }
 
       ordered_headers = required_header_keys.map do |key|
@@ -50,6 +52,7 @@ module TrueLayerSigning
 
     def set_method(method)
       @method = method.to_s.upcase
+
       self
     end
 
@@ -57,21 +60,25 @@ module TrueLayerSigning
       raise(Error, "Path must start with '/'") unless path.start_with?("/")
 
       @path = path
+
       self
     end
 
     def add_header(name, value)
       @headers[name.to_s] = value
+
       self
     end
 
     def set_headers(headers)
       headers.each { |name, value| @headers[name.to_s] = value }
+
       self
     end
 
     def set_body(body)
       @body = body
+
       self
     end
 

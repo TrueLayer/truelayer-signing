@@ -455,6 +455,28 @@ class TrueLayerSigningTest < Minitest::Test
     assert_equal("Signature verification failed", error.message)
   end
 
+  # This test reproduces an issue we had with an edge case
+  def test_verify_with_failed_payment_expired_webhook_should_succeed
+    path = "/tl-webhook"
+    payload = read_file("resources/failed-payment-expired-test-payload.json")
+    body = JSON.parse(payload).to_json
+
+    tl_signature = TrueLayerSigning.sign_with_pem
+      .set_method(:post)
+      .set_path(path)
+      .set_body(body)
+      .sign
+
+    result = TrueLayerSigning.verify_with_pem(PUBLIC_KEY)
+      .set_method(:post)
+      .set_path(path)
+      .set_body(body)
+      .verify(tl_signature)
+
+    assert(result.first.start_with?("POST /tl-webhook\n"))
+    assert(result.first.include?("\"failure_reason\":\"expired\""))
+  end
+
   def test_sign_with_pem_and_custom_jku_should_succeed
     body = { currency: "GBP", max_amount_in_minor: 50_000_00 }.to_json
     idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
