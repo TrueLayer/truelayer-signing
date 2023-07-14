@@ -1,0 +1,12 @@
+{
+  "type": "payment_failed",
+  "event_version": 1,
+  "event_id": "6f00897f-f8c8-4ffb-93a3-cfbd311396e2",
+  "payment_id": "2c4db314-b509-4d68-b883-a34ca5fa7b72",
+  "payment_method": {
+    "type": "bank_transfer"
+  },
+  "failed_at": "2023-07-11T17:42:24.123Z",
+  "failure_stage": "authorization_required",
+  "failure_reason": "expired"
+}
