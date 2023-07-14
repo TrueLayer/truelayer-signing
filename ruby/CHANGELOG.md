@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Disable expiration verification
-- Add which header is missing from the signature
 - ...
+
+## [0.2.1] – 2023-07-14
+
+- Disable expiration verification
+- Add missing header discovery
 
 ## [0.2.0] – 2023-06-13
 
