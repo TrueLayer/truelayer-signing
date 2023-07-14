@@ -314,7 +314,7 @@ class TrueLayerSigningTest < Minitest::Test
       .set_body(body)
 
     error = assert_raises(TrueLayerSigning::Error) { verifier.verify(tl_signature) }
-    assert_equal('Missing header declared in signature: idempotency-key', error.message)
+    assert_equal("Missing header declared in signature: idempotency-key", error.message)
   end
 
   def test_full_request_signature_missing_required_header_should_fail
