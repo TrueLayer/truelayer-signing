@@ -17,16 +17,16 @@ You can generate a key pair using [`openssl`](https://www.openssl.org/).
 To generate the private key, run:
 
 ```bash
-docker run --rm -v ${PWD}:/out -w /out -it alpine/openssl ecparam -genkey -name secp521r1 -noout -out ec512-private-key.pem
+openssl ecparam -genkey -name secp521r1 -noout -out ec512-private-key.pem
 ```
 
 You can then obtain the public key by running:
 
 ```bash
-docker run --rm -v ${PWD}:/out -w /out -it alpine/openssl ec -in ec512-private-key.pem -pubout -out ec512-public-key.pem
+openssl ec -in ec512-private-key.pem -pubout -out ec512-public-key.pem
 ```
 
-`ec512-public-key.pem` is the file you should upload in the **NEW** Payments Settings page in our Console.
+`ec512-public-key.pem` is the file you should upload in the [**Payments Settings** page](https://console.truelayer.com/payments/v3/settings) in our Console.
 
 ## Sign a request
 You need to specify a `Tl-Signature` header in your HTTP request.
