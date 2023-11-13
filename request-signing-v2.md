@@ -13,17 +13,30 @@ To sign an HTTP request using ECDSA you will need to generate an Elliptic Curve 
 - a private key, to be used for signing requests, which you should **not** share with anyone outside of your organisation.
 
 ES512, in particular, requires a key pair that use the P-521 family of elliptic curves (also known as `secpt521r1`).
-You can generate a key pair using [`openssl`](https://www.openssl.org/).
-To generate the private key, run:
+You can generate a key pair using [`openssl`](https://www.openssl.org/) or Docker.
 
+To generate the private key, run one of the following commands for OpenSSL or Docker:
+
+**OpenSSL**:
 ```bash
 openssl ecparam -genkey -name secp521r1 -noout -out ec512-private-key.pem
 ```
 
+**Docker**:
+```
+docker run --rm -v ${PWD}:/out -w /out -it alpine/openssl ecparam -genkey -name secp521r1 -noout -out ec512-private-key.pem
+```
+
 You can then obtain the public key by running:
 
+**OpenSSL**:
 ```bash
 openssl ec -in ec512-private-key.pem -pubout -out ec512-public-key.pem
+```
+
+**Docker**:
+```
+docker run --rm -v ${PWD}:/out -w /out -it alpine/openssl ec -in ec512-private-key.pem -pubout -out ec512-public-key.pem
 ```
 
 `ec512-public-key.pem` is the file you should upload in the [**Payments Settings** page](https://console.truelayer.com/payments/v3/settings) in our Console.
