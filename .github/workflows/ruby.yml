@@ -25,7 +25,11 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
+      - name: Install dependencies
+        run: bundle
       - name: Build and install gem
         run: gem build truelayer-signing.gemspec && gem install ./truelayer-signing-0.2.1.gem
       - name: Run tests
         run: rake test
+      - name: Lint code
+        run: rubocop
