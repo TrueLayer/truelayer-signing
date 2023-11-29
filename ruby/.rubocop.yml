@@ -1,0 +1,40 @@
+AllCops:
+  NewCops: enable
+  # TODO: bump lowest supported version when dropping support
+  TargetRubyVersion: 2.7
+Layout/LineEndStringConcatenationIndentation:
+  EnforcedStyle: indented
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Metrics/AbcSize:
+  Exclude:
+    - "test/**/*"
+Metrics/ClassLength:
+  Exclude:
+    - "test/**/*"
+  # TODO: try and go down to 100 (default) where possible
+  Max: 110
+Metrics/MethodLength:
+  Exclude:
+    - "test/**/*"
+  # TODO: try and go down to 10 (default) where possible
+  Max: 12
+Naming/AccessorMethodName:
+  # TODO: we use `set_*` to match other libraries but could revisit this
+  Enabled: false
+Naming/FileName:
+  Exclude:
+    - "lib/truelayer-signing.rb"
+    - "test/test-truelayer-signing.rb"
+Style/Documentation:
+  Enabled: false
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    default: "()"
+    "%i": "()"
+    "%I": "()"
+    "%r": "()"
+    "%w": "()"
+    "%W": "()"
+Style/StringLiterals:
+  EnforcedStyle: double_quotes

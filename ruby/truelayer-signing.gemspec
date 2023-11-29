@@ -1,4 +1,6 @@
-$LOAD_PATH.unshift(::File.join(::File.dirname(__FILE__), "lib"))
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "lib"))
 
 Gem::Specification.new do |s|
   s.name = "truelayer-signing"
@@ -15,11 +17,12 @@ Gem::Specification.new do |s|
   s.metadata = {
     "bug_tracker_uri" => "https://github.com/TrueLayer/truelayer-signing/issues",
     "changelog_uri" => "https://github.com/TrueLayer/truelayer-signing/blob/main/ruby/CHANGELOG.md",
+    "rubygems_mfa_required" => "true"
   }
 
   s.files = Dir["./**/*"]
   s.require_paths = ["lib"]
 
   s.required_ruby_version = ">= 2.7"
-  s.add_runtime_dependency("jwt",  "~> 2.7")
+  s.add_runtime_dependency("jwt", "~> 2.7")
 end

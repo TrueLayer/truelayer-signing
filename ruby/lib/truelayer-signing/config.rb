@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TrueLayerSigning
   class Config
     attr_accessor :certificate_id, :private_key
@@ -12,10 +14,10 @@ module TrueLayerSigning
 
     # @return [TrueLayerSigning::Config]
     def initialize
-      @algorithm = "ES512".freeze
-      @certificate_id = ENV.fetch("TRUELAYER_SIGNING_CERTIFICATE_ID", nil).freeze
-      @private_key = ENV.fetch("TRUELAYER_SIGNING_PRIVATE_KEY", nil)&.gsub(/\\n/, "\n").freeze
-      @version = "2".freeze
+      @algorithm = "ES512"
+      @certificate_id = ENV.fetch("TRUELAYER_SIGNING_CERTIFICATE_ID", nil)
+      @private_key = ENV.fetch("TRUELAYER_SIGNING_PRIVATE_KEY", nil)&.gsub("\\n", "\n")
+      @version = "2"
     end
   end
 end

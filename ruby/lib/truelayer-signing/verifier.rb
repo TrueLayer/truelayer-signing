@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module TrueLayerSigning
   class Verifier < JwsBase
-    EXPECTED_EC_KEY_COORDS_LENGTH = 66.freeze
+    EXPECTED_EC_KEY_COORDS_LENGTH = 66
 
     attr_reader :required_headers, :key_type, :key_value
 
@@ -16,15 +18,12 @@ module TrueLayerSigning
 
       jws_header, jws_header_b64, signature_b64 = self.class.parse_tl_signature(tl_signature)
 
-      raise(Error, "Unexpected `alg` header value") if jws_header.alg != TrueLayerSigning.algorithm
+      validate_algorithm!(jws_header.alg)
 
       ordered_headers = jws_header.filter_headers(headers)
-      normalised_headers = {}
+      normalised_headers = Utils.normalise_headers!(ordered_headers)
 
-      ordered_headers.to_a.each { |header| normalised_headers[header.first.downcase] = header.last }
-
-      raise(Error, "Signature missing required header(s)") if required_headers &&
-        required_headers.any? { |key| !normalised_headers.has_key?(key.downcase) }
+      validate_required_headers!(normalised_headers)
 
       verify_signature_flex(ordered_headers, jws_header, jws_header_b64, signature_b64)
     end
@@ -58,13 +57,15 @@ module TrueLayerSigning
       [jws_header, jws_header_b64, signature_b64]
     end
 
-    private def verify_signature_flex(ordered_headers, jws_header, jws_header_b64, signature_b64)
+    private
+
+    def verify_signature_flex(ordered_headers, jws_header, jws_header_b64, signature_b64)
       full_signature = build_full_signature(ordered_headers, jws_header_b64, signature_b64)
 
       begin
         verify_signature(jws_header, full_signature)
       rescue JWT::VerificationError
-        @path = path.end_with?("/") && path[0...-1] || path + "/"
+        @path = path.end_with?("/") ? path[0...-1] : "#{path}/"
         full_signature = build_full_signature(ordered_headers, jws_header_b64, signature_b64)
 
         begin
@@ -75,13 +76,13 @@ module TrueLayerSigning
       end
     end
 
-    private def build_full_signature(ordered_headers, jws_header_b64, signature_b64)
+    def build_full_signature(ordered_headers, jws_header_b64, signature_b64)
       payload_b64 = Base64.urlsafe_encode64(build_signing_payload(ordered_headers), padding: false)
 
       [jws_header_b64, payload_b64, signature_b64].join(".")
     end
 
-    private def verify_signature(jws_header, full_signature)
+    def verify_signature(jws_header, full_signature)
       case key_type
       when :pem
         public_key = OpenSSL::PKey.read(key_value)
@@ -98,7 +99,7 @@ module TrueLayerSigning
       JWT.truelayer_decode(full_signature, public_key, jwt_options)
     end
 
-    private def retrieve_public_key(key_type, key_value, jws_header)
+    def retrieve_public_key(key_type, key_value, jws_header)
       case key_type
       when :pem
         OpenSSL::PKey.read(key_value)
@@ -116,20 +117,30 @@ module TrueLayerSigning
       end
     end
 
-    private def apply_zero_padding_as_needed(jwk)
+    def apply_zero_padding_as_needed(jwk)
       valid_jwk = jwk.clone
 
       %i(x y).each do |elem|
         coords = Base64.urlsafe_decode64(valid_jwk[elem])
         diff = EXPECTED_EC_KEY_COORDS_LENGTH - coords.length
 
-        valid_jwk[elem] = Base64.urlsafe_encode64(("\x00" * diff) + coords) if diff > 0
+        valid_jwk[elem] = Base64.urlsafe_encode64(("\x00" * diff) + coords) if diff.positive?
       end
 
       valid_jwk
     end
 
-    private def ensure_verifier_config!
+    def validate_required_headers!(headers)
+      raise(Error, "Signature missing required header(s)") if required_headers&.any? do |key|
+        !headers.key?(key.downcase)
+      end
+    end
+
+    def validate_algorithm!(algorithm)
+      raise(Error, "Unexpected `alg` header value") if algorithm != TrueLayerSigning.algorithm
+    end
+
+    def ensure_verifier_config!
       raise(Error, "Key value missing") unless key_value
     end
   end
