@@ -18,7 +18,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
         node-version: 'lts/*'
@@ -30,7 +30,7 @@ jobs:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     needs: test
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
         node-version: 'lts/*'
