@@ -20,8 +20,17 @@ Gem::Specification.new do |s|
     "rubygems_mfa_required" => "true"
   }
 
-  s.files = Dir["./**/*"]
-  s.require_paths = ["lib"]
+  s.files = Dir[
+    "CHANGELOG.md",
+    "Gemfile",
+    "LICENSE*",
+    "README.md",
+    "Rakefile",
+    "lib/**/*.*",
+    "test/**/*.*",
+    "truelayer-signing.gemspec",
+  ]
+  s.require_path = "lib"
 
   s.required_ruby_version = ">= 2.7"
   s.add_runtime_dependency("jwt", "~> 2.7")
