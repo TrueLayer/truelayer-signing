@@ -39,7 +39,8 @@ jobs:
         run: rake test
   publish:
     runs-on: ubuntu-latest
-    if: github.event_name == "push" && contains(github.ref, "refs/tags/")
+    # Runs only on tag pushes for Ruby (combined with line 6) and if lint_and_test succeeded
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     needs: lint_and_test
     steps:
       - uses: actions/checkout@v4
