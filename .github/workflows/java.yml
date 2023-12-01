@@ -33,7 +33,7 @@ jobs:
           distribution: 'adopt'
           cache: gradle
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v1.0.4
+        uses: gradle/wrapper-validation-action@v1.1.0
       - name: Test
         run: cd java && ./gradlew test
 
@@ -76,7 +76,7 @@ jobs:
           distribution: 'adopt'
           cache: gradle
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v1.0.4
+        uses: gradle/wrapper-validation-action@v1.1.0
       - name: Publish to Sonatype and Maven Central
         run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
@@ -93,7 +93,7 @@ jobs:
     steps:
       - name: Create tag
         id: create_tag
-        uses: mathieudutour/github-tag-action@v6.0
+        uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ needs.set-release-version.outputs.project_version }}
