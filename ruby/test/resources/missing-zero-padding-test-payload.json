@@ -1,0 +1,22 @@
+{
+  "type": "payment_executed",
+  "event_version": 1,
+  "event_id": "2606ed6d-5c89-4bd9-8f95-40e42c95ca71",
+  "payment_id": "a62ba556-4b35-4628-9d8c-42302d2e5d02",
+  "payment_method": {
+    "type": "bank_transfer",
+    "provider_id": "mock-payments-gb-redirect",
+    "scheme_id": "faster_payments_service"
+  },
+  "executed_at": "2023-06-09T15:40:30.561Z",
+  "payment_source": {
+    "account_identifiers": [
+      {
+        "type": "sort_code_account_number",
+        "sort_code": "040668",
+        "account_number": "00000871"
+      }
+    ],
+    "account_holder_name": "JOHN SANDBRIDGE"
+  }
+}

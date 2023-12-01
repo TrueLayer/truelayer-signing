@@ -2,23 +2,18 @@
 
 namespace TrueLayer\Signing;
 
-use Exception;
-
 class Util
 {
     /**
      * @param array<string, string> $headers
      *
-     * @throws Exception
+     * @throws \Exception
      *
      * @return array<string, string>
      */
     public static function normaliseHeaders(array $headers): array
     {
-        // Sort the array
-        if (!\ksort($headers)) {
-            throw new Exception('Could not sort the headers array.');
-        }
+        \ksort($headers);
 
         return $headers;
     }
@@ -26,16 +21,13 @@ class Util
     /**
      * @param string[] $headerKeys
      *
-     * @throws Exception
+     * @throws \Exception
      *
      * @return string[]
      */
     public static function normaliseHeaderKeys(array $headerKeys): array
     {
-        // Sort the array
-        if (!\sort($headerKeys)) {
-            throw new Exception('Could not sort the headers array.');
-        }
+        \sort($headerKeys);
 
         return $headerKeys;
     }

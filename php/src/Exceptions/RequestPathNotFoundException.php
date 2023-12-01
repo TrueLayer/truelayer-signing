@@ -2,8 +2,6 @@
 
 namespace TrueLayer\Signing\Exceptions;
 
-use Exception;
-
-class RequestPathNotFoundException extends Exception
+class RequestPathNotFoundException extends \Exception
 {
 }
