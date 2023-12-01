@@ -314,7 +314,7 @@ class TrueLayerSigningTest < Minitest::Test
       .set_body(body)
 
     error = assert_raises(TrueLayerSigning::Error) { verifier.verify(tl_signature) }
-    assert_equal("Missing header(s) declared in signature", error.message)
+    assert_equal("Missing header declared in signature: idempotency-key", error.message)
   end
 
   def test_full_request_signature_missing_required_header_should_fail
@@ -453,6 +453,28 @@ class TrueLayerSigningTest < Minitest::Test
 
     error = assert_raises(TrueLayerSigning::Error) { verifier.verify(hook_signature) }
     assert_equal("Signature verification failed", error.message)
+  end
+
+  # This test reproduces an issue we had with an edge case
+  def test_verify_with_failed_payment_expired_webhook_should_succeed
+    path = "/tl-webhook"
+    payload = read_file("resources/failed-payment-expired-test-payload.json")
+    body = JSON.parse(payload).to_json
+
+    tl_signature = TrueLayerSigning.sign_with_pem
+      .set_method(:post)
+      .set_path(path)
+      .set_body(body)
+      .sign
+
+    result = TrueLayerSigning.verify_with_pem(PUBLIC_KEY)
+      .set_method(:post)
+      .set_path(path)
+      .set_body(body)
+      .verify(tl_signature)
+
+    assert(result.first.start_with?("POST /tl-webhook\n"))
+    assert(result.first.include?("\"failure_reason\":\"expired\""))
   end
 
   def test_sign_with_pem_and_custom_jku_should_succeed

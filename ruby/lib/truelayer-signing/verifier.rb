@@ -1,11 +1,12 @@
 module TrueLayerSigning
   class Verifier < JwsBase
-    EXPECTED_COORDS_LENGTH = 66.freeze
+    EXPECTED_EC_KEY_COORDS_LENGTH = 66.freeze
 
     attr_reader :required_headers, :key_type, :key_value
 
     def initialize(args)
       super
+
       @key_type = args[:key_type]
       @key_value = args[:key_value]
     end
@@ -19,6 +20,7 @@ module TrueLayerSigning
 
       ordered_headers = jws_header.filter_headers(headers)
       normalised_headers = {}
+
       ordered_headers.to_a.each { |header| normalised_headers[header.first.downcase] = header.last }
 
       raise(Error, "Signature missing required header(s)") if required_headers &&
@@ -30,11 +32,13 @@ module TrueLayerSigning
     def require_header(name)
       @required_headers ||= []
       @required_headers.push(name)
+
       self
     end
 
     def require_headers(names)
       @required_headers = names
+
       self
     end
 
@@ -85,8 +89,13 @@ module TrueLayerSigning
         public_key = retrieve_public_key(:jwks, key_value, jws_header)
       end
 
-      jwt_options = { algorithm: TrueLayerSigning.algorithm }
-      JWT.truelayer_decode(full_signature, public_key, true, jwt_options)
+      jwt_options = {
+        algorithm: TrueLayerSigning.algorithm,
+        verify_expiration: false,
+        verify_not_before: false
+      }
+
+      JWT.truelayer_decode(full_signature, public_key, jwt_options)
     end
 
     private def retrieve_public_key(key_type, key_value, jws_header)
@@ -112,8 +121,7 @@ module TrueLayerSigning
 
       %i(x y).each do |elem|
         coords = Base64.urlsafe_decode64(valid_jwk[elem])
-        length = coords.length
-        diff = EXPECTED_COORDS_LENGTH - length
+        diff = EXPECTED_EC_KEY_COORDS_LENGTH - coords.length
 
         valid_jwk[elem] = Base64.urlsafe_encode64(("\x00" * diff) + coords) if diff > 0
       end
