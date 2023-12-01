@@ -6,22 +6,18 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
-from jwt import InvalidKeyError
 from json import JSONDecodeError
 
-# third party imports
-from jwt.algorithms import ECAlgorithm
-
 # local imports
+from .crypto import Ec512
 from .utils import (
     HttpMethod,
     JwsHeader,
     TlJwsBase,
     build_v2_jws_b64,
     decode_url_safe_base64,
-    to_url_safe_base64,
 )
-from .errors import TlSigningException
+from .errors import INVALID_KEY, INVALID_SIGNATURE, TlSigningException
 
 
 class KeyFmt(Enum):
@@ -140,33 +136,16 @@ def tl_verify(args: VerifyArguments) -> None:
         raise TlSigningException("Internal Error")
 
     # verify the signature
-    verifier = ECAlgorithm(ECAlgorithm.SHA512)  # type: ignore
+    if args.key_fmt == KeyFmt.PEM and isinstance(args.pkey, str):
+        verifier = Ec512.load_from_pem(args.pkey.encode())
+    elif args.key_fmt == KeyFmt.JWKS:
+        verifier = Ec512.load_from_jwks(args.pkey)
+    else:
+        raise TlSigningException(INVALID_KEY)
+
     try:
-        if args.key_fmt == KeyFmt.PEM and isinstance(args.pkey, str):
-            key = verifier.prepare_key(args.pkey)  # type: ignore
-        elif args.key_fmt == KeyFmt.JWKS:
-            # adds zero-padding to keys
-            if isinstance(args.pkey, str):
-                pkey = json.loads(args.pkey)
-            elif isinstance(args.pkey, Mapping):
-                pkey = args.pkey
-            else:
-                raise ValueError
-
-            pkey["x"] = to_url_safe_base64(
-                decode_url_safe_base64(pkey["x"].encode(), zero_pad=66)
-            )
-            pkey["y"] = to_url_safe_base64(
-                decode_url_safe_base64(pkey["y"].encode(), zero_pad=66)
-            )
-
-            key = verifier.from_jwk(pkey)  # type: ignore
-        else:
-            raise ValueError
-    except (ValueError, InvalidKeyError) as e:
-        raise TlSigningException(f"Invalid Key: {e}")
-
-    if not verifier.verify(jws_b64, key, signature):  # type: ignore
+        verifier.verify(signature, jws_b64)
+    except TlSigningException:
         (path, slash) = (
             (args.path[:-1], False) if args.path.endswith("/") else (args.path, True)
         )
@@ -178,8 +157,7 @@ def tl_verify(args: VerifyArguments) -> None:
             args.body,
             slash,
         )
-        if not verifier.verify(jws_b64_2, key, signature):  # type: ignore
-            raise TlSigningException("Invalid Signature")
+        verifier.verify(signature, jws_b64_2)
 
 
 def extract_jws_header(tl_signature: str) -> JwsHeader:
@@ -225,4 +203,4 @@ def signature_split(tl_signature: str) -> Tuple[str, str]:
         header, signature = tl_signature.split("..", maxsplit=1)
         return (header, signature)
     except ValueError:
-        raise TlSigningException("Invalid Signature")
+        raise TlSigningException(INVALID_SIGNATURE)

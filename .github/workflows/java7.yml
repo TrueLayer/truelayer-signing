@@ -25,7 +25,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
@@ -43,7 +43,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2 #we need to make a git diff of the last 2 commits
       - name: Get project version
@@ -68,7 +68,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && needs.set-release-version.outputs.changed_version != ''
     needs: [build-and-test, set-release-version]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup JDK 8
         uses: actions/setup-java@v3
         with:
@@ -78,7 +78,7 @@ jobs:
       - name: Validate gradle wrapper
         uses: gradle/wrapper-validation-action@v1.0.4
       - name: Publish to Sonatype and Maven Central
-        run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: cd java7 && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
@@ -93,7 +93,7 @@ jobs:
     steps:
       - name: Create tag
         id: create_tag
-        uses: mathieudutour/github-tag-action@v6.0
+        uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ needs.set-release-version.outputs.project_version }}

@@ -31,7 +31,7 @@ jobs:
           - "8.1"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: "Install PHP"
         uses: "shivammathur/setup-php@v2"
         with:
@@ -41,7 +41,7 @@ jobs:
         env:
           update: true
       - name: "Cache dependencies"
-        uses: "actions/cache@v2"
+        uses: "actions/cache@v3.0.11"
         with:
           path: |
             ~/.composer/cache
@@ -64,7 +64,7 @@ jobs:
     needs: test
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Remove "php/" from tag name

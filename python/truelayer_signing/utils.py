@@ -3,9 +3,31 @@ from __future__ import annotations
 # std imports
 import base64
 import json
+import sys
 from dataclasses import asdict, dataclass
-from enum import Enum
+
 from typing import Dict, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
+
+if sys.version_info < (3, 11):
+    from enum import Enum
+
+    class HttpMethod(str, Enum):
+        POST = "POST"
+        GET = "GET"
+        PATCH = "PATCH"
+        PUT = "PUT"
+        DELETE = "DELETE"
+
+else:
+    from enum import StrEnum
+
+    class HttpMethod(StrEnum):
+        POST = "POST"
+        GET = "GET"
+        PATCH = "PATCH"
+        PUT = "PUT"
+        DELETE = "DELETE"
+
 
 # local imports
 from .errors import TlSigningException
@@ -15,14 +37,6 @@ TL_VERSION = "2"
 
 P = TypeVar("P", str, Union[str, Mapping[str, str]])
 T = TypeVar("T", bound="TlJwsBase")  # type: ignore
-
-
-class HttpMethod(str, Enum):
-    POST = "POST"
-    GET = "GET"
-    PATCH = "PATCH"
-    PUT = "PUT"
-    DELETE = "DELETE"
 
 
 M = TypeVar("M", HttpMethod, Optional[HttpMethod])
