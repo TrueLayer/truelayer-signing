@@ -16,14 +16,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '5.0.x'
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '3.1.x'
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '2.2.x'
     - run: cd csharp && dotnet build && dotnet test
@@ -31,8 +31,8 @@ jobs:
   examples:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '6.0.x'
     - run: cd csharp/examples/webhook-server && dotnet build
@@ -42,9 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
     - name: Generate NuGet package

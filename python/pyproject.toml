@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "truelayer-signing"
-version = "0.3.0"
+version = "0.3.1"
 description = "Produce & verify TrueLayer API requests signatures"
 authors = ["tl-flavio-barinas <flavio.barinas@truelayer.com>"]
 license = "Apache-2.0 or MIT"
@@ -11,7 +11,7 @@ keywords = ["truelayer"]
 include = ["LICENSE-APACHE", "LICENSE-MIT"]
 
 [tool.poetry.dependencies]
-cryptography = "^39.0.0"
+cryptography = ">=39,<42"
 python = "^3.8.1"
 
 [tool.poetry.group.dev.dependencies]
