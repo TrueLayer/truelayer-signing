@@ -7,6 +7,7 @@ import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 
 import java.security.interfaces.ECPublicKey;
+import java.text.ParseException;
 import java.util.Map;
 
 class VerifierFromPublicKey extends Verifier {
@@ -22,6 +23,8 @@ class VerifierFromPublicKey extends Verifier {
         JWSHeader jwsHeader;
         try {
             jwsHeader = JWSHeader.parse(JOSEObject.split(signature)[0]);
+        } catch (ParseException e) {
+            throw new SignatureException("Failed to parse JWS: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new SignatureException(e);
         }
@@ -31,6 +34,8 @@ class VerifierFromPublicKey extends Verifier {
         try {
             verifiedResult = JWSObject.parse(signature, new Payload(Utils.buildPayload(orderedHeaders, method, path, body)))
                     .verify(new ECDSAVerifier(publicKey));
+        } catch (ParseException e) {
+            throw new SignatureException("Failed to parse JWS: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new SignatureException(e);
         }

@@ -1,16 +1,12 @@
 {
   "name": "truelayer-signing",
-  "version": "0.1.5",
   "description": "Produce & verify TrueLayer API requests signatures",
   "main": "lib/lib.js",
   "types": "lib/lib.d.ts",
   "scripts": {
     "test": "jest --config jestconfig.json",
     "build": "tsc --p tsconfig.prod.json",
-    "prepare": "yarn run build",
-    "prepublishOnly": "yarn test",
-    "version": "git add -A src",
-    "postversion": "git push && git push --tags"
+    "prepare": "yarn run build"
   },
   "repository": {
     "type": "git",
@@ -24,7 +20,7 @@
   "bugs": {
     "url": "https://github.com/TrueLayer/truelayer-signing/issues"
   },
-  "homepage": "https://github.com/TrueLayer/truelayer-signing/tree/main/javascript#readme",
+  "homepage": "https://github.com/TrueLayer/truelayer-signing/tree/main/nodejs#readme",
   "dependencies": {
     "@types/jwk-to-pem": "^2.0.1",
     "js-base64": "^3.7.2",
@@ -33,13 +29,16 @@
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
+    "@types/jwa": "^2.0.0",
     "@types/jws": "^3.2.4",
     "jest": "^27.3.1",
+    "jwa": "^2.0.0",
     "ts-jest": "^27.0.7",
     "tsc": "^2.0.3",
     "typescript": "^4.4.4"
   },
   "files": [
     "lib/**/*"
-  ]
+  ],
+  "version": "0.0.1"
 }

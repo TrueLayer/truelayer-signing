@@ -51,14 +51,30 @@ const buildV2SigningPayload = ({
   return payload;
 };
 
-type SignPayloadConfig = {
-  privateKeyPem: string;
+type SignPayloadConfigCommon = {
   kid: string;
   payload: string;
   headerNames: string[];
 };
 
-const signPayload = ({
+type SignPayloadConfig = SignPayloadConfigCommon & {
+  privateKeyPem: string;
+};
+
+type SignPayloadWithFunctionConfig = SignPayloadConfigCommon & {
+  signingFunction: (message: string) => Promise<string>;
+};
+
+const createJwsHeader = (kid: string, headerNames: string[]): jws.Header => {
+  return {
+    alg: "ES512",
+    kid,
+    tl_version: "2",
+    tl_headers: headerNames.join(","),
+  };
+};
+
+const signPayloadWithPem = ({
   privateKeyPem,
   kid,
   payload,
@@ -67,18 +83,34 @@ const signPayload = ({
   try {
     const [header, _, signature] = jws
       .sign({
-        header: {
-          alg: "ES512",
-          kid,
-          tl_version: "2",
-          tl_headers: headerNames.join(","),
-        },
+        header: createJwsHeader(kid, headerNames),
         payload,
         privateKey: privateKeyPem,
       })
       .split(".");
 
     return `${header}..${signature}`;
+  } catch (e: unknown) {
+    const message = hasMessage(e) ? e.message : "Signature error";
+
+    throw new SignatureError(message);
+  }
+};
+
+const signPayloadWithFunction = async ({
+  signingFunction,
+  kid,
+  payload,
+  headerNames,
+}: SignPayloadWithFunctionConfig): Promise<string> => {
+  try {
+    const jwsComponents = {
+      header: Base64.encodeURI(JSON.stringify(createJwsHeader(kid, headerNames))),
+      payload: Base64.encodeURI(payload),
+    };
+    const jwsSigningMessage = `${jwsComponents.header}.${jwsComponents.payload}`;
+    const signature = await signingFunction(jwsSigningMessage);
+    return `${jwsComponents.header}..${signature}`;
   } catch (e: unknown) {
     const message = hasMessage(e) ? e.message : "Signature error";
 
@@ -97,8 +129,9 @@ type JOSEHeader = {
 const parseSignature = (signature: string) => {
   try {
     const [header, _, footer] = signature.split(".");
-    const headerJson = JSON.parse(Base64.decode(header)) as JOSEHeader;
 
+    let headerJson = parseHeader(header);
+    
     SignatureError.ensure(headerJson.alg === "ES512", "unsupported header alg");
     SignatureError.ensure(
       headerJson.tl_version === "2",
@@ -117,32 +150,81 @@ const parseSignature = (signature: string) => {
   }
 };
 
-type SignArguments = {
+function parseHeader(header: string): JOSEHeader {
+  let headerJson: JOSEHeader | undefined = undefined;
+  try {
+    headerJson = JSON.parse(Base64.decode(header)) as JOSEHeader;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new SignatureError("Failed to parse JWS: " + error.message);
+    } else {
+      throw new SignatureError("Failed to parse JWS");
+    }
+  }
+  if (headerJson === undefined) {
+    throw new SignatureError("Failed to parse JWS");
+  }
+  return headerJson;
+}
+
+type SignBaseArguments = {
   kid: string;
-  privateKeyPem: string;
   method?: HttpMethod;
   path: string;
   headers?: Record<string, string>;
   body?: string;
 };
 
+/**
+ * @typedef {Object} SignWithPemArguments
+ * @property {string} kid - Private key kid.
+ * @property {string} [method="POST"] - Request method, e.g. "POST".
+ * @property {string} path - Request path, e.g. "/payouts".
+ * @property {Record<string, string>} [headers={}] - Request headers to be signed.
+ * @property {string} [body=""] - Request body.
+ * @property {string} privateKeyPem - Private key pem.
+ */
+export type SignWithPemArguments = SignBaseArguments & {
+  privateKeyPem: string;
+};
+
+/**
+ * @typedef {Object} SignWithFunctionArguments
+ * @property {string} kid - Private key kid.
+ * @property {string} [method="POST"] - Request method, e.g. "POST".
+ * @property {string} path - Request path, e.g. "/payouts".
+ * @property {Record<string, string>} [headers={}] - Request headers to be signed.
+ * @property {string} [body=""] - Request body.
+ * @property {(string) => Promise<string>} signingFunction - Function to sign using a KMS/HSM.
+ */
+export type SignWithFunctionArguments = SignBaseArguments & {
+  signingFunction: (message: string) => Promise<string>;
+};
+
+export type SignArguments = SignWithPemArguments | SignWithFunctionArguments;
+
+function isSignWithPemArguments(args: SignArguments): args is SignWithPemArguments {
+  return 'privateKeyPem' in (args as SignWithPemArguments);
+}
+
 /** Sign/verification error
  * SignatureError: SignatureError,
  * Produce a JWS `Tl-Signature` v2 header value.
- * @param {Object} args - Arguments.
- * @param {string} args.privateKeyPem - Private key pem.
- * @param {string} args.kid - Private key kid.
- * @param {string} [args.method="POST"] - Request method, e.g. "POST".
- * @param {string} args.path - Request path, e.g. "/payouts".
- * @param {string} [args.body=""] - Request body.
- * @param {Object} [args.headers={}] - Request headers to be signed.
- * Warning: Only a single value per header name is supported.
+ * @param {SignWithPemArguments} args - Arguments.
  * @returns {string} Tl-Signature header value.
  * @throws {SignatureError} Will throw if signing fails.
  */
-export function sign(args: SignArguments) {
+export function sign(args: SignWithPemArguments): string;
+/** Sign/verification error
+ * SignatureError: SignatureError,
+ * Produce a JWS `Tl-Signature` v2 header value.
+ * @param {SignWithFunctionArguments} args - Arguments.
+ * @returns {Promise<string>} Tl-Signature header value.
+ * @throws {SignatureError} Will throw if signing fails.
+ */
+export function sign(args: SignWithFunctionArguments): Promise<string>;
+export function sign(args: SignArguments): any {
   const kid = requireArg(args.kid, "kid");
-  const privateKeyPem = requireArg(args.privateKeyPem, "privateKeyPem");
   const method = (args.method || HttpMethod.Post).toUpperCase() as HttpMethod;
   const path = requireArg(args.path, "path");
   const headers = new Headers(args.headers || {}).validated();
@@ -150,12 +232,23 @@ export function sign(args: SignArguments) {
 
   const payload = buildV2SigningPayload({ method, path, headers, body });
 
-  return signPayload({
-    privateKeyPem,
-    kid,
-    payload,
-    headerNames: headers.names(),
-  });
+  if (isSignWithPemArguments(args)) {
+    const privateKeyPem = requireArg(args.privateKeyPem, "privateKeyPem");
+    return signPayloadWithPem({
+      privateKeyPem,
+      kid,
+      payload,
+      headerNames: headers.names(),
+    });
+  } else {
+    const signingFunction = requireArg(args.signingFunction, "signingFunction");
+    return signPayloadWithFunction({
+      signingFunction,
+      kid,
+      payload,
+      headerNames: headers.names(),
+    });
+  }
 }
 
 

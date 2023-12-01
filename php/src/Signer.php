@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
-use Exception;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
@@ -92,7 +91,7 @@ final class Signer extends AbstractJws implements ISigner
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      * @throws Exceptions\RequestPathNotFoundException
      *
      * @return string

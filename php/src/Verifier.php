@@ -189,8 +189,11 @@ final class Verifier extends AbstractJws implements IVerifier
      */
     public function verify(string $signature): void
     {
-        $jws = $this->serializerManager
-            ->unserialize($signature);
+        try {
+            $jws = $this->serializerManager->unserialize($signature);
+        } catch (\Exception $e) {
+            throw new InvalidSignatureException('Failed to parse JWS: ' . $e->getMessage(), 0, $e);
+        }
 
         if (!\is_null($jws->getPayload())) {
             throw new SignatureMustUseDetachedPayloadException();
@@ -210,7 +213,10 @@ final class Verifier extends AbstractJws implements IVerifier
             throw new InvalidSignatureException('The kid is missing from the signature headers');
         }
 
-        $tlHeaders = !empty($jwsHeaders['tl_headers']) ? \explode(',', $jwsHeaders['tl_headers']) : [];
+        $tlHeaders = [];
+        if (!empty($jwsHeaders['tl_headers']) && \is_string($jwsHeaders['tl_headers'])) {
+            $tlHeaders = \explode(',', $jwsHeaders['tl_headers']);
+        }
 
         if (!empty($this->requestHeaders)) {
             $lowercaseTlHeaders = \array_map('strtolower', $tlHeaders);

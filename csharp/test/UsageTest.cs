@@ -317,10 +317,40 @@ namespace TrueLayer.Signing.Tests
         }
 
         [Fact]
+        public void VerifierExtractKid_FromInvalidSignature_ShouldThrowSignatureException()
+        {
+            Action action = () => { Verifier.ExtractKid("an-invalid..signature"); };
+            action
+                .Should()
+                .Throw<SignatureException>()
+// exception message changed between version 2.2 and 3.1 due to a migration from Newtonsoft.Json (Json.NET) to System.Text.Json
+#if (NETCOREAPP3_1 || NETCOREAPP3_1_OR_GREATER)
+                .WithMessage("Failed to parse JWS: 'j' is an invalid start of a value. Path: $ | LineNumber: 0 | BytePositionInLine: 0.");
+#else
+                .WithMessage("Failed to parse JWS: Unexpected character encountered while parsing value: j. Path '', line 0, position 0.");
+#endif
+        }
+
+        [Fact]
         public void Verifier_ExtractJku()
         {
             var tlSignature = File.ReadAllText(TestResourcePath("webhook-signature.txt")).Trim();
             Verifier.ExtractJku(tlSignature).Should().Be("https://webhooks.truelayer.com/.well-known/jwks");
+        }
+
+        [Fact]
+        public void VerifierExtractJku_FromInvalidSignature_ShouldThrowSignatureException()
+        {
+            Action action = () => { Verifier.ExtractJku("an-invalid..signature"); };
+            action
+                .Should()
+                .Throw<SignatureException>()
+// exception message changed between version 2.2 and 3.1 due to a migration from Newtonsoft.Json (Json.NET) to System.Text.Json
+#if (NETCOREAPP3_1 || NETCOREAPP3_1_OR_GREATER)
+                .WithMessage("Failed to parse JWS: 'j' is an invalid start of a value. Path: $ | LineNumber: 0 | BytePositionInLine: 0.");
+#else
+                .WithMessage("Failed to parse JWS: Unexpected character encountered while parsing value: j. Path '', line 0, position 0.");
+#endif
         }
 
         [Fact]
@@ -346,6 +376,26 @@ namespace TrueLayer.Signing.Tests
                 .Verify(tlSignature);
 
             verify.Should().Throw<SignatureException>();
+        }
+
+        [Fact]
+        public void VerifierVerify_InvalidSignature_ShouldThrowSignatureException()
+        {
+            Action action = () => Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path("/bar")
+                .Body("{}")
+                .Verify("an-invalid..signature");
+
+            action
+                .Should()
+                .Throw<SignatureException>()
+// exception message changed between version 2.2 and 3.1 due to a migration from Newtonsoft.Json (Json.NET) to System.Text.Json
+#if (NETCOREAPP3_1 || NETCOREAPP3_1_OR_GREATER)
+                .WithMessage("Failed to parse JWS: 'j' is an invalid start of a value. Path: $ | LineNumber: 0 | BytePositionInLine: 0.");
+#else
+                .WithMessage("Failed to parse JWS: Unexpected character encountered while parsing value: j. Path '', line 0, position 0.");
+#endif
         }
 
         public sealed class TestCase

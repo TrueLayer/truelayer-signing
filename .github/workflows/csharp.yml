@@ -16,7 +16,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.x'
@@ -31,9 +31,32 @@ jobs:
   examples:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '6.0.x'
     - run: cd csharp/examples/webhook-server && dotnet build
     - run: cd csharp/examples/sign-request && dotnet build
+  
+  publish:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Generate NuGet package
+      run: |
+        cd csharp
+        dotnet pack src/truelayer-signing.csproj \
+          --configuration Release \
+          --include-source \
+          -property:SymbolPackageFormat=snupkg
+    - name: Push to NuGet
+      run: |
+        cd csharp
+        dotnet nuget push src/bin/Release/TrueLayer.Signing.*.nupkg \
+          --source https://api.nuget.org/v3/index.json \
+          --api-key ${{ secrets.NUGET_API_KEY }}

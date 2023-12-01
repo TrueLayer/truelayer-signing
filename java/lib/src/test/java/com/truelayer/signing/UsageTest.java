@@ -271,7 +271,7 @@ public class UsageTest {
 
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
 
-        assertEquals("The payload Base64URL part must be empty", invalidSignatureException.getMessage());
+        assertEquals("Failed to parse JWS: The payload Base64URL part must be empty", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -290,7 +290,7 @@ public class UsageTest {
 
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(signature));
 
-        assertEquals("Invalid serialized unsecured/JWS/JWE object: Too many part delimiters", invalidSignatureException.getMessage());
+        assertEquals("Failed to parse JWS: Invalid serialized unsecured/JWS/JWE object: Too many part delimiters", invalidSignatureException.getMessage());
     }
 
     @Test
@@ -371,6 +371,15 @@ public class UsageTest {
     }
 
     @Test
+    public void verifierExtractJku_InvalidSignature_ThrowsSignatureException() {
+        Exception e = assertThrows(
+                SignatureException.class,
+                () -> Verifier.extractJku("an-invalid..signature")
+        );
+        assertEquals("Failed to parse JWS: Invalid JWS header: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
+    }
+
+    @Test
     public void verifierJwks() {
         Verifier.verifyWithJwks(jwks)
                 .method("POST")
@@ -394,6 +403,19 @@ public class UsageTest {
         SignatureException invalidSignatureException = assertThrows(SignatureException.class, () -> verifier.verify(webhookSignature));
 
         assertEquals("invalid signature", invalidSignatureException.getMessage());
+    }
+
+    @Test
+    public void verifierVerify_InvalidSignature_ThrowsSignatureException() {
+        Exception e = assertThrows(
+                SignatureException.class,
+                () -> Verifier.verifyWithJwks(jwks)
+                        .method("POST")
+                        .path("/bar")
+                        .body("{}")
+                        .verify("an-invalid..signature")
+        );
+        assertEquals("Failed to parse JWS: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
     }
 
     @Test

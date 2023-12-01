@@ -8,7 +8,7 @@ from truelayer_signing import (
     extract_jws_header,
 )
 from truelayer_signing.errors import TlSigningException
-from truelayer_signing.utils import HttpMethod
+from truelayer_signing.utils import HttpMethod, build_v2_signing_payload
 
 
 def read_file(path: str) -> str:
@@ -100,6 +100,28 @@ def test_mismatched_signature_with_attached_valid_body_trailing_dots():
             .set_body("{}")
             .verify(tl_signature)
         )
+
+
+def test_verify_with_invalaid_signature_should_raise_exception():
+    body = '{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}'
+    idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
+    path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
+
+    with pytest.raises(TlSigningException) as ex:
+        (
+            verify_with_pem(PUBLIC_KEY)
+            .set_method(HttpMethod.POST)
+            .set_path(path)
+            .add_header("X-Whatever-2", "t2345d")
+            .add_header("Idempotency-Key", idempotency_key)
+            .set_body(body)
+            .verify("an-invalid..signature")
+        )
+
+    assert ex.value.args[0] == (
+        "Failed to parse JWS: "
+        "'utf-8' codec can't decode byte 0xa2 in position 2: invalid start byte"
+    )
 
 
 def test_signature_no_headers():
@@ -421,3 +443,20 @@ def test_verify_with_unsigned_trailing_slash():
         .set_body(body)
         .verify(tl_signature)
     )
+
+
+def test_payload_builder():
+    payload = (
+        "POST /test-signature\n"
+        "Idempotency-Key: 619410b3-b00c-406e-bb1b-2982f97edb8b\n"
+        '{"bar":123}'
+    )
+
+    test = build_v2_signing_payload(
+        HttpMethod.POST,
+        "/test-signature",
+        [("Idempotency-Key", "619410b3-b00c-406e-bb1b-2982f97edb8b")],
+        '{"bar":123}',
+    )
+
+    assert payload == test

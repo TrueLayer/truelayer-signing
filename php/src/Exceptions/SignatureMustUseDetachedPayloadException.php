@@ -2,8 +2,6 @@
 
 namespace TrueLayer\Signing\Exceptions;
 
-use Exception;
-
-class SignatureMustUseDetachedPayloadException extends Exception
+class SignatureMustUseDetachedPayloadException extends \Exception
 {
 }

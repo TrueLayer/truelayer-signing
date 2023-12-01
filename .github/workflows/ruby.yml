@@ -1,0 +1,31 @@
+name: Ruby
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "ruby/**"
+      - "test-resources/**"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "ruby/**"
+      - "test-resources/**"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ruby
+    strategy:
+      matrix:
+        ruby-version: ["3.2", "3.1", "3.0", "2.7"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+      - name: Build and install gem
+        run: gem build truelayer-signing.gemspec && gem install ./truelayer-signing-0.2.1.gem
+      - name: Run tests
+        run: rake test

@@ -1,5 +1,6 @@
 import { sign, verify, extractJku, extractKid, SignatureError, HttpMethod } from '../lib';
 import { readFileSync } from 'fs';
+import jwa from 'jwa';
 
 // Use the same values as rust tests for cross-lang consistency assurance
 const PUBLIC_KEY = readFileSync("../test-resources/ec512-public.pem", "utf8");
@@ -8,8 +9,13 @@ const TL_SIGNATURE = readFileSync("../test-resources/tl-signature.txt", "utf8").
 const WEBHOOK_SIGNATURE = readFileSync("../test-resources/webhook-signature.txt", "utf8").trim();
 const JWKS_JSON = readFileSync("../test-resources/jwks.json", "utf8");
 const KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
+const SIGNING_FUNCTION = (message: string): Promise<string> => {
+  const algo = jwa('ES512');
+  const signature = algo.sign(message, PRIVATE_KEY);
+  return Promise.resolve(signature);
+};
 
-describe('sign', () => {
+describe('sign with pem', () => {
   it("should sign a full request which can be successfully verified (verify won't throw)", () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
@@ -82,6 +88,88 @@ describe('sign', () => {
     const fn = () => sign({
       kid: KID,
       privateKeyPem: PRIVATE_KEY,
+      method: HttpMethod.Post,
+      path: 'https://example.com/the-path', // invalid path
+      body: '{}',
+    });
+
+    expect(fn).toThrow(new Error("Invalid path \"https://example.com/the-path\" must start with '/'"));
+  });
+});
+
+describe('sign with function', () => {
+  it("should sign a full request which can be successfully verified (verify won't throw)", async () => {
+    const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
+    const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    const signature = await sign({
+      kid: KID,
+      signingFunction: SIGNING_FUNCTION,
+      method: HttpMethod.Post,
+      path,
+      headers: { "Idempotency-Key": idempotencyKey },
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: HttpMethod.Post,
+      path,
+      body,
+      requiredHeaders: ["Idempotency-Key"],
+      headers: {
+        "X-Whatever-2": "yarshtarst",
+        "Idempotency-Key": idempotencyKey,
+      }
+    });
+  });
+
+  it('should not throw when signed path has an additional trailing slash', async () => {
+    const body = '{"foo":"bar"}';
+
+    const signature = await sign({
+      kid: KID,
+      signingFunction: SIGNING_FUNCTION,
+      method: HttpMethod.Post,
+      path: "/tl-webhook/",
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: HttpMethod.Post,
+      path: "/tl-webhook", // missing trailing slash
+      body,
+    });
+  });
+
+  it('should not throw when verified path has an additional trailing slash', async () => {
+    const body = '{"foo":"bar"}';
+
+    const signature = await sign({
+      kid: KID,
+      signingFunction: SIGNING_FUNCTION,
+      method: HttpMethod.Post,
+      path: "/tl-webhook",
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: HttpMethod.Post,
+      path: "/tl-webhook/", // additional trailing slash
+      body,
+    });
+  });
+
+  it('should throw when using an invalid path', () => {
+    const fn = () => sign({
+      kid: KID,
+      signingFunction: SIGNING_FUNCTION,
       method: HttpMethod.Post,
       path: 'https://example.com/the-path', // invalid path
       body: '{}',
@@ -434,9 +522,24 @@ describe('extractKid', () => {
   });
 });
 
+describe('extractKidInvalidSignature', () => {
+  it('should throw using an invalid signature', () => {
+    const fn = () => extractKid("an-invalid..signature")
+    expect(fn).toThrow(new SignatureError("Failed to parse JWS: Unexpected token 'j', \"j�����\" is not valid JSON"));
+  });
+});
+
 describe('extractJku', () => {
   it('should produce a jku from a valid tl signature', () => {
     const jku = extractJku(WEBHOOK_SIGNATURE);
     expect(jku).toEqual('https://webhooks.truelayer.com/.well-known/jwks');
+  });
+});
+
+
+describe('extractJkuInvalidSignature', () => {
+  it('should throw using an invalid signature', () => {
+    const fn = () => extractJku("an-invalid..signature")
+    expect(fn).toThrow(new SignatureError("Failed to parse JWS: Unexpected token 'j', \"j�����\" is not valid JSON"));
   });
 });
