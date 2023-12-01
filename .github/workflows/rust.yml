@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: rustup update stable
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: cd rust && cargo test
 
   rustfmt:
     runs-on: ubuntu-latest
     steps:
     - run: rustup update stable
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: cargo fmt --manifest-path=rust/Cargo.toml -- --check
     - run: cargo fmt --manifest-path=rust/examples/webhook-server/Cargo.toml -- --check
 
@@ -32,5 +32,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: rustup update stable
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: cargo check --manifest-path=rust/examples/webhook-server/Cargo.toml
