@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.26.1",
+    "axios": "^1.6.0",
     "truelayer-signing": "file:../.."
   }
 }
