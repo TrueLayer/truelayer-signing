@@ -4,11 +4,13 @@ on:
   push:
     branches: [ main ]
     paths:
+      - '.github/workflows/csharp.yml'
       - 'csharp/**'
       - 'test-resources/**'
   pull_request:
     branches: [ main ]
     paths:
+      - '.github/workflows/csharp.yml'
       - 'csharp/**'
       - 'test-resources/**'
 

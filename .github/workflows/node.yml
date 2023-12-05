@@ -6,13 +6,15 @@ on:
     tags:
       - "nodejs/v**"
     paths:
-    - 'nodejs/**'
-    - 'test-resources/**'
+      - '.github/workflows/node.yml'
+      - 'nodejs/**'
+      - 'test-resources/**'
   pull_request:
     branches: [ main ]
     paths:
-    - 'nodejs/**'
-    - 'test-resources/**'
+      - '.github/workflows/node.yml'
+      - 'nodejs/**'
+      - 'test-resources/**'
 
 jobs:
   test:
