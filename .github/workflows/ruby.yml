@@ -34,7 +34,7 @@ jobs:
       - name: Lint code
         run: rubocop
       - name: Build and install gem
-        run: gem build truelayer-signing.gemspec && gem install ./truelayer-signing-0.2.1.gem
+        run: gem build truelayer-signing.gemspec && gem install "./truelayer-signing-*.*.*.gem"
       - name: Run tests
         run: rake test
   publish:
