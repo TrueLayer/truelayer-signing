@@ -13,7 +13,7 @@ on:
       - "ruby/**"
       - "test-resources/**"
 jobs:
-  test_and_lint:
+  lint_and_test:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,9 +29,9 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
       - name: Install dependencies
         run: bundle
+      - name: Lint code
+        run: rubocop
       - name: Build and install gem
         run: gem build truelayer-signing.gemspec && gem install ./truelayer-signing-0.2.1.gem
       - name: Run tests
         run: rake test
-      - name: Lint code
-        run: rubocop
