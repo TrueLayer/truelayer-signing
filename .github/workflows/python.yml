@@ -6,6 +6,8 @@ name: Python package
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'python/v**'
     paths:
       - '.github/workflows/python.yml'
       - 'python/**/*.py'
@@ -17,12 +19,13 @@ on:
       - 'python/**/*.py'
       - 'python/pyproject.toml'
 
+defaults:
+  run:
+    working-directory: ./python
+
 jobs:
-  build:
+  lint_and_test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./python
     strategy:
       fail-fast: false
       matrix:
@@ -52,10 +55,9 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
-    defaults:
-      run:
-        working-directory: ./python
+    # Runs only on tag pushes for Python (combined with line 10) and if lint_and_test succeeded
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: lint_and_test
     env:
       python-version: "3.10"
     strategy:
