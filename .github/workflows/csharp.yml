@@ -3,6 +3,8 @@ name: C#
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'csharp/v**'
     paths:
       - '.github/workflows/csharp.yml'
       - 'csharp/**'
@@ -42,7 +44,9 @@ jobs:
   
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
+    # Runs only on tag pushes for C# (combined with line 7) and if test job succeeded
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: test
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
