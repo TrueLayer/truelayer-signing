@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require "http"
 require "truelayer-signing"
 require "webrick"
 
 class TrueLayerSigningExamples
-  # Note: the webhook path can be whatever is configured for your application.
+  # NOTE: the webhook path can be whatever is configured for your application.
   # Here a unique path is used, matching the example signature in the README.
-  WEBHOOK_PATH = "/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b".freeze
+  WEBHOOK_PATH = "/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b"
 
   class << self
     def run_webhook_server
@@ -13,14 +15,13 @@ class TrueLayerSigningExamples
 
       puts "Server running at http://localhost:4567"
 
-      server.mount_proc('/') do |req, res|
-        request = parse_request(req)
-        status, body = handle_request.call(request)
+      server.mount_proc("/") do |req, res|
+        status, body = handle_request.call(parse_request(req))
         headers = { "Content-Type" => "text/plain" }
 
         send_response(res, status, headers, body)
-      rescue => error
-        puts error
+      rescue StandardError => e
+        puts e
       end
 
       server.start
@@ -28,7 +29,9 @@ class TrueLayerSigningExamples
       server.shutdown
     end
 
-    private def parse_request(request)
+    private
+
+    def parse_request(request)
       {
         method: request.request_method,
         path: request.path,
@@ -37,17 +40,17 @@ class TrueLayerSigningExamples
       }
     end
 
-    private def handle_request
-      Proc.new do |request|
+    def handle_request
+      proc do |request|
         if request[:method] == "POST" && request[:path] == WEBHOOK_PATH
           verify_webhook(request[:path], request[:headers], request[:body])
         else
-          ["403", "Forbidden"]
+          %w(403 Forbidden)
         end
       end
     end
 
-    private def verify_webhook(path, headers, body)
+    def verify_webhook(path, headers, body)
       tl_signature = headers["tl-signature"]
 
       return ["400", "Bad Request – Header `Tl-Signature` missing"] unless tl_signature
@@ -55,35 +58,42 @@ class TrueLayerSigningExamples
       jku = TrueLayerSigning.extract_jws_header(tl_signature).jku
 
       return ["400", "Bad Request – Signature missing `jku`"] unless jku
-      return ["401", "Unauthorized – Unpermitted `jku`"] \
-        unless jku == "https://webhooks.truelayer.com/.well-known/jwks" ||
-          jku == "https://webhooks.truelayer-sandbox.com/.well-known/jwks"
+      return ["401", "Unauthorized – Unpermitted `jku`"] unless valid_jku?(jku)
 
       jwks = HTTP.get(jku)
 
       return ["401", "Unauthorized – Unavailable `jwks` resource"] unless jwks.status.success?
 
-      begin
-        TrueLayerSigning.verify_with_jwks(jwks.to_s)
-          .set_method(:post)
-          .set_path(path)
-          .set_headers(headers)
-          .set_body(body)
-          .verify(tl_signature)
-
-        ["202", "Accepted"]
-      rescue TrueLayerSigning::Error => error
-        puts error
-
-        ["401", "Unauthorized"]
-      end
+      attempt_signature_verification!(jwks, path, headers, body, tl_signature)
     end
 
-    private def headers_to_hash(headers)
+    def attempt_signature_verification!(jwks, path, headers, body, tl_signature)
+      TrueLayerSigning.verify_with_jwks(jwks.to_s)
+        .set_method(:post)
+        .set_path(path)
+        .set_headers(headers)
+        .set_body(body)
+        .verify(tl_signature)
+
+      %w(202 Accepted)
+    rescue TrueLayerSigning::Error => e
+      puts e
+
+      %w(401 Unauthorized)
+    end
+
+    def valid_jku?(jku)
+      [
+        "https://webhooks.truelayer.com/.well-known/jwks",
+        "https://webhooks.truelayer-sandbox.com/.well-known/jwks"
+      ].include?(jku)
+    end
+
+    def headers_to_hash(headers)
       headers.transform_keys { |key| key.to_s.strip.downcase }.transform_values(&:first)
     end
 
-    private def send_response(response, status, headers, body)
+    def send_response(response, status, headers, body)
       response.status = status
       response.header.merge!(headers)
       response.body = body

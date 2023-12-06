@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "minitest/autorun"
 require "truelayer-signing"
 
@@ -5,12 +7,12 @@ def read_file(path)
   File.read(File.expand_path(path, File.dirname(__FILE__)))
 end
 
-CERTIFICATE_ID = "45fc75cf-5649-4134-84b3-192c2c78e990".freeze
-PRIVATE_KEY = read_file("../../test-resources/ec512-private.pem").freeze
-PUBLIC_KEY = read_file("../../test-resources/ec512-public.pem").freeze
+CERTIFICATE_ID = "45fc75cf-5649-4134-84b3-192c2c78e990"
+PRIVATE_KEY = read_file("../../test-resources/ec512-private.pem")
+PUBLIC_KEY = read_file("../../test-resources/ec512-public.pem")
 
-TrueLayerSigning.certificate_id = CERTIFICATE_ID.freeze
-TrueLayerSigning.private_key = PRIVATE_KEY.freeze
+TrueLayerSigning.certificate_id = CERTIFICATE_ID
+TrueLayerSigning.private_key = PRIVATE_KEY
 
 class TrueLayerSigningTest < Minitest::Test
   def test_full_request_signature_should_succeed
@@ -35,7 +37,7 @@ class TrueLayerSigningTest < Minitest::Test
       .verify(tl_signature)
 
     refute(result.first.include?("\nX-Whatever: aoitbeh\n"))
-    assert(result.first.include?("\nIdempotency-Key: " + idempotency_key + "\n"))
+    assert(result.first.include?("\nIdempotency-Key: #{idempotency_key}\n"))
     assert(result.first
       .start_with?("POST /merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping\n"))
   end
@@ -82,11 +84,11 @@ class TrueLayerSigningTest < Minitest::Test
   def test_mismatched_signature_with_attached_valid_body_should_fail
     # Signature for `/bar` but with a valid jws-body pre-attached.
     # If we run a simple jws verify on this unchanged, it'll work!
-    tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND" +
-      "ktndeZnC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV" +
-      "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD" +
-      "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC" +
-      "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB" +
+    tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND" \
+      "ktndeZnC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV" \
+      "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD" \
+      "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC" \
+      "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB" \
       "d2d3D17Wd9UA"
 
     verifier = TrueLayerSigning.verify_with_pem(PUBLIC_KEY)
@@ -101,11 +103,11 @@ class TrueLayerSigningTest < Minitest::Test
   def test_mismatched_signature_with_attached_valid_body_and_trailing_dots_should_fail
     # Signature for `/bar` but with a valid jws-body pre-attached.
     # If we run a simple jws verify on this unchanged, it'll work!
-    tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND" +
-      "ktndeZnC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV" +
-      "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD" +
-      "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC" +
-      "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB" +
+    tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2ND" \
+      "ktndeZnC04NGIzLTE5MmMyYzc4ZTk5MCIsInRsX3ZlcnNpb24iOiIyIiwidGxfaGV" \
+      "hZGVycyI6IiJ9.UE9TVCAvYmFyCnt9.ARLa7Q5b8k5CIhfy1qrS-IkNqCDeE-VFRD" \
+      "z7Lb0fXUMOi_Ktck-R7BHDMXFDzbI5TyaxIo5TGHZV_cs0fg96dlSxAERp3UaN2oC" \
+      "QHIE5gQ4m5uU3ee69XfwwU_RpEIMFypycxwq1HOf4LzTLXqP_CDT8DdyX8oTwYdUB" \
       "d2d3D17Wd9UA...."
 
     verifier = TrueLayerSigning.verify_with_pem(PUBLIC_KEY)
@@ -132,7 +134,7 @@ class TrueLayerSigningTest < Minitest::Test
       .verify(tl_signature)
 
     refute(result.first.include?("\nX-Whatever-2: t2345d\n"))
-    assert(result.first.include?("\nIdempotency-Key: " + idempotency_key + "\n"))
+    assert(result.first.include?("\nIdempotency-Key: #{idempotency_key}\n"))
     assert(result.first
       .start_with?("POST /merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping\n"))
   end
@@ -482,34 +484,34 @@ class TrueLayerSigningTest < Minitest::Test
     idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382"
     path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping"
 
-    tl_signature_1 = TrueLayerSigning.sign_with_pem
+    tl_signature_a = TrueLayerSigning.sign_with_pem
       .set_path(path)
       .add_header("Idempotency-Key", idempotency_key)
       .set_body(body)
       .sign
 
-    jws_header_1 = TrueLayerSigning.extract_jws_header(tl_signature_1)
+    jws_header_a = TrueLayerSigning.extract_jws_header(tl_signature_a)
 
-    assert_nil(jws_header_1.jku)
+    assert_nil(jws_header_a.jku)
 
-    tl_signature_2 = TrueLayerSigning.sign_with_pem
+    tl_signature_b = TrueLayerSigning.sign_with_pem
       .set_path(path)
       .add_header("Idempotency-Key", idempotency_key)
       .set_body(body)
       .set_jku("https://webhooks.truelayer.com/.well-known/jwks")
       .sign
 
-    jws_header_2 = TrueLayerSigning.extract_jws_header(tl_signature_2)
+    jws_header_b = TrueLayerSigning.extract_jws_header(tl_signature_b)
 
-    assert_equal("https://webhooks.truelayer.com/.well-known/jwks", jws_header_2.jku)
+    assert_equal("https://webhooks.truelayer.com/.well-known/jwks", jws_header_b.jku)
   end
 
   # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
   def test_jwt_encode_and_decode_should_succeed
     payload_object = { currency: "GBP", max_amount_in_minor: 50_000_00 }
-    token_when_object = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW" +
+    token_when_object = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW" \
       "91bnRfaW5fbWlub3IiOjUwMDAwMDB9.SjbwZCqTl6G7LQNs_M6oQhwl3a9rbqO7p3cVncLtgZY"
-    token_when_json = "eyJhbGciOiJIUzI1NiJ9.IntcImN1cnJlbmN5XCI6XCJHQlBcIixcIm1h" +
+    token_when_json = "eyJhbGciOiJIUzI1NiJ9.IntcImN1cnJlbmN5XCI6XCJHQlBcIixcIm1h" \
       "eF9hbW91bnRfaW5fbWlub3JcIjo1MDAwMDAwfSI.rvCcgu-JevsNxbjUwJiFOuTd0hzVKvPK5RvGmaoDc7E"
 
     # succeeds with a hash object
@@ -530,7 +532,7 @@ class TrueLayerSigningTest < Minitest::Test
   # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
   def test_jwt_truelayer_encode_and_decode_when_given_json_should_succeed
     payload_json = { currency: "GBP", max_amount_in_minor: 50_000_00 }.to_json
-    token_when_json = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW9" +
+    token_when_json = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW9" \
       "1bnRfaW5fbWlub3IiOjUwMDAwMDB9.SjbwZCqTl6G7LQNs_M6oQhwl3a9rbqO7p3cVncLtgZY"
 
     assert_equal(token_when_json, JWT.truelayer_encode(payload_json, "12345", "HS256", {}))
@@ -549,7 +551,7 @@ class TrueLayerSigningTest < Minitest::Test
 
   # TODO: remove if/when we get rid of `lib/truelayer-signing/jwt.rb`
   def test_jwt_truelayer_decode_when_given_a_hash_should_succeed
-    token_when_object = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW" +
+    token_when_object = "eyJhbGciOiJIUzI1NiJ9.eyJjdXJyZW5jeSI6IkdCUCIsIm1heF9hbW" \
       "91bnRfaW5fbWlub3IiOjUwMDAwMDB9.SjbwZCqTl6G7LQNs_M6oQhwl3a9rbqO7p3cVncLtgZY"
 
     assert_equal(
