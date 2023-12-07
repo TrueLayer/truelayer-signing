@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ...
 
-## [0.2.2] – 2023-12-06
+## [0.2.2] – 2023-12-07
 
 - Add code linter
 
