@@ -2,6 +2,8 @@ AllCops:
   NewCops: enable
   # TODO: bump lowest supported version when dropping support
   TargetRubyVersion: 2.7
+Gemspec/RequireMFA:
+  Enabled: false
 Layout/LineEndStringConcatenationIndentation:
   EnforcedStyle: indented
 Layout/MultilineMethodCallIndentation:
