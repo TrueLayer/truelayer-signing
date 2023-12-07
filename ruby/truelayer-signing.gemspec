@@ -16,8 +16,7 @@ Gem::Specification.new do |s|
 
   s.metadata = {
     "bug_tracker_uri" => "https://github.com/TrueLayer/truelayer-signing/issues",
-    "changelog_uri" => "https://github.com/TrueLayer/truelayer-signing/blob/main/ruby/CHANGELOG.md",
-    "rubygems_mfa_required" => "true"
+    "changelog_uri" => "https://github.com/TrueLayer/truelayer-signing/blob/main/ruby/CHANGELOG.md"
   }
 
   s.files = Dir[
