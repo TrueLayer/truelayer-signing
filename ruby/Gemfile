@@ -2,5 +2,4 @@
 
 source "https://rubygems.org"
 
-gem "http"
-gem "truelayer-signing"
+gem "rubocop", "~> 1.57", require: false
