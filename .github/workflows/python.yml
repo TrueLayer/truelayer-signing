@@ -53,6 +53,8 @@ jobs:
 
   check_version:
     runs-on: ubuntu-latest
+    # Runs only on the main branch
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: lint_and_test
     outputs:
       version: ${{ steps.get_version.outputs.VERSION }}
@@ -71,8 +73,8 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    # if: ${{ github.ref == 'refs/heads/main' && needs.check_version.outputs.is_published == false }}
-    if: ${{ needs.check_version.outputs.is_published == false }}
+    # Runs only on the main branch and if the current version isn't already published
+    if: ${{ github.ref == 'refs/heads/main' && needs.check_version.outputs.is_published == false }}
     needs: [lint_and_test, check_version]
     env:
       python-version: "3.10"
