@@ -6,8 +6,6 @@ name: Python package
 on:
   push:
     branches: [ main ]
-    tags:
-      - 'python/v**'
     paths:
       - '.github/workflows/python.yml'
       - 'python/**/*.py'
@@ -53,11 +51,29 @@ jobs:
         run: |
           poetry run pytest --cov=truelayer_signing -v tests/
 
+  check_version:
+    runs-on: ubuntu-latest
+    needs: lint_and_test
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
+      is_published: ${{ steps.check_published.outputs.IS_PUBLISHED }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current version
+        id: get_version
+        run: echo VERSION="$(grep -m1 'version = "' pyproject.toml | cut -d '"' -f2)" >> $GITHUB_OUTPUT
+      - name: Check if it's already published
+        id: check_published
+        run: |
+          PACKAGE_URL=https://pypi.org/pypi/truelayer-signing/${{ steps.get_version.outputs.VERSION }}/json
+          STATUS_CODE=$(curl --write-out %{http_code} --silent --output /dev/null $PACKAGE_URL)
+          echo IS_PUBLISHED=$(([ $STATUS_CODE -eq 200 ] && echo true ) || echo false) >> $GITHUB_OUTPUT
+
   publish:
     runs-on: ubuntu-latest
-    # Runs only on tag pushes for Python (combined with line 10) and if lint_and_test succeeded
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    needs: lint_and_test
+    # if: ${{ github.ref == 'refs/heads/main' && needs.check_version.outputs.is_published == false }}
+    if: ${{ needs.check_version.outputs.is_published == false }}
+    needs: [lint_and_test, check_version]
     env:
       python-version: "3.10"
     strategy:
