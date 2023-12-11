@@ -2,20 +2,24 @@ name: Ruby
 on:
   push:
     branches: [ main ]
+    tags:
+      - "ruby/v**"
     paths:
+      - ".github/workflows/ruby.yml"
       - "ruby/**"
       - "test-resources/**"
   pull_request:
     branches: [ main ]
     paths:
+      - ".github/workflows/ruby.yml"
       - "ruby/**"
       - "test-resources/**"
+defaults:
+  run:
+    working-directory: ./ruby
 jobs:
-  test:
+  lint_and_test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./ruby
     strategy:
       matrix:
         ruby-version: ["3.2", "3.1", "3.0", "2.7"]
@@ -25,7 +29,36 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
+      - name: Install dependencies
+        run: bundle
+      - name: Lint code
+        run: rubocop
       - name: Build and install gem
-        run: gem build truelayer-signing.gemspec && gem install ./truelayer-signing-0.2.1.gem
+        run: gem build truelayer-signing.gemspec && gem install "./truelayer-signing-*.*.*.gem"
       - name: Run tests
         run: rake test
+  publish:
+    runs-on: ubuntu-latest
+    # Runs only on tag pushes for Ruby (combined with line 6) and if lint_and_test succeeded
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: lint_and_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby 3.2
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+      - name: Build gem
+        run: gem build truelayer-signing.gemspec
+      - name: Get gem version
+        uses: actions-ecosystem/action-regex-match@v2
+        id: regex-match
+        with:
+          text: ${{ github.ref_name }}
+          regex: 'ruby\/v(.*)'
+      - name: Set gem version
+        run: echo VERSION=${{ steps.regex-match.outputs.group1 }} >> $GITHUB_ENV
+      - name: Set API key
+        run: echo GEM_HOST_API_KEY=${{ secrets.GEM_HOST_API_KEY }} >> $GITHUB_ENV
+      - name: Publish to RubyGems.org
+        run: gem push truelayer-signing-$VERSION.gem

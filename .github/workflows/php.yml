@@ -6,11 +6,13 @@ on:
     tags:
       - "php/v**"
     paths:
+      - '.github/workflows/php.yml'
       - 'php/**'
       - 'test-resources/**'
   pull_request:
     branches: [ main ]
     paths:
+      - '.github/workflows/php.yml'
       - 'php/**'
       - 'test-resources/**'
 
@@ -41,7 +43,7 @@ jobs:
         env:
           update: true
       - name: "Cache dependencies"
-        uses: "actions/cache@v3.0.11"
+        uses: "actions/cache@v3.3.2"
         with:
           path: |
             ~/.composer/cache

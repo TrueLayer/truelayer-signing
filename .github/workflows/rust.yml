@@ -4,13 +4,15 @@ on:
   push:
     branches: [ main ]
     paths:
-    - 'rust/**'
-    - 'test-resources/**'
+      - '.github/workflows/rust.yml'
+      - 'rust/**'
+      - 'test-resources/**'
   pull_request:
     branches: [ main ]
     paths:
-    - 'rust/**'
-    - 'test-resources/**'
+      - '.github/workflows/rust.yml'
+      - 'rust/**'
+      - 'test-resources/**'
 
 jobs:
   test:

@@ -7,20 +7,23 @@ on:
   push:
     branches: [ main ]
     paths:
+      - '.github/workflows/python.yml'
       - 'python/**/*.py'
       - 'python/pyproject.toml'
   pull_request:
     branches: [ main ]
     paths:
+      - '.github/workflows/python.yml'
       - 'python/**/*.py'
       - 'python/pyproject.toml'
 
+defaults:
+  run:
+    working-directory: ./python
+
 jobs:
-  build:
+  lint_and_test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./python
     strategy:
       fail-fast: false
       matrix:
@@ -28,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -48,12 +51,31 @@ jobs:
         run: |
           poetry run pytest --cov=truelayer_signing -v tests/
 
+  check_version:
+    runs-on: ubuntu-latest
+    # Runs only on the main branch
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: lint_and_test
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
+      is_published: ${{ steps.check_published.outputs.IS_PUBLISHED }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current version
+        id: get_version
+        run: echo VERSION="$(grep -m1 'version = "' pyproject.toml | cut -d '"' -f2)" >> $GITHUB_OUTPUT
+      - name: Check if it's already published
+        id: check_published
+        run: |
+          PACKAGE_URL=https://pypi.org/pypi/truelayer-signing/${{ steps.get_version.outputs.VERSION }}/json
+          STATUS_CODE=$(curl --write-out %{http_code} --silent --output /dev/null $PACKAGE_URL)
+          echo IS_PUBLISHED=$(([ $STATUS_CODE -eq 200 ] && echo true ) || echo false) >> $GITHUB_OUTPUT
+
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Runs only on commits on main branch
-    defaults:
-      run:
-        working-directory: ./python
+    # Runs only on the main branch and if the current version isn't already published
+    if: ${{ github.ref == 'refs/heads/main' && needs.check_version.outputs.is_published == false }}
+    needs: [lint_and_test, check_version]
     env:
       python-version: "3.10"
     strategy:
@@ -61,7 +83,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ env.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.python-version }}
       - name: Install dependencies
