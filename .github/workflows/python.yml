@@ -54,28 +54,28 @@ jobs:
   check_version:
     runs-on: ubuntu-latest
     # Runs only on the main branch
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: github.ref == 'refs/heads/main'
     needs: lint_and_test
     outputs:
-      version: ${{ steps.get_version.outputs.VERSION }}
-      is_published: ${{ steps.check_published.outputs.IS_PUBLISHED }}
+      version: ${{ steps.get_version.outputs.version }}
+      is_published: ${{ steps.check_published.outputs.is_published }}
     steps:
       - uses: actions/checkout@v4
       - name: Get current version
         id: get_version
-        run: echo VERSION="$(grep -m1 'version = "' pyproject.toml | cut -d '"' -f2)" >> $GITHUB_OUTPUT
+        run: echo version=$(grep -m1 'version = "' pyproject.toml | cut -d '"' -f2) >> $GITHUB_OUTPUT
       - name: Check if it's already published
         id: check_published
         run: |
-          PACKAGE_URL=https://pypi.org/pypi/truelayer-signing/${{ steps.get_version.outputs.VERSION }}/json
-          STATUS_CODE=$(curl --write-out %{http_code} --silent --output /dev/null $PACKAGE_URL)
-          echo IS_PUBLISHED=$(([ $STATUS_CODE -eq 200 ] && echo true ) || echo false) >> $GITHUB_OUTPUT
+          package_url=https://pypi.org/pypi/truelayer-signing/${{ steps.get_version.outputs.version }}/json
+          status_code=$(curl --write-out %{http_code} --silent --output /dev/null $package_url)
+          echo is_published=$(([ $status_code -eq 200 ] && echo true ) || echo false) >> $GITHUB_OUTPUT
 
   publish:
     runs-on: ubuntu-latest
-    # Runs only on the main branch and if the current version isn't already published
-    if: ${{ github.ref == 'refs/heads/main' && needs.check_version.outputs.is_published == false }}
     needs: [lint_and_test, check_version]
+    # Runs only on the main branch and if the current version isn't already published
+    if: github.ref == 'refs/heads/main' && needs.check_version.outputs.is_published == 'false'
     env:
       python-version: "3.10"
     strategy:
