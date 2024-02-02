@@ -12,7 +12,7 @@ namespace TrueLayer.Signing
     /// <summary>
     /// Builder to generate a Tl-Signature header value using a private key.
     /// </summary>
-    public sealed class Signer : Signer<Signer>
+    public abstract class Signer : Signer<Signer>
     {
         /// <summary>
         /// Start building a request Tl-Signature header value using private key
@@ -35,40 +35,21 @@ namespace TrueLayer.Signing
         /// <summary>
         /// Start building a request Tl-Signature header value using private key and the key's kid.
         /// </summary>
-        public static Signer SignWith(string kid, ECDsa privateKey) => new(kid, privateKey);
+        public static Signer SignWith(string kid, ECDsa privateKey) => new PrivateKeySigner(kid, privateKey);
 
         /// <summary>
         /// Start building a request Tl-Signature header value using the key ID of the signing key (kid)
         /// and a function that accepts the payload and returns the signature. 
         /// </summary>
-        public static FunctionSigner SignWithFunction(string kid, Func<string, Task<string>> signAsync) => new(kid, signAsync);
+        public static AsyncSigner SignWithFunction(string kid, Func<string, Task<string>> signAsync) => new FunctionSigner(kid, signAsync);
 
-        private readonly ECDsa _key;
         
-        private Signer(string kid, ECDsa privateKey) : base(kid)
+        internal protected Signer(string kid) : base(kid)
         {
-            _key = privateKey;
         }
-        
+
         /// <summary>Produce a JWS `Tl-Signature` v2 header value.</summary>
-        public string Sign()
-        {
-            if (_key is null)
-            {
-                throw new InvalidOperationException("Signing key must be set");
-            }
-
-            var jwsHeaders = CreateJwsHeaders();
-            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
-            var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
-
-            return JWT.EncodeBytes(
-                signingPayload,
-                _key,
-                JwsAlgorithm.ES512,
-                jwsHeaders,
-                options: new JwtOptions {DetachPayload = true});
-        }
+        public abstract string Sign();
     }
 
     public abstract class Signer<TSigner> where TSigner : Signer<TSigner>
@@ -185,7 +166,46 @@ namespace TrueLayer.Signing
             };
     }
     
-    public sealed class FunctionSigner : Signer<FunctionSigner>
+    public abstract class AsyncSigner : Signer<AsyncSigner>
+    {
+        protected internal AsyncSigner(string kid) : base(kid)
+        {
+        }
+
+        /// <summary>Produce a JWS `Tl-Signature` v2 header value.</summary>
+        public abstract Task<string> SignAsync();
+    }
+
+    internal sealed class PrivateKeySigner : Signer
+    {
+        private readonly ECDsa _key;
+
+        internal PrivateKeySigner(string kid, ECDsa privateKey) : base(kid)
+        {
+            _key = privateKey;
+        }
+        
+        public override string Sign()
+        {
+            if (_key is null)
+            {
+                throw new InvalidOperationException("Signing key must be set");
+            }
+
+            var jwsHeaders = CreateJwsHeaders();
+            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
+            var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
+
+            return JWT.EncodeBytes(
+                signingPayload,
+                _key,
+                JwsAlgorithm.ES512,
+                jwsHeaders,
+                options: new JwtOptions {DetachPayload = true});
+        }
+    }
+    
+    internal sealed class FunctionSigner : AsyncSigner
     {
         private readonly Func<string, Task<string>> _signAsync;
         
@@ -194,8 +214,7 @@ namespace TrueLayer.Signing
             _signAsync = signAsync;
         }
         
-        /// <summary>Produce a JWS `Tl-Signature` v2 header value.</summary>
-        public async Task<string> SignAsync()
+        public override async Task<string> SignAsync()
         {
             if (_signAsync is null)
             {
