@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Jose;
 
 namespace TrueLayer.Signing
@@ -33,25 +35,38 @@ namespace TrueLayer.Signing
         /// <summary>
         /// Start building a request Tl-Signature header value using private key and the key's kid.
         /// </summary>
-        public static Signer SignWith(string kid, ECDsa privateKey) => new Signer(kid, privateKey);
+        public static Signer SignWith(string kid, ECDsa privateKey) => new(kid, privateKey);
 
-        private ECDsa key;
-        private string kid;
-        private string method = "POST";
-        private string path = "";
-        private Dictionary<string, byte[]> headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
-        private byte[] body = new byte[0];
+        /// <summary>
+        /// Start building a request Tl-Signature header value using the key ID of the signing key (kid)
+        /// and a function that accepts the payload and returns the signature. 
+        /// </summary>
+        public static Signer SignWithFunction(string kid, Func<string, Task<string>> signAsync) => new(kid, signAsync);
+        
+        private readonly string _kid;
+        private readonly ECDsa? _key;
+        private readonly Func<string, Task<string>>? _signAsync;
+        private string _method = "POST";
+        private string _path = "";
+        private readonly Dictionary<string, byte[]> _headers = new(new HeaderNameComparer());
+        private byte[] _body = Array.Empty<byte>();
 
-        private Signer(string _kid, ECDsa privateKey)
+        private Signer(string kid, ECDsa privateKey)
         {
-            key = privateKey;
-            kid = _kid;
+            _kid = kid;
+            _key = privateKey;
+        }
+        
+        private Signer(string kid, Func<string, Task<string>> signAsync)
+        {
+            _kid = kid;
+            _signAsync = signAsync;
         }
 
         /// <summary>Add the request method, defaults to `"POST"` if unspecified.</summary>
         public Signer Method(string method)
         {
-            this.method = method;
+            _method = method;
             return this;
         }
 
@@ -64,7 +79,7 @@ namespace TrueLayer.Signing
             {
                 throw new ArgumentException($"Invalid path \"{path}\" must start with '/'");
             }
-            this.path = path;
+            _path = path;
             return this;
         }
 
@@ -76,7 +91,7 @@ namespace TrueLayer.Signing
         /// </summary>
         public Signer Header(string name, byte[] value)
         {
-            this.headers.Add(name.Trim(), value);
+            _headers.Add(name.Trim(), value);
             return this;
         }
 
@@ -122,7 +137,7 @@ namespace TrueLayer.Signing
         /// </summary>
         public Signer Body(byte[] body)
         {
-            this.body = body;
+            _body = body;
             return this;
         }
 
@@ -137,22 +152,53 @@ namespace TrueLayer.Signing
         /// <summary>Produce a JWS `Tl-Signature` v2 header value.</summary>
         public string Sign()
         {
-            var headerList = headers.Select(e => (e.Key, e.Value)).ToList();
-            var jwsHeaders = new Dictionary<string, object>()
+            if (_key is null)
             {
-                {"alg", "ES512"},
-                {"kid", kid},
-                {"tl_version", "2"},
-                {"tl_headers", string.Join(",", headerList.Select(h => h.Key))},
-            };
-            var signingPayload = Util.BuildV2SigningPayload(method, path, headerList, body);
+                throw new InvalidOperationException("Signing key must be set");
+            }
+            
+            var jwsHeaders = CreateJwsHeaders();
+            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
+            var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
 
             return JWT.EncodeBytes(
                 signingPayload,
-                key,
+                _key,
                 JwsAlgorithm.ES512,
                 jwsHeaders,
                 options: new JwtOptions { DetachPayload = true });
         }
+        
+        /// <summary>Produce a JWS `Tl-Signature` v2 header value.</summary>
+        public async Task<string> SignAsync()
+        {
+            if (_signAsync is null)
+            {
+                throw new InvalidOperationException("Signing function must be set");
+            }
+            
+            var jwsHeaders = CreateJwsHeaders();
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
+            var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
+            
+            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
+            var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
+            var signingPayloadB64 = Base64Url.Encode(signingPayload);
+
+            var signingMessage = $"{serializedJwsHeadersB64}.{signingPayloadB64}";
+
+            var signature = await _signAsync(signingMessage);
+            
+            return $"{serializedJwsHeadersB64}..{signature}";
+        }
+        
+        private Dictionary<string, object> CreateJwsHeaders() =>
+            new()
+            {
+                {"alg", "ES512"},
+                {"kid", _kid},
+                {"tl_version", "2"},
+                {"tl_headers", string.Join(",", _headers.Select(h => h.Key))},
+            };
     }
 }
