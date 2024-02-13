@@ -206,14 +206,11 @@ impl<'a> Signer<'a> {
     ) -> Result<String, Error> {
         let jws_header_and_payload = self.build_jws_header_and_payload()?;
         let signature = sign_fn(jws_header_and_payload.as_bytes())?;
-        let mut jws: String = jws_header_and_payload
-            .split('.')
-            .next()
-            .unwrap()
-            .to_string();
-        jws.push_str("..");
-        jws.push_str(&signature);
-        Ok(jws)
+        Ok(format!(
+            "{}..{}",
+            jws_header_and_payload.split('.').next().unwrap(),
+            signature
+        ))
     }
 
     pub async fn async_sign_with<F, Fut>(&self, sign_fn: F) -> Result<String, Error>
@@ -223,15 +220,11 @@ impl<'a> Signer<'a> {
     {
         let jws_header_and_payload = self.build_jws_header_and_payload()?;
         let signature = sign_fn(jws_header_and_payload.as_bytes()).await?;
-        let mut jws: String = jws_header_and_payload
-            .split('.')
-            .next()
-            .unwrap()
-            .to_string();
-        jws.push_str("..");
-        jws.push_str(&signature);
-
-        Ok(jws)
+        Ok(format!(
+            "{}..{}",
+            jws_header_and_payload.split('.').next().unwrap(),
+            signature
+        ))
     }
 }
 
