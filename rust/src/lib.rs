@@ -100,4 +100,7 @@ pub enum Error {
     /// JWS signature generation or verification failed.
     #[error("jws signing/verification failed: {0}")]
     JwsError(anyhow::Error),
+    /// Other error.
+    #[error("Error: {0}")]
+    Other(anyhow::Error),
 }

@@ -1,6 +1,6 @@
 use crate::{base64::ToUrlSafeBase64, http::HeaderName, jws::JwsHeader, openssl, Error};
 use indexmap::IndexMap;
-use std::fmt;
+use std::{fmt, future::Future};
 
 /// Builder to generate a `Tl-Signature` header value using a private key.
 ///
@@ -173,11 +173,7 @@ impl<'a> Signer<'a> {
         Ok(jws)
     }
 
-    /// Produce a JWS `Tl-Signature` v2 header value.
-    pub fn sign(&self) -> Result<String, Error> {
-        let private_key =
-            openssl::parse_ec_private_key(self.private_key).map_err(Error::InvalidKey)?;
-
+    fn build_jws_header_and_payload(&self) -> Result<String, Error> {
         let jws_header = JwsHeader::new_v2(self.kid, &self.headers, self.jws_jku.map(|u| u.into()));
         let jws_header_b64 = serde_json::to_string(&jws_header)
             .map_err(|e| Error::JwsError(e.into()))?
@@ -186,16 +182,52 @@ impl<'a> Signer<'a> {
         let signing_payload =
             build_v2_signing_payload(self.method, self.path, &self.headers, self.body, false);
 
-        let jws_header_and_payload = format!(
+        Ok(format!(
             "{}.{}",
             jws_header_b64,
             signing_payload.to_url_safe_base64()
-        );
-        let signature = openssl::sign_es512(&private_key, jws_header_and_payload.as_bytes())
-            .map_err(Error::JwsError)?
-            .to_url_safe_base64();
+        ))
+    }
 
-        let mut jws = jws_header_b64;
+    /// Produce a JWS `Tl-Signature` v2 header value.
+    pub fn sign(&self) -> Result<String, Error> {
+        let private_key =
+            openssl::parse_ec_private_key(self.private_key).map_err(Error::InvalidKey)?;
+        self.sign_with(|bytes| {
+            openssl::sign_es512(&private_key, bytes)
+                .map(|sig| sig.to_url_safe_base64())
+                .map_err(Error::JwsError)
+        })
+    }
+
+    pub fn sign_with(
+        &self,
+        sign_fn: impl FnOnce(&[u8]) -> Result<String, Error>,
+    ) -> Result<String, Error> {
+        let jws_header_and_payload = self.build_jws_header_and_payload()?;
+        let signature = sign_fn(jws_header_and_payload.as_bytes())?;
+        let mut jws: String = jws_header_and_payload
+            .split('.')
+            .next()
+            .unwrap()
+            .to_string();
+        jws.push_str("..");
+        jws.push_str(&signature);
+        Ok(jws)
+    }
+
+    pub async fn async_sign_with<F, Fut>(&self, sign_fn: F) -> Result<String, Error>
+    where
+        F: FnOnce(&[u8]) -> Fut,
+        Fut: Future<Output = Result<String, Error>>,
+    {
+        let jws_header_and_payload = self.build_jws_header_and_payload()?;
+        let signature = sign_fn(jws_header_and_payload.as_bytes()).await?;
+        let mut jws: String = jws_header_and_payload
+            .split('.')
+            .next()
+            .unwrap()
+            .to_string();
         jws.push_str("..");
         jws.push_str(&signature);
 

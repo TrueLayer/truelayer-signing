@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use truelayer_signing::Error;
 
 const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem");
