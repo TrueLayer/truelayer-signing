@@ -21,7 +21,7 @@ mod sign;
 mod verify;
 
 pub use jws::JwsHeader;
-pub use sign::Signer;
+pub use sign::{CustomSigner, Signer, SignerBuilder};
 pub use verify::Verifier;
 
 /// Start building a request `Tl-Signature` header value using private key

@@ -1,6 +1,6 @@
 [package]
 name = "truelayer-signing"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Alex Butler <alex.butler@truelayer.com>"]
 edition = "2021"
 description = "Produce & verify TrueLayer API requests signatures"
@@ -16,4 +16,4 @@ thiserror = "1.0.30"
 anyhow = "1.0.44"
 serde_json = "1.0.68"
 serde = { version = "1.0.130", features = ["derive"] }
-indexmap = "1.7.0"
+indexmap = "2.2.3"
