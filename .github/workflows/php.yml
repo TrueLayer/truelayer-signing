@@ -43,7 +43,7 @@ jobs:
         env:
           update: true
       - name: "Cache dependencies"
-        uses: "actions/cache@v3.3.2"
+        uses: "actions/cache@v4.0.0"
         with:
           path: |
             ~/.composer/cache
