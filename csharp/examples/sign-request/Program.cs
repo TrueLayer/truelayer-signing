@@ -28,7 +28,6 @@ namespace TrueLayer.ExampleWebhookServer
                 // Optional: /test-signature does not require any headers, but we may sign some anyway.
                 // All signed headers *must* be included unmodified in the request.
                 .Header("Idempotency-Key", idempotencyKey)
-                .Header("X-Foo-Header", "abc123")
                 .Body(body) // body of our request
                 .Sign();
 
@@ -37,7 +36,6 @@ namespace TrueLayer.ExampleWebhookServer
             request.Content = new StringContent(body, Encoding.UTF8);
             request.Headers.Add("Idempotency-Key", idempotencyKey);
             request.Headers.Add("Authorization", $"Bearer {accessToken}");
-            request.Headers.Add("X-Foo-Header", "abc123");
             request.Headers.Add("Tl-Signature", tlSignature);
 
             Console.WriteLine($"Sending {request}\nbody: {body}\n");

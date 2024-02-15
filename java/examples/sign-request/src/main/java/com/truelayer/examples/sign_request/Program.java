@@ -34,7 +34,6 @@ public class Program {
                 // Optional: /test-signature does not require any headers, but we may sign some anyway.
                 // All signed headers *must* be included unmodified in the request.
                 .header("Idempotency-Key", idempotencyKey)
-                .header("X-Foo-Header", "abc123")
                 .body(body)
                 .sign();
 
@@ -45,7 +44,6 @@ public class Program {
                 .url("https://api.truelayer-sandbox.com/test-signature")
                 .header("Idempotency-Key", idempotencyKey)
                 .header("Authorization", "Bearer " + access_token)
-                .header("X-Foo-Header", "abc123")
                 .header("Tl-Signature", tlSignature)
                 .post(RequestBody.create(body.getBytes(StandardCharsets.UTF_8)))
                 .build();
