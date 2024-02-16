@@ -10,7 +10,7 @@ using Jose;
 namespace TrueLayer.Signing
 {
     /// <summary>
-    /// Builder to generate a Tl-Signature header value using a private key.
+    /// Builder to generate a Tl-Signature header value.
     /// </summary>
     public abstract class Signer : Signer<Signer>
     {
@@ -39,12 +39,11 @@ namespace TrueLayer.Signing
 
         /// <summary>
         /// Start building a request Tl-Signature header value using the key ID of the signing key (kid)
-        /// and a function that accepts the payload and returns the signature. 
+        /// and a function that accepts the payload to sign and returns the signature in IEEE P1363 format. 
         /// </summary>
         public static AsyncSigner SignWithFunction(string kid, Func<string, Task<string>> signAsync) => new FunctionSigner(kid, signAsync);
-
         
-        internal protected Signer(string kid) : base(kid)
+        protected internal Signer(string kid) : base(kid)
         {
         }
 
@@ -166,6 +165,9 @@ namespace TrueLayer.Signing
             };
     }
     
+    /// <summary>
+    /// Builder to generate a Tl-Signature header value.
+    /// </summary>
     public abstract class AsyncSigner : Signer<AsyncSigner>
     {
         protected internal AsyncSigner(string kid) : base(kid)
@@ -187,11 +189,6 @@ namespace TrueLayer.Signing
         
         public override string Sign()
         {
-            if (_key is null)
-            {
-                throw new InvalidOperationException("Signing key must be set");
-            }
-
             var jwsHeaders = CreateJwsHeaders();
             var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
@@ -216,11 +213,6 @@ namespace TrueLayer.Signing
         
         public override async Task<string> SignAsync()
         {
-            if (_signAsync is null)
-            {
-                throw new InvalidOperationException("Signing function must be set");
-            }
-
             var jwsHeaders = CreateJwsHeaders();
             var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
             var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
