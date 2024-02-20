@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using FluentAssertions;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 using static TrueLayer.Signing.Tests.TestData;
 
 namespace TrueLayer.Signing.Tests
@@ -398,6 +400,38 @@ namespace TrueLayer.Signing.Tests
 #endif
         }
 
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public async Task SignAndVerify_AsyncFunction(TestCase testCase)
+        {
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+            var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+            Func<string, Task<string>> signingFunction = payload =>
+            {
+                var privateKey = Util.ParsePem(testCase.PrivateKey);
+                var payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
+                var signatureBytes = privateKey.SignData(payloadBytes, HashAlgorithmName.SHA512);
+                return Task.FromResult(Convert.ToBase64String(signatureBytes));
+            };
+            
+            var tlSignature = await Signer.SignWithFunction(testCase.Kid, signingFunction)
+                .Method("POST")
+                .Path(path)
+                .Header("Idempotency-Key", idempotency_key)
+                .Body(body)
+                .SignAsync();
+
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("post") // case-insensitive: no troubles
+                .Path(path)
+                .Header("X-Whatever-2", "t2345d")
+                .Header("Idempotency-Key", idempotency_key)
+                .Body(body)
+                .Verify(tlSignature); // should not throw
+        }
+        
         public sealed class TestCase
         {
             public TestCase(string name, string kid, string privateKey, string publicKey)
