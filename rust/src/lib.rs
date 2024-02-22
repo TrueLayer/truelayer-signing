@@ -1,14 +1,13 @@
 //! Produce & verify TrueLayer API `Tl-Signature` request headers.
-//!
 mod base64;
-pub mod common;
+mod common;
 mod http;
 mod jws;
 mod openssl;
 mod sign;
 mod verify;
 
-pub use common::{Get, Post};
+pub use http::{Get, Post};
 pub use jws::JwsHeader;
 pub use sign::{CustomSigner, Signer, SignerBuilder};
 pub use verify::{CustomVerifier, Verifier, VerifierBuilder};

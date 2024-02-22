@@ -9,6 +9,23 @@ use crate::{base64::ToUrlSafeBase64, common::Unset, http::HeaderName, openssl, E
 pub use self::custom_signer::CustomSigner;
 use self::signer_v1::SignerV1;
 
+/// Builder to generate a `Tl-Signature` header value.
+///
+/// # Example
+/// ```no_run
+/// # fn main() -> Result<(), truelayer_signing::Error> {
+/// # let (kid, private_key, idempotency_key, body) = unimplemented!();
+/// let tl_signature = truelayer_signing::SignerBuilder::new()
+///     .private_key(private_key)
+///     .kid(kid)
+///     .method::<truelayer_signing::Post>()
+///     .path("/payouts")
+///     .header("Idempotency-Key", idempotency_key)
+///     .body(body)
+///     .build_signer()
+///     .sign()?;
+/// # Ok(()) }
+/// ```
 #[derive(Default)]
 pub struct SignerBuilder<'a, Kid, Pk, Body, Method, Path> {
     kid: Kid,
@@ -20,7 +37,7 @@ pub struct SignerBuilder<'a, Kid, Pk, Body, Method, Path> {
     jws_jku: Option<&'a str>,
 }
 
-impl<K, Pk, B, M, P> fmt::Debug for SignerBuilder<'_, K, Pk, B, M, P> {
+impl<K, Pk, Body, Method, Path> fmt::Debug for SignerBuilder<'_, K, Pk, Body, Method, Path> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "Signer")
     }
@@ -40,8 +57,9 @@ impl<'a> SignerBuilder<'a, Unset, Unset, Unset, Unset, Unset> {
     }
 }
 
-impl<'a, Pk, B, M, P> SignerBuilder<'a, Unset, Pk, B, M, P> {
-    pub fn kid(self, kid: &str) -> SignerBuilder<'a, &str, Pk, B, M, P> {
+impl<'a, Pk, Body, Method, Path> SignerBuilder<'a, Unset, Pk, Body, Method, Path> {
+    /// Add the private key kid.
+    pub fn kid(self, kid: &str) -> SignerBuilder<'a, &str, Pk, Body, Method, Path> {
         SignerBuilder {
             kid,
             private_key: self.private_key,
@@ -54,8 +72,12 @@ impl<'a, Pk, B, M, P> SignerBuilder<'a, Unset, Pk, B, M, P> {
     }
 }
 
-impl<'a, K, B, M, P> SignerBuilder<'a, K, Unset, B, M, P> {
-    pub fn private_key(self, private_key: &[u8]) -> SignerBuilder<'a, K, &[u8], B, M, P> {
+impl<'a, K, Body, Method, Path> SignerBuilder<'a, K, Unset, Body, Method, Path> {
+    /// Add the private key.
+    pub fn private_key(
+        self,
+        private_key: &[u8],
+    ) -> SignerBuilder<'a, K, &[u8], Body, Method, Path> {
         SignerBuilder {
             kid: self.kid,
             private_key,
@@ -68,11 +90,11 @@ impl<'a, K, B, M, P> SignerBuilder<'a, K, Unset, B, M, P> {
     }
 }
 
-impl<'a, K, Pk, M, P> SignerBuilder<'a, K, Pk, Unset, M, P> {
+impl<'a, K, Pk, Method, Path> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
     /// Add the full request body.
     ///
     /// Note: This **must** be identical to what is sent with the request.
-    pub fn body(self, body: &[u8]) -> SignerBuilder<'a, K, Pk, &[u8], M, P> {
+    pub fn body(self, body: &[u8]) -> SignerBuilder<'a, K, Pk, &[u8], Method, Path> {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
@@ -85,9 +107,9 @@ impl<'a, K, Pk, M, P> SignerBuilder<'a, K, Pk, Unset, M, P> {
     }
 }
 
-impl<'a, K, Pk, B, P> SignerBuilder<'a, K, Pk, B, Unset, P> {
-    /// Add the request method, defaults to `"POST"` if unspecified.
-    pub fn method<M>(self) -> SignerBuilder<'a, K, Pk, B, PhantomData<M>, P> {
+impl<'a, K, Pk, Body, Path> SignerBuilder<'a, K, Pk, Body, Unset, Path> {
+    /// Add the request method.
+    pub fn method<M>(self) -> SignerBuilder<'a, K, Pk, Body, PhantomData<M>, Path> {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
@@ -100,10 +122,10 @@ impl<'a, K, Pk, B, P> SignerBuilder<'a, K, Pk, B, Unset, P> {
     }
 }
 
-impl<'a, K, Pk, B, M> SignerBuilder<'a, K, Pk, B, M, Unset> {
+impl<'a, K, Pk, Body, Method> SignerBuilder<'a, K, Pk, Body, Method, Unset> {
     /// Add the request absolute path starting with a leading `/` and without
     /// any trailing slashes.
-    pub fn path(self, path: &str) -> SignerBuilder<'a, K, Pk, B, M, &str> {
+    pub fn path(self, path: &str) -> SignerBuilder<'a, K, Pk, Body, Method, &str> {
         assert!(
             path.starts_with('/'),
             "Invalid path \"{path}\" must start with '/'"
@@ -120,7 +142,7 @@ impl<'a, K, Pk, B, M> SignerBuilder<'a, K, Pk, B, M, Unset> {
     }
 }
 
-impl<'a, K, Pk, B, M, P> SignerBuilder<'a, K, Pk, B, M, P> {
+impl<'a, K, Pk, Body, Method, Path> SignerBuilder<'a, K, Pk, Body, Method, Path> {
     /// Add a header name & value.
     /// May be called multiple times to add multiple different headers.
     ///
@@ -149,7 +171,8 @@ impl<'a, K, Pk, B, M, P> SignerBuilder<'a, K, Pk, B, M, P> {
     }
 }
 
-impl<'a, Pk> SignerBuilder<'a, &'a str, Pk, Unset, PhantomData<Get>, &'a str> {
+impl<'a> SignerBuilder<'a, &'a str, Unset, Unset, PhantomData<Get>, &'a str> {
+    /// Builds a [`CustomSigner`]
     pub fn build_custom_signer(self) -> CustomSigner<'a> {
         CustomSigner {
             kid: self.kid,
@@ -162,7 +185,8 @@ impl<'a, Pk> SignerBuilder<'a, &'a str, Pk, Unset, PhantomData<Get>, &'a str> {
     }
 }
 
-impl<'a, Pk> SignerBuilder<'a, &'a str, Pk, &'a [u8], PhantomData<Post>, &'a str> {
+impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], PhantomData<Post>, &'a str> {
+    /// Builds a [`CustomSigner`]
     pub fn build_custom_signer(self) -> CustomSigner<'a> {
         CustomSigner {
             kid: self.kid,
@@ -176,6 +200,11 @@ impl<'a, Pk> SignerBuilder<'a, &'a str, Pk, &'a [u8], PhantomData<Post>, &'a str
 }
 
 impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
+    /// Build a V1 Signer see [`SignerV1`].
+    ///
+    /// Any specified method, path & headers will be ignored.
+    ///
+    /// In general full request signing should be preferred, see [`Signer`].
     pub fn build_v1_signer(self) -> SignerV1<'a> {
         SignerV1 {
             private_key: self.private_key,
@@ -187,6 +216,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
 }
 
 impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, PhantomData<Get>, &'a str> {
+    /// Build a V2 Signer see [`Signer`].
     pub fn build_signer(self) -> Signer<'a> {
         Signer {
             private_key: self.private_key,
@@ -203,6 +233,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, PhantomData<Get>, &'a str> 
 }
 
 impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], PhantomData<Post>, &'a str> {
+    /// Build a V2 Signer see [`Signer`].
     pub fn build_signer(self) -> Signer<'a> {
         Signer {
             private_key: self.private_key,
@@ -218,9 +249,23 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], PhantomData<Post>, &'a s
     }
 }
 
-/// Builder to generate a `Tl-Signature` header value using a private key.
+/// Signer to generate a `Tl-Signature` header value using a private key.
 ///
-/// See [`crate::sign_with_pem`] for examples.
+/// # Example
+/// ```no_run
+/// # fn main() -> Result<(), truelayer_signing::Error> {
+/// # let (kid, private_key, idempotency_key, body) = unimplemented!();
+/// let tl_signature = truelayer_signing::SignerBuilder::new()
+///     .private_key(private_key)
+///     .kid(kid)
+///     .method::<truelayer_signing::Post>()
+///     .path("/payouts")
+///     .header("Idempotency-Key", idempotency_key)
+///     .body(body)
+///     .build_signer()
+///     .sign()?;
+/// # Ok(()) }
+/// ```
 pub struct Signer<'a> {
     base: CustomSigner<'a>,
     private_key: &'a [u8],
@@ -262,7 +307,7 @@ pub(crate) fn build_v2_signing_payload(
     add_path_trailing_slash: bool,
 ) -> Vec<u8> {
     let mut payload = Vec::new();
-    payload.extend(method.to_ascii_uppercase().as_bytes());
+    payload.extend(method.as_bytes());
     payload.push(b' ');
     payload.extend(path.as_bytes());
     if add_path_trailing_slash {

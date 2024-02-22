@@ -1,5 +1,10 @@
 use crate::{base64::ToUrlSafeBase64, openssl, Error};
 
+/// Produce a JWS `Tl-Signature` v1 header value, signing just the request body.
+///
+/// Any specified method, path & headers will be ignored.
+///
+/// In general full request signing should be preferred, see [`Signer::sign`].
 pub struct SignerV1<'a> {
     pub(crate) private_key: &'a [u8],
     pub(crate) kid: &'a str,

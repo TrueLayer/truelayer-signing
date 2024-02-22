@@ -6,6 +6,22 @@ use crate::{base64::ToUrlSafeBase64, http::HeaderName, Error, JwsHeader};
 
 use super::build_v2_signing_payload;
 
+/// Builder to generate a `Tl-Signature` header value with a custom singer.
+///
+/// # Example
+/// ```no_run
+/// # fn main() -> Result<(), truelayer_signing::Error> {
+/// # let (kid, idempotency_key, body) = unimplemented!();
+/// let tl_signature = truelayer_signing::SignerBuilder::new()
+///     .kid(kid)
+///     .method::<truelayer_signing::Post>()
+///     .path("/payouts")
+///     .header("Idempotency-Key", idempotency_key)
+///     .body(body)
+///     .build_custom_signer()
+///     .sign_with(|bytes| todo!())?;
+/// # Ok(()) }
+/// ```
 pub struct CustomSigner<'a> {
     pub(crate) kid: &'a str,
     pub(crate) body: &'a [u8],
@@ -28,7 +44,7 @@ impl<'a> CustomSigner<'a> {
         Ok((jws_header_b64, signing_payload.to_url_safe_base64()))
     }
 
-    /// Produce a JWS `Tl-Signature` v2 header value.
+    /// Produce a JWS `Tl-Signature` v2 header value with a custom singer.
     pub fn sign_with(
         self,
         sign_fn: impl FnOnce(&[u8]) -> Result<String, Error>,
@@ -39,7 +55,7 @@ impl<'a> CustomSigner<'a> {
         Ok(format!("{}..{}", jws_header, signature))
     }
 
-    /// Produce a JWS `Tl-Signature` v2 header value.
+    /// Produce a JWS `Tl-Signature` v2 header value with a custom singer.
     pub async fn async_sign_with<F, Fut>(self, sign_fn: F) -> Result<String, Error>
     where
         F: FnOnce(&[u8]) -> Fut,

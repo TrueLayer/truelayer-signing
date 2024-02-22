@@ -3,6 +3,24 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+/// A valid HTTP method
+pub struct Get;
+
+/// A valid HTTP method
+pub struct Post;
+
+impl Get {
+    pub const fn name() -> &'static str {
+        "GET"
+    }
+}
+
+impl Post {
+    pub const fn name() -> &'static str {
+        "POST"
+    }
+}
+
 /// A case-sensitive header name, with case-insensitive
 /// `Eq` & `Hash` implementations.
 #[derive(Clone, Copy, Eq)]
