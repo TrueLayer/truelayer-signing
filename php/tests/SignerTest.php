@@ -32,9 +32,6 @@ use TrueLayer\Signing\Tests\MockData;
     \expect($signer->sign())->not->toThrow(Exception::class);
 });
 
-/*
- * @throws RequestPathNotFoundException
- */
 \it('should allow signing classes implementing PSR7 interfaces', function () {
     $keys = MockData::generateKeyPair();
     $kid = Uuid::uuid4()->toString();
@@ -73,5 +70,11 @@ use TrueLayer\Signing\Tests\MockData;
         )
         ->andReturn($requestMock);
 
-    Signer::signWithKey($kid, $keys['private'])->addSignatureHeader($requestMock);
+    $signer = Signer::signWithKey($kid, $keys['private']);
+
+    $signer->addSignatureHeader($requestMock);
+    $signer->method('POST')
+        ->path('/test');
+
+    \expect($signer->sign())->not->toThrow(Exception::class);
 });
