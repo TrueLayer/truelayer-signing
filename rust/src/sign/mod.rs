@@ -9,6 +9,29 @@ use crate::{base64::ToUrlSafeBase64, common::Unset, http::HeaderName, openssl, E
 pub use self::custom_signer::CustomSigner;
 use self::signer_v1::SignerV1;
 
+pub trait U {}
+
+impl U for Unset {}
+
+pub trait Set: Sized {
+    type Ty;
+    fn inner(self) -> Self::Ty;
+}
+
+impl Set for &str {
+    type Ty = Self;
+    fn inner(self) -> Self::Ty {
+        self
+    }
+}
+
+impl Set for &[u8] {
+    type Ty = Self;
+    fn inner(self) -> Self::Ty {
+        self
+    }
+}
+
 /// Builder to generate a `Tl-Signature` header value.
 ///
 /// # Example
@@ -44,7 +67,7 @@ impl<K, Pk, Body, Method, Path> fmt::Debug for SignerBuilder<'_, K, Pk, Body, Me
 }
 
 impl<'a> SignerBuilder<'a, Unset, Unset, Unset, Unset, Unset> {
-    pub fn new() -> Self {
+    pub fn new() -> SignerBuilder<'a, Unset, Unset, Unset, Unset, Unset> {
         SignerBuilder {
             kid: Unset,
             private_key: Unset,
@@ -57,9 +80,12 @@ impl<'a> SignerBuilder<'a, Unset, Unset, Unset, Unset, Unset> {
     }
 }
 
-impl<'a, Pk, Body, Method, Path> SignerBuilder<'a, Unset, Pk, Body, Method, Path> {
+impl<'a, Kid, Pk, Body, Method, Path> SignerBuilder<'a, Kid, Pk, Body, Method, Path> {
     /// Add the private key kid.
-    pub fn kid(self, kid: &str) -> SignerBuilder<'a, &str, Pk, Body, Method, Path> {
+    pub fn kid(self, kid: &str) -> SignerBuilder<'a, &str, Pk, Body, Method, Path>
+    where
+        Kid: U,
+    {
         SignerBuilder {
             kid,
             private_key: self.private_key,
@@ -70,14 +96,15 @@ impl<'a, Pk, Body, Method, Path> SignerBuilder<'a, Unset, Pk, Body, Method, Path
             jws_jku: self.jws_jku,
         }
     }
-}
 
-impl<'a, K, Body, Method, Path> SignerBuilder<'a, K, Unset, Body, Method, Path> {
     /// Add the private key.
     pub fn private_key(
         self,
         private_key: &[u8],
-    ) -> SignerBuilder<'a, K, &[u8], Body, Method, Path> {
+    ) -> SignerBuilder<'a, Kid, &[u8], Body, Method, Path>
+    where
+        Pk: U,
+    {
         SignerBuilder {
             kid: self.kid,
             private_key,
@@ -88,13 +115,14 @@ impl<'a, K, Body, Method, Path> SignerBuilder<'a, K, Unset, Body, Method, Path> 
             jws_jku: self.jws_jku,
         }
     }
-}
 
-impl<'a, K, Pk, Method, Path> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
     /// Add the full request body.
     ///
     /// Note: This **must** be identical to what is sent with the request.
-    pub fn body(self, body: &[u8]) -> SignerBuilder<'a, K, Pk, &[u8], Method, Path> {
+    pub fn body(self, body: &[u8]) -> SignerBuilder<'a, Kid, Pk, &[u8], Method, Path>
+    where
+        Body: U,
+    {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
@@ -105,11 +133,12 @@ impl<'a, K, Pk, Method, Path> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
             jws_jku: self.jws_jku,
         }
     }
-}
 
-impl<'a, K, Pk, Body, Path> SignerBuilder<'a, K, Pk, Body, Unset, Path> {
     /// Add the request method.
-    pub fn method<M>(self) -> SignerBuilder<'a, K, Pk, Body, PhantomData<M>, Path> {
+    pub fn method<M>(self) -> SignerBuilder<'a, Kid, Pk, Body, PhantomData<M>, Path>
+    where
+        Method: U,
+    {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
@@ -120,16 +149,13 @@ impl<'a, K, Pk, Body, Path> SignerBuilder<'a, K, Pk, Body, Unset, Path> {
             jws_jku: self.jws_jku,
         }
     }
-}
 
-impl<'a, K, Pk, Body, Method> SignerBuilder<'a, K, Pk, Body, Method, Unset> {
     /// Add the request absolute path starting with a leading `/` and without
     /// any trailing slashes.
-    pub fn path(self, path: &str) -> SignerBuilder<'a, K, Pk, Body, Method, &str> {
-        assert!(
-            path.starts_with('/'),
-            "Invalid path \"{path}\" must start with '/'"
-        );
+    pub fn path(self, path: &str) -> SignerBuilder<'a, Kid, Pk, Body, Method, &str>
+    where
+        Path: U,
+    {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
@@ -140,9 +166,7 @@ impl<'a, K, Pk, Body, Method> SignerBuilder<'a, K, Pk, Body, Method, Unset> {
             jws_jku: self.jws_jku,
         }
     }
-}
 
-impl<'a, K, Pk, Body, Method, Path> SignerBuilder<'a, K, Pk, Body, Method, Path> {
     /// Add a header name & value.
     /// May be called multiple times to add multiple different headers.
     ///
