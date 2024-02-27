@@ -7,7 +7,7 @@ mod openssl;
 mod sign;
 mod verify;
 
-pub use http::{Get, Post};
+pub use http::Method;
 pub use jws::JwsHeader;
 pub use sign::{CustomSigner, Signer, SignerBuilder};
 pub use verify::{CustomVerifier, Verifier, VerifierBuilder};

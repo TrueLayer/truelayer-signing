@@ -14,7 +14,7 @@ use super::build_v2_signing_payload;
 /// # let (kid, idempotency_key, body) = unimplemented!();
 /// let tl_signature = truelayer_signing::SignerBuilder::new()
 ///     .kid(kid)
-///     .method::<truelayer_signing::Post>()
+///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .header("Idempotency-Key", idempotency_key)
 ///     .body(body)

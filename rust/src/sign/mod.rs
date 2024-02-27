@@ -2,9 +2,9 @@ mod custom_signer;
 mod signer_v1;
 
 use indexmap::IndexMap;
-use std::{fmt, marker::PhantomData};
+use std::fmt;
 
-use crate::{base64::ToUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, Get, Post};
+use crate::{base64::ToUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, Method};
 
 pub use self::custom_signer::CustomSigner;
 use self::signer_v1::SignerV1;
@@ -18,7 +18,7 @@ use self::signer_v1::SignerV1;
 /// let tl_signature = truelayer_signing::SignerBuilder::new()
 ///     .private_key(private_key)
 ///     .kid(kid)
-///     .method::<truelayer_signing::Post>()
+///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .header("Idempotency-Key", idempotency_key)
 ///     .body(body)
@@ -107,14 +107,36 @@ impl<'a, K, Pk, Method, Path> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
     }
 }
 
-impl<'a, K, Pk, Body, Path> SignerBuilder<'a, K, Pk, Body, Unset, Path> {
+impl<'a, K, Pk, Path> SignerBuilder<'a, K, Pk, Unset, Unset, Path> {
     /// Add the request method.
-    pub fn method<M>(self) -> SignerBuilder<'a, K, Pk, Body, PhantomData<M>, Path> {
+    ///
+    /// If the method is GET the body will be ignored.
+    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
             body: self.body,
-            method: PhantomData,
+            method,
+            path: self.path,
+            headers: self.headers,
+            jws_jku: self.jws_jku,
+        }
+    }
+}
+
+impl<'a, K, Pk, Path> SignerBuilder<'a, K, Pk, &'a [u8], Unset, Path> {
+    /// Add the request method.
+    ///
+    /// If the method is GET the body will be ignored.
+    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, &'a [u8], Method, Path> {
+        SignerBuilder {
+            kid: self.kid,
+            private_key: self.private_key,
+            body: match method {
+                Method::Get => &[],
+                Method::Post => self.body,
+            },
+            method,
             path: self.path,
             headers: self.headers,
             jws_jku: self.jws_jku,
@@ -171,27 +193,19 @@ impl<'a, K, Pk, Body, Method, Path> SignerBuilder<'a, K, Pk, Body, Method, Path>
     }
 }
 
-impl<'a> SignerBuilder<'a, &'a str, Unset, Unset, PhantomData<Get>, &'a str> {
+impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
     /// Builds a [`CustomSigner`]
+    ///
+    /// requires the kid, body, method, and path to be set to call this functions.
+    /// if the private key is set this function will not be available.
     pub fn build_custom_signer(self) -> CustomSigner<'a> {
         CustomSigner {
             kid: self.kid,
-            body: &[],
-            method: Get::name(),
-            path: self.path,
-            headers: self.headers,
-            jws_jku: self.jws_jku,
-        }
-    }
-}
-
-impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], PhantomData<Post>, &'a str> {
-    /// Builds a [`CustomSigner`]
-    pub fn build_custom_signer(self) -> CustomSigner<'a> {
-        CustomSigner {
-            kid: self.kid,
-            body: self.body,
-            method: Post::name(),
+            body: match self.method {
+                Method::Get => &[],
+                Method::Post => self.body,
+            },
+            method: self.method.name(),
             path: self.path,
             headers: self.headers,
             jws_jku: self.jws_jku,
@@ -202,7 +216,8 @@ impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], PhantomData<Post>, &'a str>
 impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
     /// Build a V1 Signer see [`SignerV1`].
     ///
-    /// Any specified method, path & headers will be ignored.
+    /// requires the private key, kid, and body to be set to call this functions.
+    /// if the method of path is set this function will not be available.
     ///
     /// In general full request signing should be preferred, see [`Signer`].
     pub fn build_v1_signer(self) -> SignerV1<'a> {
@@ -215,32 +230,20 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
     }
 }
 
-impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, PhantomData<Get>, &'a str> {
+impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Method, &'a str> {
     /// Build a V2 Signer see [`Signer`].
+    ///
+    /// requires the private key, kid, body, method, and path to be set to call this functions.
     pub fn build_signer(self) -> Signer<'a> {
         Signer {
             private_key: self.private_key,
             base: CustomSigner {
                 kid: self.kid,
-                body: &[],
-                method: Get::name(),
-                path: self.path,
-                headers: self.headers,
-                jws_jku: self.jws_jku,
-            },
-        }
-    }
-}
-
-impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], PhantomData<Post>, &'a str> {
-    /// Build a V2 Signer see [`Signer`].
-    pub fn build_signer(self) -> Signer<'a> {
-        Signer {
-            private_key: self.private_key,
-            base: CustomSigner {
-                kid: self.kid,
-                body: self.body,
-                method: Post::name(),
+                body: match self.method {
+                    Method::Get => &[],
+                    Method::Post => self.body,
+                },
+                method: self.method.name(),
                 path: self.path,
                 headers: self.headers,
                 jws_jku: self.jws_jku,
@@ -258,7 +261,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], PhantomData<Post>, &'a s
 /// let tl_signature = truelayer_signing::SignerBuilder::new()
 ///     .private_key(private_key)
 ///     .kid(kid)
-///     .method::<truelayer_signing::Post>()
+///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .header("Idempotency-Key", idempotency_key)
 ///     .body(body)

@@ -4,20 +4,24 @@ use std::{
 };
 
 /// A valid HTTP method
-pub struct Get;
+#[derive(Debug, Clone, Copy)]
+pub enum Method {
+    Get,
+    Post,
+}
 
-/// A valid HTTP method
-pub struct Post;
-
-impl Get {
-    pub const fn name() -> &'static str {
-        "GET"
+impl Method {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Method::Get => "GET",
+            Method::Post => "POST",
+        }
     }
 }
 
-impl Post {
-    pub const fn name() -> &'static str {
-        "POST"
+impl std::fmt::Display for Method {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name())
     }
 }
 

@@ -1,11 +1,10 @@
-use std::{fmt, marker::PhantomData};
+use std::fmt;
 
 use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
 
 use crate::{
-    base64::DecodeUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, Get, JwsHeader,
-    Post,
+    base64::DecodeUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, JwsHeader, Method,
 };
 
 pub use self::custom_verifer::CustomVerifier;
@@ -22,7 +21,7 @@ mod verifier_v1;
 /// # let (public_key, idempotency_key, body, tl_signature) = unimplemented!();
 /// truelayer_signing::VerifierBuilder::new()
 ///     .pem(public_key)
-///     .method::<truelayer_signing::Post>()
+///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .require_header("Idempotency-Key")
 ///     .header("X-Whatever", b"aoitbeh")
@@ -60,6 +59,7 @@ impl<Pk, Body, Method, Path> fmt::Debug for VerifierBuilder<'_, Pk, Body, Method
 }
 
 impl<'a> VerifierBuilder<'a, Unset, Unset, Unset, Unset> {
+    /// create new Builder with Unset Values.
     pub fn new() -> Self {
         VerifierBuilder {
             public_key: Unset,
@@ -114,11 +114,11 @@ impl<'a, Pk, Method, Path> VerifierBuilder<'a, Pk, Unset, Method, Path> {
 
 impl<'a, Pk, Body, Path> VerifierBuilder<'a, Pk, Body, Unset, Path> {
     /// Add the request method.
-    pub fn method<M>(self) -> VerifierBuilder<'a, Pk, Body, PhantomData<M>, Path> {
+    pub fn method(self, method: Method) -> VerifierBuilder<'a, Pk, Body, Method, Path> {
         VerifierBuilder {
             public_key: self.public_key,
             body: self.body,
-            method: PhantomData,
+            method,
             path: self.path,
             headers: self.headers,
             required_headers: self.required_headers,
@@ -186,30 +186,18 @@ impl<'a, Pk, Body, Method, Path> VerifierBuilder<'a, Pk, Body, Method, Path> {
     }
 }
 
-impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], PhantomData<Get>, &'a str> {
+impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Method, &'a str> {
     /// Build a V2 Verifier see [`Verifier`].
+    ///
+    /// requires the public key, body, method, and path to be set to call this functions.
     pub fn build_verifier(self) -> Verifier<'a> {
         Verifier {
             base: CustomVerifier {
-                body: self.body,
-                method: Get::name(),
-                path: self.path,
-                headers: self.headers,
-                required_headers: self.required_headers,
-                parsed_tl_sig: None,
-            },
-            public_key: self.public_key,
-        }
-    }
-}
-
-impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], PhantomData<Post>, &'a str> {
-    /// Build a V2 Verifier see [`Verifier`].
-    pub fn build_verifier(self) -> Verifier<'a> {
-        Verifier {
-            base: CustomVerifier {
-                body: self.body,
-                method: Post::name(),
+                body: match self.method {
+                    Method::Get => &[],
+                    Method::Post => self.body,
+                },
+                method: self.method.name(),
                 path: self.path,
                 headers: self.headers,
                 required_headers: self.required_headers,
@@ -222,6 +210,8 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], PhantomData<Post>, &'a str
 
 impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Unset, Unset> {
     /// Build a V1 Verifier see [`VerifierV1`].
+    ///
+    /// requires the public key and body to be set to call this functions.
     pub fn build_v1_verifier(self) -> VerifierV1<'a> {
         VerifierV1 {
             public_key: self.public_key,
@@ -239,7 +229,7 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Unset, Unset> {
 /// # let (public_key, idempotency_key, body, tl_signature) = unimplemented!();
 /// truelayer_signing::VerifierBuilder::new()
 ///     .pem(public_key)
-///     .method::<truelayer_signing::Post>()
+///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .require_header("Idempotency-Key")
 ///     .header("X-Whatever", b"aoitbeh")

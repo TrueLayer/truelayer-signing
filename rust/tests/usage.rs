@@ -1,4 +1,4 @@
-use truelayer_signing::{Error, Get, Post};
+use truelayer_signing::{Error, Method};
 
 const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem");
 const PRIVATE_KEY: &[u8] = include_bytes!("../../test-resources/ec512-private.pem");
@@ -20,7 +20,7 @@ fn full_request_signature() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -33,7 +33,7 @@ fn full_request_signature() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .require_header("Idempotency-Key")
         .header("X-Whatever", b"aoitbeh")
@@ -53,7 +53,7 @@ fn full_request_signature_no_headers() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .body(body)
         .build_signer()
@@ -62,7 +62,7 @@ fn full_request_signature_no_headers() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .body(body)
@@ -84,7 +84,7 @@ fn mismatched_signature_with_attached_valid_body() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/foo") // not bar so should fail
         .body("{}".as_bytes())
         .build_verifier()
@@ -105,7 +105,7 @@ fn mismatched_signature_with_attached_valid_body_trailing_dots() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/foo") // not bar so should fail
         .body("{}".as_bytes())
         .build_verifier()
@@ -122,7 +122,7 @@ fn verify_full_request_static_signature() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever-2", b"t2345d")
         .header("Idempotency-Key", idempotency_key)
@@ -140,7 +140,7 @@ fn verify_with_invalid_signature_should_error() {
 
     let error = truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever-2", b"t2345d")
         .header("Idempotency-Key", idempotency_key)
@@ -160,7 +160,7 @@ fn verify_without_signed_trailing_slash() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/tl-webhook/")
         .body(body)
         .build_signer()
@@ -169,7 +169,7 @@ fn verify_without_signed_trailing_slash() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/tl-webhook") // missing trailing slash
         .body(body)
         .build_verifier()
@@ -186,7 +186,7 @@ fn verify_with_unsigned_trailing_slash() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/tl-webhook")
         .body(body)
         .build_signer()
@@ -195,7 +195,7 @@ fn verify_with_unsigned_trailing_slash() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/tl-webhook/") // additional trailing slash
         .body(body)
         .build_verifier()
@@ -217,7 +217,7 @@ fn sign_an_invalid_path() {
 fn verify_an_invalid_path() {
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path("https://example.com/the-path");
 }
 
@@ -230,7 +230,7 @@ fn full_request_signature_method_mismatch() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -240,7 +240,7 @@ fn full_request_signature_method_mismatch() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Get>() // different
+        .method(Method::Get) // different
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
@@ -259,7 +259,7 @@ fn full_request_signature_path_mismatch() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -269,7 +269,7 @@ fn full_request_signature_path_mismatch() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/merchant_accounts/67b5b1cf-1d0c-45d4-a2ea-61bdc044327c/sweeping") // different
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
@@ -288,7 +288,7 @@ fn full_request_signature_header_mismatch() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -298,7 +298,7 @@ fn full_request_signature_header_mismatch() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", b"something-else") // different
@@ -317,7 +317,7 @@ fn full_request_signature_body_mismatch() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -327,7 +327,7 @@ fn full_request_signature_body_mismatch() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
@@ -346,7 +346,7 @@ fn full_request_signature_missing_signature_header() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -356,7 +356,7 @@ fn full_request_signature_missing_signature_header() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         // missing Idempotency-Key
@@ -375,7 +375,7 @@ fn full_request_signature_required_header_missing_from_signature() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -385,7 +385,7 @@ fn full_request_signature_required_header_missing_from_signature() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .require_header("X-Required") // missing from signature
         .header("Idempotency-Key", idempotency_key)
@@ -404,7 +404,7 @@ fn full_request_signature_required_header_case_insensitive() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .private_key(PRIVATE_KEY)
         .kid(KID)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
@@ -414,7 +414,7 @@ fn full_request_signature_required_header_case_insensitive() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .require_header("IdEmPoTeNcY-KeY") // case insensitive so should be fine
         .header("Idempotency-Key", idempotency_key)
@@ -433,7 +433,7 @@ fn flexible_header_case_order_verify() {
     let tl_signature = truelayer_signing::SignerBuilder::new()
         .kid(KID)
         .private_key(PRIVATE_KEY)
-        .method::<truelayer_signing::Post>()
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .header("X-Custom", b"123")
@@ -444,7 +444,7 @@ fn flexible_header_case_order_verify() {
 
     truelayer_signing::VerifierBuilder::new()
         .pem(PUBLIC_KEY)
-        .method::<Post>()
+        .method(Method::Post)
         .path(path)
         .header("X-CUSTOM", b"123") // different order & case, it's ok!
         .header("idempotency-key", idempotency_key) // different order & case, it's ok!
@@ -462,7 +462,7 @@ fn set_jku() {
         .private_key(PRIVATE_KEY)
         .kid(KID)
         .jku("https://webhooks.truelayer.com/.well-known/jwks")
-        .method::<Post>()
+        .method(Method::Post)
         .path("/tl-webhook")
         .header("X-Tl-Webhook-Timestamp", b"2021-11-29T11:42:55Z")
         .header("Content-Type", b"application/json")
@@ -507,7 +507,7 @@ fn verify_with_jwks() {
 
     truelayer_signing::VerifierBuilder::new()
         .jwks(jwks)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/tl-webhook")
         .header("x-tl-webhook-timestamp", b"2021-11-29T11:42:55Z")
         .header("content-type", b"application/json")
@@ -518,7 +518,7 @@ fn verify_with_jwks() {
 
     truelayer_signing::VerifierBuilder::new()
         .jwks(jwks)
-        .method::<Post>()
+        .method(Method::Post)
         .path("/tl-webhook")
         .header("x-tl-webhook-timestamp", b"2021-12-02T14:18:00Z") // different
         .header("content-type", b"application/json")
