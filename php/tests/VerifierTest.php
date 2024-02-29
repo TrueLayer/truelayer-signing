@@ -232,7 +232,7 @@ use TrueLayer\Signing\Verifier;
 });
 
 \it('should verify a valid signature from decoded json', function () {
-    $signature = \file_get_contents('../test-resources/tl-signature.txt');
+    $signature = \trim(\file_get_contents('../test-resources/tl-signature.txt'));
     $jwksJson = \file_get_contents('../test-resources/jwks.json');
 
     /**
