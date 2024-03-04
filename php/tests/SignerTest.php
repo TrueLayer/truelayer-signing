@@ -73,5 +73,11 @@ use TrueLayer\Signing\Tests\MockData;
         )
         ->andReturn($requestMock);
 
-    Signer::signWithKey($kid, $keys['private'])->addSignatureHeader($requestMock);
+    $signer = Signer::signWithKey($kid, $keys['private']);
+
+    $signer->addSignatureHeader($requestMock);
+    $signer->method('POST')
+        ->path('/test');
+
+    \expect($signer->sign())->not->toThrow(Exception::class);
 });
