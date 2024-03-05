@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0
+* Introduces the Http `Method` enum to replace string literals for HTTP methods, enhancing type safety, code clarity, and a more robust and developer-friendly API.
+* The `Singer` has become the `SignerBuilder`: 
+  - uses generics for compile time correctness checks 
+  - requires an explit build call
+    - `build_custom_signer` requires the kid, method, body(optinal of GET requests), and path to be set. It builds a `CustomSinger` which exposed and `sign_with` function.
+    - `build_v1_signer` requires private key, kid, and body to be set. It builds a `SignerV1` and exposes a `sign_body_only` function. 
+    - `build_signer` requires the private key, kid, body, method, and path to be set. It builds a `Signer` and exposed a `sign` function.
+* The `Verifier` has become the `VerifierBuilder`, which uses generics for compile time correctness checks. 
+  - uses generics for compile time correctness checks 
+  - requires an explit build call
+    - `build_v1_verifier` requires the public key and body to be set. It builds a `VerifierV1` and exposes a `verify_body_only` function. 
+    - `build_verifier` requires the public key, body, method, and path to be. It builds a `Verifier` and exposed a `verify` and `verify_v1_or_v2` functions.
+
 ## 0.1.5
 * Improves error handling when parsing and invalid signature.
 
