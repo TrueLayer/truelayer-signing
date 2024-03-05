@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Introduces the Http `Method` enum to replace string literals for HTTP methods, enhancing type safety, code clarity, and a more robust and developer-friendly API.
 * The `Signer` has become the `SignerBuilder`: 
   - uses generics for compile time correctness checks 
-  - requires an explit build call
+  - requires an explicit build call
     - `build_custom_signer` requires the kid, method, body(optinal of GET requests), and path to be set. It builds a `CustomSinger` which exposed and `sign_with` function.
     - `build_v1_signer` requires private key, kid, and body to be set. It builds a `SignerV1` and exposes a `sign_body_only` function. 
     - `build_signer` requires the private key, kid, body, method, and path to be set. It builds a `Signer` and exposed a `sign` function.
