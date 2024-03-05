@@ -55,7 +55,7 @@ impl<'a> CustomSigner<'a> {
         Ok(format!("{}..{}", jws_header, signature))
     }
 
-    /// Produce a JWS `Tl-Signature` v2 header value with a custom singer.
+    /// Produce a JWS `Tl-Signature` v2 header value with a custom signer.
     pub async fn async_sign_with<F, Fut>(self, sign_fn: F) -> Result<String, Error>
     where
         F: FnOnce(&[u8]) -> Fut,
