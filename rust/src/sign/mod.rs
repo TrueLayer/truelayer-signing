@@ -245,7 +245,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
 impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Method, &'a str> {
     /// Build a V2 Signer see [`Signer`].
     ///
-    /// requires the private key, kid, body, method, and path to be set to call this functions.
+    /// requires the private key, kid, body, method, and path to be set to call this function.
     pub fn build_signer(self) -> Signer<'a> {
         Signer {
             private_key: self.private_key,
