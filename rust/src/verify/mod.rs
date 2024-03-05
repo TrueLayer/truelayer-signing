@@ -197,7 +197,7 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Method, &'a str> {
 impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Unset, Unset> {
     /// Build a V1 Verifier see [`VerifierV1`].
     ///
-    /// requires the public key and body to be set to call this functions.
+    /// requires the public key and body to be set to call this function.
     pub fn build_v1_verifier(self) -> VerifierV1<'a> {
         VerifierV1 {
             public_key: self.public_key,
