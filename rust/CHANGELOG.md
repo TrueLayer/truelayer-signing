@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - uses generics for compile time correctness checks 
   - requires an explicit build call
     - `build_v1_verifier` requires the public key and body to be set. It builds a `VerifierV1` and exposes a `verify_body_only` function. 
-    - `build_verifier` requires the public key, body, method, and path to be. It builds a `Verifier` and exposed a `verify` and `verify_v1_or_v2` functions.
+    - `build_verifier` requires the public key, body, method, and path to be set. It builds a `Verifier` and exposes `verify` and `verify_v1_or_v2` functions.
 
 ## 0.1.5
 * Improves error handling when parsing and invalid signature.
