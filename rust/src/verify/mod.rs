@@ -175,7 +175,7 @@ impl<'a, Pk, Body, Method, Path> VerifierBuilder<'a, Pk, Body, Method, Path> {
 impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Method, &'a str> {
     /// Build a V2 Verifier see [`Verifier`].
     ///
-    /// requires the public key, body, method, and path to be set to call this functions.
+    /// requires the public key, body, method, and path to be set to call this function.
     pub fn build_verifier(self) -> Verifier<'a> {
         Verifier {
             base: CustomVerifier {
