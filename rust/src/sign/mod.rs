@@ -228,7 +228,7 @@ impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
 impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
     /// Build a V1 Signer see [`SignerV1`].
     ///
-    /// requires the private key, kid, and body to be set to call this functions.
+    /// requires the private key, kid, and body to be set to call this function.
     /// if the method of path is set this function will not be available.
     ///
     /// In general full request signing should be preferred, see [`Signer`].
