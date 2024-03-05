@@ -208,7 +208,7 @@ impl<'a, K, Pk, Body, Method, Path> SignerBuilder<'a, K, Pk, Body, Method, Path>
 impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
     /// Builds a [`CustomSigner`]
     ///
-    /// requires the kid, body, method, and path to be set to call this functions.
+    /// requires the kid, body, method, and path to be set to call this function.
     /// if the private key is set this function will not be available.
     pub fn build_custom_signer(self) -> CustomSigner<'a> {
         CustomSigner {
