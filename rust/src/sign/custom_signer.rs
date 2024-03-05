@@ -6,7 +6,7 @@ use crate::{base64::ToUrlSafeBase64, http::HeaderName, Error, JwsHeader};
 
 use super::build_v2_signing_payload;
 
-/// Builder to generate a `Tl-Signature` header value with a custom singer.
+/// Builder to generate a `Tl-Signature` header value with a custom signer.
 ///
 /// # Example
 /// ```no_run
