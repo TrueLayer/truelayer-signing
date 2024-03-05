@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `build_signer` requires the private key, kid, body, method, and path to be set. It builds a `Signer` and exposes a `sign` function.
 * The `Verifier` has become the `VerifierBuilder`, which uses generics for compile time correctness checks. 
   - uses generics for compile time correctness checks 
-  - requires an explit build call
+  - requires an explicit build call
     - `build_v1_verifier` requires the public key and body to be set. It builds a `VerifierV1` and exposes a `verify_body_only` function. 
     - `build_verifier` requires the public key, body, method, and path to be. It builds a `Verifier` and exposed a `verify` and `verify_v1_or_v2` functions.
 
