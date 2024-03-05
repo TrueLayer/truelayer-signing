@@ -44,7 +44,7 @@ impl<'a> CustomSigner<'a> {
         Ok((jws_header_b64, signing_payload.to_url_safe_base64()))
     }
 
-    /// Produce a JWS `Tl-Signature` v2 header value with a custom singer.
+    /// Produce a JWS `Tl-Signature` v2 header value with a custom signer.
     pub fn sign_with(
         self,
         sign_fn: impl FnOnce(&[u8]) -> Result<String, Error>,
