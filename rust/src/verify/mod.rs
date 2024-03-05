@@ -19,8 +19,7 @@ mod verifier_v1;
 /// ```no_run
 /// # fn main() -> Result<(), truelayer_signing::Error> {
 /// # let (public_key, idempotency_key, body, tl_signature) = unimplemented!();
-/// truelayer_signing::VerifierBuilder::new()
-///     .pem(public_key)
+/// truelayer_signing::VerifierBuilder::pem(public_key)
 ///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .require_header("Idempotency-Key")
@@ -58,11 +57,11 @@ impl<Pk, Body, Method, Path> fmt::Debug for VerifierBuilder<'_, Pk, Body, Method
     }
 }
 
-impl<'a> VerifierBuilder<'a, Unset, Unset, Unset, Unset> {
-    /// create new Builder with Unset Values.
-    pub fn new() -> Self {
+impl<'a> VerifierBuilder<'a, PublicKey<'a>, Unset, Unset, Unset> {
+    /// Add public key via pem.
+    pub fn pem(pem: &'a [u8]) -> VerifierBuilder<'a, PublicKey<'a>, Unset, Unset, Unset> {
         VerifierBuilder {
-            public_key: Unset,
+            public_key: PublicKey::Pem(pem),
             body: Unset,
             method: Unset,
             path: Unset,
@@ -70,30 +69,16 @@ impl<'a> VerifierBuilder<'a, Unset, Unset, Unset, Unset> {
             required_headers: <_>::default(),
         }
     }
-}
-
-impl<'a, Body, Method, Path> VerifierBuilder<'a, Unset, Body, Method, Path> {
-    /// Add public key via pem.
-    pub fn pem(self, pem: &'a [u8]) -> VerifierBuilder<'a, PublicKey<'a>, Body, Method, Path> {
-        VerifierBuilder {
-            public_key: PublicKey::Pem(pem),
-            body: self.body,
-            method: self.method,
-            path: self.path,
-            headers: self.headers,
-            required_headers: self.required_headers,
-        }
-    }
 
     /// Add public key via a jwks.
-    pub fn jwks(self, jwk: &'a [u8]) -> VerifierBuilder<'a, PublicKey<'a>, Body, Method, Path> {
+    pub fn jwks(jwk: &'a [u8]) -> VerifierBuilder<'a, PublicKey<'a>, Unset, Unset, Unset> {
         VerifierBuilder {
             public_key: PublicKey::Jwks(jwk),
-            body: self.body,
-            method: self.method,
-            path: self.path,
-            headers: self.headers,
-            required_headers: self.required_headers,
+            body: Unset,
+            method: Unset,
+            path: Unset,
+            headers: <_>::default(),
+            required_headers: <_>::default(),
         }
     }
 }
@@ -166,8 +151,9 @@ impl<'a, Pk, Body, Method, Path> VerifierBuilder<'a, Pk, Body, Method, Path> {
     /// [`Verifier::require_header`].
     ///
     /// # Example
-    /// ```
-    /// truelayer_signing::VerifierBuilder::new()
+    /// ```no_run
+    /// # let public_key = unimplemented!();
+    /// truelayer_signing::VerifierBuilder::pem(public_key)
     ///     .headers([("X-Head-A", "123".as_bytes()), ("X-Head-B", "345".as_bytes())]);
     /// ```
     pub fn headers(mut self, headers: impl IntoIterator<Item = (&'a str, &'a [u8])>) -> Self {
@@ -227,8 +213,7 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Unset, Unset> {
 /// ```no_run
 /// # fn main() -> Result<(), truelayer_signing::Error> {
 /// # let (public_key, idempotency_key, body, tl_signature) = unimplemented!();
-/// truelayer_signing::VerifierBuilder::new()
-///     .pem(public_key)
+/// truelayer_signing::VerifierBuilder::pem(public_key)
 ///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .require_header("Idempotency-Key")

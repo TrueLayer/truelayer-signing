@@ -15,9 +15,7 @@ use self::signer_v1::SignerV1;
 /// ```no_run
 /// # fn main() -> Result<(), truelayer_signing::Error> {
 /// # let (kid, private_key, idempotency_key, body) = unimplemented!();
-/// let tl_signature = truelayer_signing::SignerBuilder::new()
-///     .private_key(private_key)
-///     .kid(kid)
+/// let tl_signature = truelayer_signing::SignerBuilder::build_with_pem(kid, private_key)
 ///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .header("Idempotency-Key", idempotency_key)
@@ -37,7 +35,7 @@ pub struct SignerBuilder<'a, Kid, Pk, Body, Method, Path> {
     jws_jku: Option<&'a str>,
 }
 
-impl<K, Pk, Body, Method, Path> fmt::Debug for SignerBuilder<'_, K, Pk, Body, Method, Path> {
+impl<Kid, Pk, Body, Method, Path> fmt::Debug for SignerBuilder<'_, Kid, Pk, Body, Method, Path> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "Signer")
     }
@@ -48,6 +46,20 @@ impl<'a> SignerBuilder<'a, Unset, Unset, Unset, Unset, Unset> {
         SignerBuilder {
             kid: Unset,
             private_key: Unset,
+            body: Unset,
+            method: Unset,
+            path: Unset,
+            headers: <_>::default(),
+            jws_jku: <_>::default(),
+        }
+    }
+}
+
+impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, Unset, Unset> {
+    pub fn build_with_pem(kid: &'a str, private_key: &'a [u8]) -> Self {
+        SignerBuilder {
+            kid,
+            private_key,
             body: Unset,
             method: Unset,
             path: Unset,
@@ -258,9 +270,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Method, &'a str> {
 /// ```no_run
 /// # fn main() -> Result<(), truelayer_signing::Error> {
 /// # let (kid, private_key, idempotency_key, body) = unimplemented!();
-/// let tl_signature = truelayer_signing::SignerBuilder::new()
-///     .private_key(private_key)
-///     .kid(kid)
+/// let tl_signature = truelayer_signing::SignerBuilder::build_with_pem(kid, private_key)
 ///     .method(truelayer_signing::Method::Post)
 ///     .path("/payouts")
 ///     .header("Idempotency-Key", idempotency_key)
