@@ -1,4 +1,5 @@
 use anyhow::{ensure, Context};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use openssl::{
     bn::BigNum,
     ec::EcKey,
@@ -106,8 +107,8 @@ impl Jwk {
         ensure!(self.kty == "EC", "unsupported jwk kty");
         ensure!(self.crv == "P-521", "unsupported jwk crv");
 
-        let x = base64::decode_config(self.x, base64::URL_SAFE_NO_PAD)?;
-        let y = base64::decode_config(self.y, base64::URL_SAFE_NO_PAD)?;
+        let x = URL_SAFE_NO_PAD.decode(self.x)?;
+        let y = URL_SAFE_NO_PAD.decode(self.y)?;
         let x = openssl::bn::BigNum::from_slice(&x)?;
         let y = openssl::bn::BigNum::from_slice(&y)?;
 

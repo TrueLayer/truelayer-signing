@@ -1,5 +1,4 @@
-use anyhow::anyhow;
-use truelayer_signing::Error;
+use truelayer_signing::{Error, Method};
 
 const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem");
 const PRIVATE_KEY: &[u8] = include_bytes!("../../test-resources/ec512-private.pem");
@@ -19,10 +18,11 @@ fn full_request_signature() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
@@ -30,12 +30,13 @@ fn full_request_signature() {
     eprintln!("signature: {tl_signature}");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path(path)
         .require_header("Idempotency-Key")
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect("verify");
 }
@@ -47,17 +48,19 @@ fn full_request_signature_no_headers() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect("verify");
 }
@@ -74,9 +77,10 @@ fn mismatched_signature_with_attached_valid_body() {
       d2d3D17Wd9UA";
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path("/foo") // not bar so should fail
         .body("{}".as_bytes())
+        .build_verifier()
         .verify(tl_signature)
         .expect_err("verify should fail");
 }
@@ -93,9 +97,10 @@ fn mismatched_signature_with_attached_valid_body_trailing_dots() {
       d2d3D17Wd9UA....";
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path("/foo") // not bar so should fail
         .body("{}".as_bytes())
+        .build_verifier()
         .verify(tl_signature)
         .expect_err("verify should fail");
 }
@@ -108,11 +113,12 @@ fn verify_full_request_static_signature() {
     let tl_signature = include_str!("../../test-resources/tl-signature.txt").trim();
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever-2", b"t2345d")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_verifier()
         .verify(tl_signature)
         .expect("verify");
 }
@@ -124,11 +130,12 @@ fn verify_with_invalid_signature_should_error() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let error = truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever-2", b"t2345d")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_verifier()
         .verify("an-invalid..signature");
 
     assert!(matches!(error, Err(Error::JwsError(_))));
@@ -141,15 +148,18 @@ fn verify_without_signed_trailing_slash() {
     let body = br#"{"foo":"bar"}"#;
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+        .method(Method::Post)
         .path("/tl-webhook/")
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path("/tl-webhook") // missing trailing slash
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect("verify");
 }
@@ -161,15 +171,18 @@ fn verify_with_unsigned_trailing_slash() {
     let body = br#"{"foo":"bar"}"#;
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+        .method(Method::Post)
         .path("/tl-webhook")
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("POST")
+        .method(Method::Post)
         .path("/tl-webhook/") // additional trailing slash
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect("verify");
 }
@@ -183,7 +196,9 @@ fn sign_an_invalid_path() {
 #[test]
 #[should_panic = r#"Invalid path "https://example.com/the-path" must start with '/'"#]
 fn verify_an_invalid_path() {
-    truelayer_signing::verify_with_pem(PUBLIC_KEY).path("https://example.com/the-path");
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method(Method::Post)
+        .path("https://example.com/the-path");
 }
 
 #[test]
@@ -193,19 +208,21 @@ fn full_request_signature_method_mismatch() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("DELETE") // different
+        .method(Method::Get) // different
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect_err("verify should fail");
 }
@@ -217,19 +234,21 @@ fn full_request_signature_path_mismatch() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("post")
+        .method(Method::Post)
         .path("/merchant_accounts/67b5b1cf-1d0c-45d4-a2ea-61bdc044327c/sweeping") // different
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect_err("verify should fail");
 }
@@ -241,19 +260,21 @@ fn full_request_signature_header_mismatch() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", b"something-else") // different
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect_err("verify should fail");
 }
@@ -265,19 +286,21 @@ fn full_request_signature_body_mismatch() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         .header("Idempotency-Key", idempotency_key)
         .body(br#"{"max_amount_in_minor":1234}"#) // different
+        .build_verifier()
         .verify(&tl_signature)
         .expect_err("verify should fail");
 }
@@ -289,19 +312,21 @@ fn full_request_signature_missing_signature_header() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("X-Whatever", b"aoitbeh")
         // missing Idempotency-Key
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect_err("verify should fail");
 }
@@ -313,19 +338,21 @@ fn full_request_signature_required_header_missing_from_signature() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .require_header("X-Required") // missing from signature
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect_err("verify should fail");
 }
@@ -337,19 +364,21 @@ fn full_request_signature_required_header_case_insensitive() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .require_header("IdEmPoTeNcY-KeY") // case insensitive so should be fine
         .header("Idempotency-Key", idempotency_key)
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect("verify should work");
 }
@@ -361,20 +390,22 @@ fn flexible_header_case_order_verify() {
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
         .header("X-Custom", b"123")
         .body(body)
+        .build_signer()
         .sign()
         .expect("sign");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .method("post")
+        .method(Method::Post)
         .path(path)
         .header("X-CUSTOM", b"123") // different order & case, it's ok!
         .header("idempotency-key", idempotency_key) // different order & case, it's ok!
         .body(body)
+        .build_verifier()
         .verify(&tl_signature)
         .expect("verify");
 }
@@ -385,11 +416,12 @@ fn flexible_header_case_order_verify() {
 fn set_jku() {
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
         .jku("https://webhooks.truelayer.com/.well-known/jwks")
-        .method("POST")
+        .method(Method::Post)
         .path("/tl-webhook")
         .header("X-Tl-Webhook-Timestamp", b"2021-11-29T11:42:55Z")
         .header("Content-Type", b"application/json")
         .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
+        .build_signer()
         .sign()
         .expect("sign");
 
@@ -428,20 +460,22 @@ fn verify_with_jwks() {
     let jwks = include_bytes!("../../test-resources/jwks.json");
 
     truelayer_signing::verify_with_jwks(jwks)
-        .method("POST")
+        .method(Method::Post)
         .path("/tl-webhook")
         .header("x-tl-webhook-timestamp", b"2021-11-29T11:42:55Z")
         .header("content-type", b"application/json")
         .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
+        .build_verifier()
         .verify(hook_signature)
         .expect("verify");
 
     truelayer_signing::verify_with_jwks(jwks)
-        .method("POST")
+        .method(Method::Post)
         .path("/tl-webhook")
         .header("x-tl-webhook-timestamp", b"2021-12-02T14:18:00Z") // different
         .header("content-type", b"application/json")
         .body(br#"{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}"#)
+        .build_verifier()
         .verify(hook_signature)
         .expect_err("verify should fail as header is different");
 }
@@ -456,6 +490,7 @@ fn body_signature() {
 
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
         .body(body)
+        .build_v1_signer()
         .sign_body_only()
         .expect("sign_body");
 
@@ -463,9 +498,9 @@ fn body_signature() {
     eprintln!("signature: {tl_signature}");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .allow_v1(true)
         .body(body)
-        .verify(&tl_signature)
+        .build_v1_verifier()
+        .verify_body_only(&tl_signature)
         .expect("verify");
 }
 
@@ -473,13 +508,14 @@ fn body_signature() {
 fn body_signature_mismatch() {
     let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
         .body(br#"{"abc":123}"#)
+        .build_v1_signer()
         .sign_body_only()
         .expect("sign_body");
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .allow_v1(true)
         .body(br#"{"abc":124}"#) // different
-        .verify(&tl_signature)
+        .build_v1_verifier()
+        .verify_body_only(&tl_signature)
         .expect_err("verify should fail");
 }
 
@@ -489,20 +525,8 @@ fn verify_body_static_signature() {
     let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
 
     truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        .allow_v1(true)
         .body(body)
-        .verify(tl_signature)
+        .build_v1_verifier()
+        .verify_body_only(tl_signature)
         .expect("verify");
-}
-
-#[test]
-fn verify_body_static_signature_not_allowed() {
-    let body = br#"{"abc":123}"#;
-    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..ASwrHoHm-1tuvTWj_YFbrMZiP22sUHEu826cJC7flb9nZLwdfP0L-RDhBA5csNLM2KtkAOD7pnJYS7tnw383gtuxAWnXI_NbJ5rZuYWVgVlqc9VCt8lkvyQZtKOiRQfpFmJWBDNULHWwFTyrX2UaOO_KWHnZ4_8jpNaNsyeQGe61gfk-";
-
-    truelayer_signing::verify_with_pem(PUBLIC_KEY)
-        // v1 not allowed by default
-        .body(body)
-        .verify(tl_signature)
-        .expect_err("verify should not be allowed");
 }

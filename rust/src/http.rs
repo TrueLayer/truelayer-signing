@@ -3,6 +3,28 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+/// A valid HTTP method
+#[derive(Debug, Clone, Copy)]
+pub enum Method {
+    Get,
+    Post,
+}
+
+impl Method {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Method::Get => "GET",
+            Method::Post => "POST",
+        }
+    }
+}
+
+impl std::fmt::Display for Method {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name())
+    }
+}
+
 /// A case-sensitive header name, with case-insensitive
 /// `Eq` & `Hash` implementations.
 #[derive(Clone, Copy, Eq)]
