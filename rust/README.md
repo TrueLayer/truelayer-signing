@@ -7,10 +7,11 @@ Rust crate to produce & verify TrueLayer API requests signatures.
 ```rust
 // `Tl-Signature` value to send with the request.
 let tl_signature = truelayer_signing::sign_with_pem(kid, private_key)
-    .method("POST")
+    .method(Method::Post)
     .path("/payouts")
     .header("Idempotency-Key", idempotency_key)
     .body(body)
+    .build_signer()
     .sign()?;
 ```
 
@@ -32,10 +33,11 @@ let jwks = fetch_jwks(jku);
 
 // jwks may be used directly to verify a signature
 truelayer_signing::verify_with_jwks(jwks)
-    .method("POST")
+    .method(Method::Post)
     .path(path)
     .headers(all_webhook_headers)
     .body(body)
+    .build_verifier()
     .verify(webhook_signature)?;
 ```
 
