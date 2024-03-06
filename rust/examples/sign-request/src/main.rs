@@ -1,4 +1,5 @@
 use std::env;
+use truelayer_signing::Method;
 use uuid::Uuid;
 
 // the base url to use
@@ -19,13 +20,14 @@ async fn main() {
 
     // Generate tl-signature
     let tl_signature = truelayer_signing::sign_with_pem(kid.as_str(), private_key.as_bytes())
-        .method("POST") // as we're sending a POST request
+        .method(Method::Post) // as we're sending a POST request
         .path("/test-signature") // the path of our request
         // Optional: /test-signature does not require any headers, but we may sign some anyway.
         // All signed headers *must* be included unmodified in the request.
         .header("Idempotency-Key", idempotency_key.as_bytes())
         .header("X-Bar-Header", b"abc123")
         .body(body.as_bytes()) // body of our request
+        .build_signer()
         .sign()
         .unwrap();
 
