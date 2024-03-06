@@ -8,6 +8,9 @@ use std::{
 pub enum Method {
     Get,
     Post,
+    Put,
+    Delete,
+    Patch,
 }
 
 impl Method {
@@ -15,6 +18,9 @@ impl Method {
         match self {
             Method::Get => "GET",
             Method::Post => "POST",
+            Method::Put => "PUT",
+            Method::Delete => "DELETE",
+            Method::Patch => "PATCH",
         }
     }
 }

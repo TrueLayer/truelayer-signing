@@ -145,8 +145,8 @@ impl<'a, K, Pk, Path> SignerBuilder<'a, K, Pk, &'a [u8], Unset, Path> {
             kid: self.kid,
             private_key: self.private_key,
             body: match method {
-                Method::Get => &[],
-                Method::Post => self.body,
+                Method::Get | Method::Delete => &[],
+                Method::Post | Method::Put | Method::Patch => self.body,
             },
             method,
             path: self.path,
@@ -214,8 +214,8 @@ impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
         CustomSigner {
             kid: self.kid,
             body: match self.method {
-                Method::Get => &[],
-                Method::Post => self.body,
+                Method::Get | Method::Delete => &[],
+                Method::Post | Method::Put | Method::Patch => self.body,
             },
             method: self.method.name(),
             path: self.path,
@@ -252,8 +252,8 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Method, &'a str> {
             base: CustomSigner {
                 kid: self.kid,
                 body: match self.method {
-                    Method::Get => &[],
-                    Method::Post => self.body,
+                    Method::Get | Method::Delete => &[],
+                    Method::Post | Method::Put | Method::Patch => self.body,
                 },
                 method: self.method.name(),
                 path: self.path,

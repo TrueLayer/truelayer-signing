@@ -180,8 +180,8 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Method, &'a str> {
         Verifier {
             base: CustomVerifier {
                 body: match self.method {
-                    Method::Get => &[],
-                    Method::Post => self.body,
+                    Method::Get | Method::Delete => &[],
+                    Method::Post | Method::Put | Method::Patch => self.body,
                 },
                 method: self.method.name(),
                 path: self.path,
