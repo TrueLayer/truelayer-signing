@@ -101,7 +101,7 @@ jobs:
           custom_tag: ${{ needs.set-release-version.outputs.project_version }}
           tag_prefix: 'java7-v'
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.create_tag.outputs.new_tag }}
           generate_release_notes: false
