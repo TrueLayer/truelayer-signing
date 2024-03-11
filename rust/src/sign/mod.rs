@@ -119,35 +119,13 @@ impl<'a, K, Pk, Method, Path> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
     }
 }
 
-impl<'a, K, Pk, Path> SignerBuilder<'a, K, Pk, Unset, Unset, Path> {
+impl<'a, K, Pk, Body, Path> SignerBuilder<'a, K, Pk, Body, Unset, Path> {
     /// Add the request method.
-    ///
-    /// If the method is GET the body will be ignored.
-    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
+    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, Body, Method, Path> {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
             body: self.body,
-            method,
-            path: self.path,
-            headers: self.headers,
-            jws_jku: self.jws_jku,
-        }
-    }
-}
-
-impl<'a, K, Pk, Path> SignerBuilder<'a, K, Pk, &'a [u8], Unset, Path> {
-    /// Add the request method.
-    ///
-    /// If the method is GET the body will be ignored.
-    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, &'a [u8], Method, Path> {
-        SignerBuilder {
-            kid: self.kid,
-            private_key: self.private_key,
-            body: match method {
-                Method::Get | Method::Delete => &[],
-                Method::Post | Method::Put | Method::Patch => self.body,
-            },
             method,
             path: self.path,
             headers: self.headers,
