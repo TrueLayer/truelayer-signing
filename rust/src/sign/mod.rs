@@ -191,10 +191,7 @@ impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
     pub fn build_custom_signer(self) -> CustomSigner<'a> {
         CustomSigner {
             kid: self.kid,
-            body: match self.method {
-                Method::Get | Method::Delete => &[],
-                Method::Post | Method::Put | Method::Patch => self.body,
-            },
+            body: self.body,
             method: self.method.name(),
             path: self.path,
             headers: self.headers,
@@ -229,10 +226,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Method, &'a str> {
             private_key: self.private_key,
             base: CustomSigner {
                 kid: self.kid,
-                body: match self.method {
-                    Method::Get | Method::Delete => &[],
-                    Method::Post | Method::Put | Method::Patch => self.body,
-                },
+                body: self.body,
                 method: self.method.name(),
                 path: self.path,
                 headers: self.headers,
