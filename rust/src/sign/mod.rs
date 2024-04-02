@@ -119,35 +119,13 @@ impl<'a, K, Pk, Method, Path> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
     }
 }
 
-impl<'a, K, Pk, Path> SignerBuilder<'a, K, Pk, Unset, Unset, Path> {
+impl<'a, K, Pk, Body, Path> SignerBuilder<'a, K, Pk, Body, Unset, Path> {
     /// Add the request method.
-    ///
-    /// If the method is GET the body will be ignored.
-    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, Unset, Method, Path> {
+    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, Body, Method, Path> {
         SignerBuilder {
             kid: self.kid,
             private_key: self.private_key,
             body: self.body,
-            method,
-            path: self.path,
-            headers: self.headers,
-            jws_jku: self.jws_jku,
-        }
-    }
-}
-
-impl<'a, K, Pk, Path> SignerBuilder<'a, K, Pk, &'a [u8], Unset, Path> {
-    /// Add the request method.
-    ///
-    /// If the method is GET the body will be ignored.
-    pub fn method(self, method: Method) -> SignerBuilder<'a, K, Pk, &'a [u8], Method, Path> {
-        SignerBuilder {
-            kid: self.kid,
-            private_key: self.private_key,
-            body: match method {
-                Method::Get | Method::Delete => &[],
-                Method::Post | Method::Put | Method::Patch => self.body,
-            },
             method,
             path: self.path,
             headers: self.headers,
@@ -213,10 +191,7 @@ impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
     pub fn build_custom_signer(self) -> CustomSigner<'a> {
         CustomSigner {
             kid: self.kid,
-            body: match self.method {
-                Method::Get | Method::Delete => &[],
-                Method::Post | Method::Put | Method::Patch => self.body,
-            },
+            body: self.body,
             method: self.method.name(),
             path: self.path,
             headers: self.headers,
@@ -251,10 +226,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Method, &'a str> {
             private_key: self.private_key,
             base: CustomSigner {
                 kid: self.kid,
-                body: match self.method {
-                    Method::Get | Method::Delete => &[],
-                    Method::Post | Method::Put | Method::Patch => self.body,
-                },
+                body: self.body,
                 method: self.method.name(),
                 path: self.path,
                 headers: self.headers,

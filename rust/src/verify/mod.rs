@@ -179,10 +179,7 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Method, &'a str> {
     pub fn build_verifier(self) -> Verifier<'a> {
         Verifier {
             base: CustomVerifier {
-                body: match self.method {
-                    Method::Get | Method::Delete => &[],
-                    Method::Post | Method::Put | Method::Patch => self.body,
-                },
+                body: self.body,
                 method: self.method.name(),
                 path: self.path,
                 headers: self.headers,
