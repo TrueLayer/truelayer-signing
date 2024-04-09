@@ -1,3 +1,5 @@
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+
 pub(crate) trait ToUrlSafeBase64 {
     fn to_url_safe_base64(&self) -> String;
 }
@@ -7,7 +9,7 @@ where
 {
     #[inline]
     fn to_url_safe_base64(&self) -> String {
-        base64::encode_config(self, base64::URL_SAFE_NO_PAD)
+        URL_SAFE_NO_PAD.encode(self)
     }
 }
 pub(crate) trait DecodeUrlSafeBase64 {
@@ -19,6 +21,6 @@ where
 {
     #[inline]
     fn decode_url_safe_base64(&self) -> Result<Vec<u8>, base64::DecodeError> {
-        base64::decode_config(self, base64::URL_SAFE_NO_PAD)
+        URL_SAFE_NO_PAD.decode(self)
     }
 }

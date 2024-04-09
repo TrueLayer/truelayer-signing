@@ -7,8 +7,8 @@ use axum::{
     Router,
 };
 use reqwest_middleware::ClientWithMiddleware;
-use std::net::SocketAddr;
 use tracing::{info, warn};
+use truelayer_signing::Method;
 
 #[tokio::main]
 async fn main() {
@@ -19,7 +19,7 @@ async fn main() {
         .with(http_cache_reqwest::Cache(http_cache_reqwest::HttpCache {
             mode: http_cache_reqwest::CacheMode::Default,
             manager: http_cache_reqwest::MokaManager::default(),
-            options: None,
+            options: <_>::default(),
         }))
         .build();
 
@@ -34,8 +34,8 @@ async fn main() {
 
     info!("Starting server on :7000");
 
-    axum::Server::bind(&SocketAddr::from(([127, 0, 0, 1], 7000)))
-        .serve(app.into_make_service())
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:7000").await.unwrap();
+    axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
 }
@@ -70,7 +70,8 @@ async fn verify_hook(
 
     let jku = truelayer_signing::extract_jws_header(tl_signature)?
         .jku
-        .context("jku missing")?;
+        .context("jku missing")?
+        .to_string();
 
     // ensure jku is an expected TrueLayer url
     ensure!(
@@ -90,7 +91,7 @@ async fn verify_hook(
 
     // verify signature using the jwks
     truelayer_signing::verify_with_jwks(&jwks)
-        .method("POST")
+        .method(Method::Post)
         .path(parts.uri.path())
         .headers(
             parts
@@ -99,6 +100,7 @@ async fn verify_hook(
                 .map(|(h, v)| (h.as_str(), v.as_bytes())),
         )
         .body(body)
+        .build_verifier()
         .verify(tl_signature)?;
 
     Ok(())

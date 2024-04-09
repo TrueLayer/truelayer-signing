@@ -1,33 +1,34 @@
+use std::borrow::Cow;
+
 use crate::http::HeaderName;
 use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
 
 /// `Tl-Signature` header.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-#[non_exhaustive]
-pub struct JwsHeader {
+pub struct JwsHeader<'a> {
     /// Algorithm, should be `ES512`.
-    pub alg: String,
+    pub alg: Cow<'a, str>,
     /// Siging key id.
-    pub kid: String,
+    pub kid: Cow<'a, str>,
     /// Signing scheme version, e.g. `"2"`.
     ///
     /// Empty implies v1, aka body-only signing.
     #[serde(default)]
-    pub tl_version: String,
+    pub tl_version: Cow<'a, str>,
     /// Comma separated ordered headers used in the signature.
     #[serde(default)]
     pub tl_headers: String,
     /// JSON Web Key URL. Used in webhook signatures providing the public key jwk url.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub jku: Option<String>,
+    pub jku: Option<Cow<'a, str>>,
 }
 
-impl JwsHeader {
+impl<'a> JwsHeader<'a> {
     pub(crate) fn new_v2(
-        kid: &str,
+        kid: &'a str,
         headers: &IndexMap<HeaderName<'_>, &[u8]>,
-        jku: Option<String>,
+        jku: Option<&'a str>,
     ) -> Self {
         let header_keys = headers.keys().fold(String::new(), |mut all, next| {
             if !all.is_empty() {
@@ -37,18 +38,18 @@ impl JwsHeader {
             all
         });
         Self {
-            alg: "ES512".into(),
-            kid: kid.into(),
-            tl_version: "2".into(),
+            alg: Cow::Borrowed("ES512"),
+            kid: Cow::Borrowed(kid),
+            tl_version: Cow::Borrowed("2"),
             tl_headers: header_keys,
-            jku,
+            jku: jku.map(Cow::Borrowed),
         }
     }
 
     /// Filter & order headers to match jws header `tl_headers`.
     ///
     /// Returns an `Err(_)` if `headers` is missing any of the declared `tl_headers`.
-    pub(crate) fn filter_headers<'a>(
+    pub(crate) fn filter_headers(
         &'a self,
         headers: &IndexMap<HeaderName<'_>, &'a [u8]>,
     ) -> anyhow::Result<IndexMap<HeaderName<'a>, &'a [u8]>> {
