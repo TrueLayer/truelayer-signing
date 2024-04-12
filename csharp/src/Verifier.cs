@@ -49,7 +49,7 @@ namespace TrueLayer.Signing
                 });
                 // ecdsa fully setup later once we know the jwk kid
                 var verifier = VerifyWith(ECDsa.Create());
-                verifier.jwks = jwks ?? new Jwks();
+                verifier._jwks = jwks ?? new Jwks();
                 return verifier;
             }
             catch (JsonException e)
@@ -106,22 +106,22 @@ namespace TrueLayer.Signing
             return jku;
         }
 
-        private ECDsa key;
+        private readonly ECDsa _key;
         // Non-null when verifying using jwks data.
         // This indicates we need to initialize `key` once we have the kid.
-        private Jwks? jwks;
-        private string method = "";
-        private string path = "";
-        private Dictionary<string, byte[]> headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
-        private HashSet<string> requiredHeaders = new HashSet<string>(new HeaderNameComparer());
-        private byte[] body = new byte[0];
+        private Jwks? _jwks;
+        private string _method = "";
+        private string _path = "";
+        private readonly Dictionary<string, byte[]> _headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
+        private readonly HashSet<string> _requiredHeaders = new HashSet<string>(new HeaderNameComparer());
+        private byte[] _body = Array.Empty<byte>();
 
-        private Verifier(ECDsa publicKey) => key = publicKey;
+        private Verifier(ECDsa publicKey) => _key = publicKey;
 
         /// <summary>Add the request method.</summary>
         public Verifier Method(string method)
         {
-            this.method = method;
+            this._method = method;
             return this;
         }
 
@@ -134,7 +134,7 @@ namespace TrueLayer.Signing
             {
                 throw new ArgumentException($"Invalid path \"{path}\" must start with '/'");
             }
-            this.path = path;
+            this._path = path;
             return this;
         }
 
@@ -144,7 +144,7 @@ namespace TrueLayer.Signing
         /// </summary>
         public Verifier Header(string name, byte[] value)
         {
-            this.headers.Add(name.Trim(), value);
+            this._headers.Add(name.Trim(), value);
             return this;
         }
 
@@ -198,14 +198,14 @@ namespace TrueLayer.Signing
         /// </summary>
         public Verifier RequireHeader(string name)
         {
-            requiredHeaders.Add(name);
+            _requiredHeaders.Add(name);
             return this;
         }
 
         /// <summary>Add the full unmodified request body.</summary>
         public Verifier Body(byte[] body)
         {
-            this.body = body;
+            this._body = body;
             return this;
         }
 
@@ -229,7 +229,7 @@ namespace TrueLayer.Signing
             {
                 throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
             }
-            if (jwks is Jwks jwkeys)
+            if (_jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data
                 var kid = jwsHeaders.GetString("kid") ?? throw new SignatureException("missing kid");
@@ -248,28 +248,28 @@ namespace TrueLayer.Signing
                 .ToList();
 
             var signatureHeaderNameSet = new HashSet<string>(signatureHeaderNames, new HeaderNameComparer());
-            var missingRequired = requiredHeaders.SingleOrDefault(h => !signatureHeaderNameSet.Contains(h));
+            var missingRequired = _requiredHeaders.SingleOrDefault(h => !signatureHeaderNameSet.Contains(h));
             SignatureException.Ensure(missingRequired == null, $"signature is missing required header {missingRequired}");
 
             var signedHeaders = FilterOrderHeaders(signatureHeaderNames);
 
-            var signingPayload = Util.BuildV2SigningPayload(method, path, signedHeaders, body);
+            var signingPayload = Util.BuildV2SigningPayload(_method, _path, signedHeaders, _body);
             var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
 
             SignatureException.Try(() =>
             {
                 try
                 {
-                    return Jose.JWT.Decode(jws, key);
+                    return Jose.JWT.Decode(jws, _key);
                 }
                 catch (Jose.IntegrityException)
                 {
                     // try again with/without a trailing slash (#80)
-                    var path2 = path + "/";
-                    if (path.EndsWith("/")) path2 = path.Remove(path.Length - 1);
-                    var signingPayload = Util.BuildV2SigningPayload(method, path2, signedHeaders, body);
+                    var path2 = _path + "/";
+                    if (_path.EndsWith("/")) path2 = _path.Remove(_path.Length - 1);
+                    var signingPayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
                     var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
-                    return Jose.JWT.Decode(jws, key);
+                    return Jose.JWT.Decode(jws, _key);
                 }
             }, "Invalid signature");
         }
@@ -282,7 +282,7 @@ namespace TrueLayer.Signing
             SignatureException.Ensure(jwk.Kty == "EC", "unsupported jwk.kty");
             SignatureException.Ensure(jwk.Crv == "P-521", "unsupported jwk.crv");
 
-            SignatureException.TryAction(() => key.ImportParameters(new ECParameters
+            SignatureException.TryAction(() => _key.ImportParameters(new ECParameters
             {
                 Curve = ECCurve.NamedCurves.nistP521,
                 Q = new ECPoint
@@ -301,7 +301,7 @@ namespace TrueLayer.Signing
             var orderedHeaders = new List<(string, byte[])>(signedHeaderNames.Count);
             foreach (var name in signedHeaderNames)
             {
-                if (headers.TryGetValue(name.ToLowerInvariant(), out var value))
+                if (_headers.TryGetValue(name.ToLowerInvariant(), out var value))
                 {
                     orderedHeaders.Add((name, value));
                 }
