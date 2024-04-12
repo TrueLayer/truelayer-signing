@@ -237,11 +237,12 @@ namespace TrueLayer.Signing
             }
 
             SignatureException.Ensure(jwsHeaders.GetString("alg") == "ES512", "unsupported jws alg");
-            SignatureException.Ensure(jwsHeaders.GetString("tl_version") == "2", "unsupported jws tl_version");
+            var version = jwsHeaders.GetString("tl_version") ?? GetHeaderString("Tl-Signature-Version");
+            SignatureException.Ensure(version == "2", "unsupported jws tl_version");
             var signatureParts = tlSignature.Split('.');
             SignatureException.Ensure(signatureParts.Length >= 3, "invalid signature format");
 
-            var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? "")
+            var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? GetHeaderString("Tl-Signature-Headers") ?? "")
                 .Split(',')
                 .Select(h => h.Trim())
                 .Where(h => !string.IsNullOrEmpty(h))
@@ -312,5 +313,10 @@ namespace TrueLayer.Signing
             }
             return orderedHeaders;
         }
+
+        private string? GetHeaderString(string key) =>
+            _headers.TryGetValue(key, out var value)
+                ? Encoding.UTF8.GetString(value)
+                : null;
     }
 }
