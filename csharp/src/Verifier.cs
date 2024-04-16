@@ -237,20 +237,20 @@ namespace TrueLayer.Signing
             }
 
             SignatureException.Ensure(jwsHeaders.GetString("alg") == "ES512", "unsupported jws alg");
-            var version = jwsHeaders.GetString("tl_version") ?? GetHeaderString("Tl-Signature-Version");
+            var version = jwsHeaders.GetString("tl_version") ?? TryRequireHeaderString("Tl-Signature-Version");
             SignatureException.Ensure(version == "2", "unsupported jws tl_version");
             var signatureParts = tlSignature.Split('.');
             SignatureException.Ensure(signatureParts.Length >= 3, "invalid signature format");
 
-            var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? GetHeaderString("Tl-Signature-Headers") ?? "")
+            var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? TryRequireHeaderString("Tl-Signature-Headers") ?? "")
                 .Split(',')
                 .Select(h => h.Trim())
                 .Where(h => !string.IsNullOrEmpty(h))
                 .ToList();
 
             var signatureHeaderNameSet = new HashSet<string>(signatureHeaderNames, new HeaderNameComparer());
-            var missingRequired = _requiredHeaders.SingleOrDefault(h => !signatureHeaderNameSet.Contains(h));
-            SignatureException.Ensure(missingRequired == null, $"signature is missing required header {missingRequired}");
+            var missingRequired = _requiredHeaders.Where(h => !signatureHeaderNameSet.Contains(h)).ToList();
+            SignatureException.Ensure(missingRequired.Count == 0, $"signature is missing required headers {string.Join(",", missingRequired)}");
 
             var signedHeaders = FilterOrderHeaders(signatureHeaderNames);
 
@@ -312,6 +312,17 @@ namespace TrueLayer.Signing
                 }
             }
             return orderedHeaders;
+        }
+
+        private string? TryRequireHeaderString(string name)
+        {
+            if (GetHeaderString(name) is {} value)
+            {
+                _requiredHeaders.Add(name);
+                return value;
+            }
+
+            return null;
         }
 
         private string? GetHeaderString(string key) =>

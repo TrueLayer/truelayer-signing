@@ -429,12 +429,18 @@ namespace TrueLayer.Signing.Tests
 
         [Theory]
         [MemberData(nameof(TestCases))]
-        public void Verify_CustomJoseHeadersSuppliedAsHttpHeaders(TestCase testCase)
+        public void Verify_CustomJoseHeadersSuppliedAsHttpHeaders_NotInPayload(TestCase testCase)
         {
             const string body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
             const string idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
             const string path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
-
+            var headers = new Dictionary<string, string>
+            {
+                ["Idempotency-Key"] = idempotencyKey,
+                ["Tl-Signature-Version"] = "2",
+                ["Tl-Signature-Headers"] = "Idempotency-Key",
+            };
+            
             var signingFunction = SigningFunction.ForPrivateKey(testCase.PrivateKey);
 
             var joseHeaders = Base64Url.Encode(JsonSerializer.SerializeToUtf8Bytes(new Dictionary<string, object>
@@ -449,12 +455,46 @@ namespace TrueLayer.Signing.Tests
             var signature = signingFunction($"{joseHeaders}.{jwsPayload}");
             var tlSignature = $"{joseHeaders}..{signature}";
 
+            Action action = () => Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Headers(headers)
+                .Body(body)
+                .Verify(tlSignature);
+
+            action.Should().Throw<SignatureException>();
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void Verify_CustomJoseHeadersSuppliedAsHttpHeaders_Success(TestCase testCase)
+        {
+            const string body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            const string idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+            const string path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+            var headers = new Dictionary<string, string>
+            {
+                ["Idempotency-Key"] = idempotencyKey,
+                ["Tl-Signature-Version"] = "2",
+                ["Tl-Signature-Headers"] = "Idempotency-Key,Tl-Signature-Version,Tl-Signature-Headers",
+            };
+            
+            var signingFunction = SigningFunction.ForPrivateKey(testCase.PrivateKey);
+
+            var joseHeaders = Base64Url.Encode(JsonSerializer.SerializeToUtf8Bytes(new Dictionary<string, object>
+            {
+                ["alg"] = "ES512",
+                ["kid"] = testCase.Kid,
+            }));
+            var jwsPayload = Base64Url.Encode(Util.BuildV2SigningPayload("POST", path,
+                headers.Select(x => (x.Key, x.Value.ToUtf8())).ToList(), body.ToUtf8()));
+            var signature = signingFunction($"{joseHeaders}.{jwsPayload}");
+            var tlSignature = $"{joseHeaders}..{signature}";
+
             Verifier.VerifyWithPem(testCase.PublicKey)
                 .Method("POST")
                 .Path(path)
-                .Header("Tl-Signature-Version", "2")
-                .Header("Tl-Signature-Headers", "Idempotency-Key")
-                .Header("Idempotency-Key", idempotencyKey)
+                .Headers(headers)
                 .Body(body)
                 .Verify(tlSignature); // should not throw
         }
