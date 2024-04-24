@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 
 use crate::http::HeaderName;
-use anyhow::anyhow;
-use indexmap::{IndexMap, IndexSet};
+use indexmap::IndexMap;
 
 /// `Tl-Signature` header.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -43,38 +42,6 @@ impl<'a> JwsHeader<'a> {
             tl_version: Some(Cow::Borrowed("2")),
             tl_headers: Some(header_keys),
             jku: jku.map(Cow::Borrowed),
-        }
-    }
-
-    /// Filter & order headers to match jws header `tl_headers`.
-    ///
-    /// Returns an `Err(_)` if `headers` is missing any of the declared `tl_headers`.
-    pub(crate) fn filter_headers(
-        &'a self,
-        headers: &IndexMap<HeaderName<'_>, &'a [u8]>,
-    ) -> anyhow::Result<Option<IndexMap<HeaderName<'a>, &'a [u8]>>> {
-        match &self.tl_headers {
-            Some(tl_headers) => {
-                let required_headers: IndexSet<_> = tl_headers
-                    .split(',')
-                    .filter(|h| !h.is_empty())
-                    .map(HeaderName)
-                    .collect();
-
-                // populate required headers in jws-header order
-                let ordered_headers: IndexMap<_, _> = required_headers
-                    .iter()
-                    .map(|h| {
-                        let hval = headers.get(h).ok_or_else(|| {
-                            anyhow!("Missing tl_header `{}` declared in signature", h)
-                        })?;
-                        Ok((*h, *hval))
-                    })
-                    .collect::<anyhow::Result<_>>()?;
-
-                Ok(Some(ordered_headers))
-            }
-            _ => Ok(None),
         }
     }
 }

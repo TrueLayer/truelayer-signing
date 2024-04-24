@@ -57,10 +57,12 @@ impl<'a> CustomVerifier<'a> {
         }
 
         // check and order all included headers
-        let ordered_headers = jws_header
-            .filter_headers(&self.headers)
-            .map_err(Error::JwsError)?
+        let included_header_names_csv = jws_header
+            .tl_headers
             .ok_or_else(|| Error::JwsError(anyhow!("missing headers tl_headers")))?;
+        let ordered_headers = &self
+            .get_included_headers(&included_header_names_csv)
+            .map_err(Error::JwsError)?;
 
         // fail if signature is missing a required header
         if let Some(header) = self
@@ -76,7 +78,7 @@ impl<'a> CustomVerifier<'a> {
 
         // reconstruct the payload as it would have been signed
         let signing_payload =
-            build_v2_signing_payload(self.method, self.path, &ordered_headers, self.body, false);
+            build_v2_signing_payload(self.method, self.path, ordered_headers, self.body, false);
         let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
 
         verify_fn(payload.as_bytes(), signature.as_slice()).or_else(|e| {
@@ -86,10 +88,35 @@ impl<'a> CustomVerifier<'a> {
                 p => (p, true),
             };
             let signing_payload =
-                build_v2_signing_payload(self.method, path, &ordered_headers, self.body, slash);
+                build_v2_signing_payload(self.method, path, ordered_headers, self.body, slash);
             let payload = format!("{header_b64}.{}", signing_payload.to_url_safe_base64());
             // use original error if both fail
             verify_fn(payload.as_bytes(), signature.as_slice()).map_err(|_| e)
         })
+    }
+
+    fn get_included_headers(
+        &self,
+        included_header_names_csv: &'a str,
+    ) -> anyhow::Result<IndexMap<HeaderName<'a>, &'a [u8]>> {
+        let included_header_names: IndexSet<_> = included_header_names_csv
+            .split(',')
+            .filter(|h| !h.is_empty())
+            .map(HeaderName)
+            .collect();
+
+        // populate included headers in specified order
+        let ordered_headers: IndexMap<_, _> = included_header_names
+            .iter()
+            .map(|h| {
+                let hval = self
+                    .headers
+                    .get(h)
+                    .ok_or_else(|| anyhow!("Missing tl_header `{}` declared in signature", h))?;
+                Ok((*h, *hval))
+            })
+            .collect::<anyhow::Result<_>>()?;
+
+        Ok(ordered_headers)
     }
 }
