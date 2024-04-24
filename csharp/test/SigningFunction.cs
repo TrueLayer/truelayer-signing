@@ -1,6 +1,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Jose;
 
 namespace TrueLayer.Signing.Tests
 {
@@ -11,7 +12,7 @@ namespace TrueLayer.Signing.Tests
             var privateKey = Util.ParsePem(privateKeyPem);
             var payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
             var signatureBytes = privateKey.SignData(payloadBytes, HashAlgorithmName.SHA512);
-            return Convert.ToBase64String(signatureBytes);
+            return Base64Url.Encode(signatureBytes);
         };
 
         public static Func<string, Task<string>> ForPrivateKeyAsync(string privateKeyPem)
