@@ -446,8 +446,11 @@ fn extract_jws_header() {
 
     assert_eq!(jws_header.alg, "ES512");
     assert_eq!(jws_header.kid, KID);
-    assert_eq!(jws_header.tl_version, "2");
-    assert_eq!(jws_header.tl_headers, "X-Tl-Webhook-Timestamp,Content-Type");
+    assert_eq!(jws_header.tl_version, Some("2".into()));
+    assert_eq!(
+        jws_header.tl_headers,
+        Some("X-Tl-Webhook-Timestamp,Content-Type".into())
+    );
     assert_eq!(
         jws_header.jku.as_deref(),
         Some("https://webhooks.truelayer.com/.well-known/jwks")

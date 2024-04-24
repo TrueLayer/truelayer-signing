@@ -3,11 +3,9 @@ use std::fmt;
 use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
 
-use crate::{
-    base64::ToUrlSafeBase64, http::HeaderName, sign::build_v2_signing_payload, Error, JwsHeader,
-};
+use crate::{base64::ToUrlSafeBase64, http::HeaderName, sign::build_v2_signing_payload, Error};
 
-use super::parse_tl_signature;
+use super::{parse_tl_signature, ParsedTlSignature};
 
 /// A `Tl-Signature` Verifier for custom signature verification.
 pub struct CustomVerifier<'a> {
@@ -16,7 +14,6 @@ pub struct CustomVerifier<'a> {
     pub(crate) path: &'a str,
     pub(crate) headers: IndexMap<HeaderName<'a>, &'a [u8]>,
     pub(crate) required_headers: IndexSet<HeaderName<'a>>,
-    pub(crate) parsed_tl_sig: Option<(JwsHeader<'a>, &'a str, Vec<u8>)>,
 }
 
 /// Debug does not display key info.
@@ -28,25 +25,42 @@ impl fmt::Debug for CustomVerifier<'_> {
 
 impl<'a> CustomVerifier<'a> {
     pub fn verify_with(
-        mut self,
+        self,
         tl_signature: &'a str,
+        verify_fn: impl FnMut(&[u8], &[u8]) -> Result<(), Error>,
+    ) -> Result<(), Error> {
+        let parsed_tl_signature = parse_tl_signature(tl_signature)?;
+        self.verify_parsed_with(parsed_tl_signature, verify_fn)
+    }
+
+    pub(crate) fn verify_parsed_with(
+        self,
+        tl_signature: ParsedTlSignature<'a>,
         mut verify_fn: impl FnMut(&[u8], &[u8]) -> Result<(), Error>,
     ) -> Result<(), Error> {
-        let (jws_header, header_b64, signature) = unsafe {
-            if self.parsed_tl_sig.is_none() {
-                self.parsed_tl_sig = Some(parse_tl_signature(tl_signature)?);
+        let ParsedTlSignature {
+            header: jws_header,
+            header_b64,
+            signature,
+        } = tl_signature;
+
+        match jws_header.tl_version {
+            Some(version) if version != "2" => {
+                return Err(Error::JwsError(anyhow!("unexpected header tl_version")))
             }
-            self.parsed_tl_sig.unwrap_unchecked()
-        };
+            None => return Err(Error::JwsError(anyhow!("missing header tl_version"))),
+            _ => {}
+        }
 
         if jws_header.alg != "ES512" {
             return Err(Error::JwsError(anyhow!("unexpected header alg")));
         }
 
-        // check and order all required headers
+        // check and order all included headers
         let ordered_headers = jws_header
             .filter_headers(&self.headers)
-            .map_err(Error::JwsError)?;
+            .map_err(Error::JwsError)?
+            .ok_or_else(|| Error::JwsError(anyhow!("missing headers tl_headers")))?;
 
         // fail if signature is missing a required header
         if let Some(header) = self

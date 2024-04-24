@@ -15,10 +15,10 @@ pub struct JwsHeader<'a> {
     ///
     /// Empty implies v1, aka body-only signing.
     #[serde(default)]
-    pub tl_version: Cow<'a, str>,
+    pub tl_version: Option<Cow<'a, str>>,
     /// Comma separated ordered headers used in the signature.
     #[serde(default)]
-    pub tl_headers: String,
+    pub tl_headers: Option<String>,
     /// JSON Web Key URL. Used in webhook signatures providing the public key jwk url.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub jku: Option<Cow<'a, str>>,
@@ -40,8 +40,8 @@ impl<'a> JwsHeader<'a> {
         Self {
             alg: Cow::Borrowed("ES512"),
             kid: Cow::Borrowed(kid),
-            tl_version: Cow::Borrowed("2"),
-            tl_headers: header_keys,
+            tl_version: Some(Cow::Borrowed("2")),
+            tl_headers: Some(header_keys),
             jku: jku.map(Cow::Borrowed),
         }
     }
@@ -52,25 +52,29 @@ impl<'a> JwsHeader<'a> {
     pub(crate) fn filter_headers(
         &'a self,
         headers: &IndexMap<HeaderName<'_>, &'a [u8]>,
-    ) -> anyhow::Result<IndexMap<HeaderName<'a>, &'a [u8]>> {
-        let required_headers: IndexSet<_> = self
-            .tl_headers
-            .split(',')
-            .filter(|h| !h.is_empty())
-            .map(HeaderName)
-            .collect();
+    ) -> anyhow::Result<Option<IndexMap<HeaderName<'a>, &'a [u8]>>> {
+        match &self.tl_headers {
+            Some(tl_headers) => {
+                let required_headers: IndexSet<_> = tl_headers
+                    .split(',')
+                    .filter(|h| !h.is_empty())
+                    .map(HeaderName)
+                    .collect();
 
-        // populate required headers in jws-header order
-        let ordered_headers: IndexMap<_, _> = required_headers
-            .iter()
-            .map(|h| {
-                let hval = headers
-                    .get(h)
-                    .ok_or_else(|| anyhow!("Missing tl_header `{}` declared in signature", h))?;
-                Ok((*h, *hval))
-            })
-            .collect::<anyhow::Result<_>>()?;
+                // populate required headers in jws-header order
+                let ordered_headers: IndexMap<_, _> = required_headers
+                    .iter()
+                    .map(|h| {
+                        let hval = headers.get(h).ok_or_else(|| {
+                            anyhow!("Missing tl_header `{}` declared in signature", h)
+                        })?;
+                        Ok((*h, *hval))
+                    })
+                    .collect::<anyhow::Result<_>>()?;
 
-        Ok(ordered_headers)
+                Ok(Some(ordered_headers))
+            }
+            _ => Ok(None),
+        }
     }
 }

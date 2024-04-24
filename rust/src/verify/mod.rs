@@ -184,7 +184,6 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Method, &'a str> {
                 path: self.path,
                 headers: self.headers,
                 required_headers: self.required_headers,
-                parsed_tl_sig: None,
             },
             public_key: self.public_key,
         }
@@ -199,7 +198,6 @@ impl<'a> VerifierBuilder<'a, PublicKey<'a>, &'a [u8], Unset, Unset> {
         VerifierV1 {
             public_key: self.public_key,
             body: self.body,
-            parsed_tl_sig: None,
         }
     }
 }
@@ -240,23 +238,24 @@ impl<'a> Verifier<'a> {
     /// Supports v2 full request signatures.
     ///
     /// Returns `Err(_)` if verification fails.
-    pub fn verify(mut self, tl_signature: &'a str) -> Result<(), Error> {
-        let jws_header = unsafe {
-            if self.base.parsed_tl_sig.is_none() {
-                self.base.parsed_tl_sig = Some(parse_tl_signature(tl_signature)?);
-            }
-            &self.base.parsed_tl_sig.as_ref().unwrap_unchecked().0
-        };
+    pub fn verify(self, tl_signature: &'a str) -> Result<(), Error> {
+        let parsed_tl_signature = parse_tl_signature(tl_signature)?;
+        self.verify_parsed(parsed_tl_signature)
+    }
 
+    fn verify_parsed(self, parsed_tl_signature: ParsedTlSignature<'a>) -> Result<(), Error> {
         let public_key = match self.public_key {
             PublicKey::Pem(pem) => openssl::parse_ec_public_key(pem),
-            PublicKey::Jwks(jwks) => openssl::find_and_parse_ec_jwk(&jws_header.kid, jwks),
+            PublicKey::Jwks(jwks) => {
+                openssl::find_and_parse_ec_jwk(&parsed_tl_signature.header.kid, jwks)
+            }
         }
         .map_err(Error::InvalidKey)?;
 
-        self.base.verify_with(tl_signature, |payload, signature| {
-            openssl::verify_es512(&public_key, payload, signature).map_err(Error::JwsError)
-        })
+        self.base
+            .verify_parsed_with(parsed_tl_signature, |payload, signature| {
+                openssl::verify_es512(&public_key, payload, signature).map_err(Error::JwsError)
+            })
     }
 
     /// Verify the given `Tl-Signature` header value.
@@ -264,29 +263,29 @@ impl<'a> Verifier<'a> {
     /// Supports v1 (body only) & v2 full request signatures.
     ///
     /// Returns `Err(_)` if verification fails.
-    pub fn verify_v1_or_v2(mut self, tl_signature: &'a str) -> Result<(), Error> {
-        let jws_header = unsafe {
-            if self.base.parsed_tl_sig.is_none() {
-                self.base.parsed_tl_sig = Some(parse_tl_signature(tl_signature)?);
-            }
-            &self.base.parsed_tl_sig.as_ref().unwrap_unchecked().0
-        };
+    pub fn verify_v1_or_v2(self, tl_signature: &'a str) -> Result<(), Error> {
+        let parsed_tl_signature = parse_tl_signature(tl_signature)?;
 
-        if jws_header.tl_version.is_empty() || jws_header.tl_version == "1" {
-            VerifierV1 {
+        match &parsed_tl_signature.header.tl_version {
+            Some(tl_version) if tl_version == "1" => VerifierV1 {
                 public_key: self.public_key,
                 body: self.base.body,
-                parsed_tl_sig: self.base.parsed_tl_sig,
             }
-            .verify_body_only(tl_signature)
-        } else {
-            self.verify(tl_signature)
+            .verify_parsed_body_only(parsed_tl_signature),
+            _ => self.verify_parsed(parsed_tl_signature),
         }
     }
 }
 
+/// Parsed `Tl-Signature` header value.
+pub(crate) struct ParsedTlSignature<'a> {
+    pub(crate) header: JwsHeader<'a>,
+    pub(crate) header_b64: &'a str,
+    pub(crate) signature: Vec<u8>,
+}
+
 /// Parse a tl signature header value into `(header, header_base64, signature)`.
-pub(crate) fn parse_tl_signature(tl_signature: &str) -> Result<(JwsHeader, &str, Vec<u8>), Error> {
+pub(crate) fn parse_tl_signature(tl_signature: &str) -> Result<ParsedTlSignature, Error> {
     let (header_b64, signature_b64) = tl_signature
         .split_once("..")
         .ok_or_else(|| Error::JwsError(anyhow!("invalid signature format")))?;
@@ -302,5 +301,9 @@ pub(crate) fn parse_tl_signature(tl_signature: &str) -> Result<(JwsHeader, &str,
         .decode_url_safe_base64()
         .map_err(|e| Error::JwsError(anyhow!("signature decode failed: {}", e)))?;
 
-    Ok((header, header_b64, signature))
+    Ok(ParsedTlSignature {
+        header,
+        header_b64,
+        signature,
+    })
 }

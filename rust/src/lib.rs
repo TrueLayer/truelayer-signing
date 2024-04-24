@@ -86,7 +86,7 @@ pub fn verify_with_jwks(jwks: &[u8]) -> VerifierBuilder<'_, PublicKey<'_>, Unset
 ///
 /// This can then be used to pick a verification key using the `kid` etc.
 pub fn extract_jws_header(tl_signature: &str) -> Result<JwsHeader, Error> {
-    Ok(verify::parse_tl_signature(tl_signature)?.0)
+    Ok(verify::parse_tl_signature(tl_signature)?.header)
 }
 
 /// Sign/verification error.

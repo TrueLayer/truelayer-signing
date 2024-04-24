@@ -2,15 +2,14 @@ use std::fmt;
 
 use anyhow::anyhow;
 
-use crate::{base64::ToUrlSafeBase64, openssl, Error, JwsHeader};
+use crate::{base64::ToUrlSafeBase64, openssl, Error};
 
-use super::{parse_tl_signature, PublicKey};
+use super::{parse_tl_signature, ParsedTlSignature, PublicKey};
 
 /// A verifier for a request against a `Tl-Signature` header V1.
 pub struct VerifierV1<'a> {
     pub(crate) public_key: PublicKey<'a>,
     pub(crate) body: &'a [u8],
-    pub(crate) parsed_tl_sig: Option<(JwsHeader<'a>, &'a str, Vec<u8>)>,
 }
 
 /// Debug does not display key info.
@@ -26,13 +25,20 @@ impl<'a> VerifierV1<'a> {
     /// Supports v1 (body only) request signatures.
     ///
     /// Returns `Err(_)` if verification fails.
-    pub fn verify_body_only(mut self, tl_signature: &'a str) -> Result<(), Error> {
-        let (jws_header, header_b64, signature) = unsafe {
-            if self.parsed_tl_sig.is_none() {
-                self.parsed_tl_sig = Some(parse_tl_signature(tl_signature)?);
-            };
-            self.parsed_tl_sig.unwrap_unchecked()
-        };
+    pub fn verify_body_only(self, tl_signature: &'a str) -> Result<(), Error> {
+        let parsed_tl_signature = parse_tl_signature(tl_signature)?;
+        self.verify_parsed_body_only(parsed_tl_signature)
+    }
+
+    pub(crate) fn verify_parsed_body_only(
+        self,
+        tl_signature: ParsedTlSignature<'a>,
+    ) -> Result<(), Error> {
+        let ParsedTlSignature {
+            header: jws_header,
+            header_b64,
+            signature,
+        } = tl_signature;
 
         let public_key = match self.public_key {
             PublicKey::Pem(pem) => openssl::parse_ec_public_key(pem),
