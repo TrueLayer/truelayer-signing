@@ -44,7 +44,14 @@ impl<'a> CustomVerifier<'a> {
             signature,
         } = tl_signature;
 
-        match jws_header.tl_version {
+        let mut required_headers = self.required_headers.clone();
+
+        let version = jws_header.tl_version.map(|s| s.to_string()).or_else(|| {
+            let version_header_name = HeaderName("Tl-Signature-Version");
+            required_headers.insert(version_header_name);
+            self.get_header_string_value_safe(&version_header_name)
+        });
+        match version {
             Some(version) if version != "2" => {
                 return Err(Error::JwsError(anyhow!("unexpected header tl_version")))
             }
@@ -56,17 +63,21 @@ impl<'a> CustomVerifier<'a> {
             return Err(Error::JwsError(anyhow!("unexpected header alg")));
         }
 
-        // check and order all included headers
         let included_header_names_csv = jws_header
             .tl_headers
-            .ok_or_else(|| Error::JwsError(anyhow!("missing headers tl_headers")))?;
+            .or_else(|| {
+                let headers_header_name = HeaderName("Tl-Signature-Headers");
+                required_headers.insert(headers_header_name);
+                self.get_header_string_value_safe(&headers_header_name)
+            })
+            .ok_or_else(|| Error::JwsError(anyhow!("missing header tl_headers")))?;
+        // check and order all included headers
         let ordered_headers = &self
             .get_included_headers(&included_header_names_csv)
             .map_err(Error::JwsError)?;
 
         // fail if signature is missing a required header
-        if let Some(header) = self
-            .required_headers
+        if let Some(header) = required_headers
             .iter()
             .find(|h| !ordered_headers.contains_key(*h))
         {
@@ -118,5 +129,13 @@ impl<'a> CustomVerifier<'a> {
             .collect::<anyhow::Result<_>>()?;
 
         Ok(ordered_headers)
+    }
+
+    fn get_header_string_value_safe(&self, header_name: &HeaderName) -> Option<String> {
+        self.headers
+            .get(header_name)
+            .map(|h| std::str::from_utf8(h).ok())
+            .flatten()
+            .map(|s| s.to_string())
     }
 }
