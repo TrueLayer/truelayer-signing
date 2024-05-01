@@ -11,7 +11,6 @@ use common::Unset;
 pub use http::Method;
 pub use jws::{JwsAlgorithm, JwsHeader, TlVersion};
 pub use sign::{CustomSigner, Signer, SignerBuilder};
-use uuid::Uuid;
 use verify::PublicKey;
 pub use verify::{CustomVerifier, Verifier, VerifierBuilder};
 
@@ -31,10 +30,10 @@ pub use verify::{CustomVerifier, Verifier, VerifierBuilder};
 ///     .sign()?;
 /// # Ok(()) }
 /// ```
-pub fn sign_with_pem(
-    kid: Uuid,
-    private_key_pem: &[u8],
-) -> SignerBuilder<'_, Uuid, &[u8], Unset, Unset, Unset> {
+pub fn sign_with_pem<'a>(
+    kid: &'a str,
+    private_key_pem: &'a [u8],
+) -> SignerBuilder<'a, &'a str, &'a [u8], Unset, Unset, Unset> {
     SignerBuilder::build_with_pem(kid, private_key_pem)
 }
 

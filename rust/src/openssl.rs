@@ -8,7 +8,6 @@ use openssl::{
     nid::Nid,
     pkey::{PKey, Private, Public},
 };
-use uuid::Uuid;
 
 pub(crate) fn parse_ec_private_key(private_key: &[u8]) -> anyhow::Result<EcKey<Private>> {
     let private_key = PKey::private_key_from_pem(private_key)?.ec_key()?;
@@ -32,7 +31,7 @@ pub(crate) fn parse_ec_public_key(public_key: &[u8]) -> anyhow::Result<EcKey<Pub
 
 /// Read JWKs json then find & parse the JWK for the given `signature_kid`
 pub(crate) fn find_and_parse_ec_jwk(
-    signature_kid: Uuid,
+    signature_kid: &str,
     jwks: &[u8],
 ) -> anyhow::Result<EcKey<Public>> {
     let jwks: Jwks = serde_json::from_slice(jwks)?;
@@ -92,7 +91,7 @@ struct Jwks {
 #[derive(serde::Deserialize)]
 struct Jwk {
     #[serde(default)]
-    kid: Uuid,
+    kid: String,
     #[serde(default)]
     kty: String,
     #[serde(default)]

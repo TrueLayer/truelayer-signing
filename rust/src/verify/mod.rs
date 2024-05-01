@@ -248,7 +248,7 @@ impl<'a> Verifier<'a> {
         let public_key = match self.public_key {
             PublicKey::Pem(pem) => openssl::parse_ec_public_key(pem),
             PublicKey::Jwks(jwks) => {
-                openssl::find_and_parse_ec_jwk(parsed_tl_signature.header.kid, jwks)
+                openssl::find_and_parse_ec_jwk(&parsed_tl_signature.header.kid, jwks)
             }
         }
         .map_err(Error::InvalidKey)?;

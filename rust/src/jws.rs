@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use indexmap::IndexMap;
-use uuid::Uuid;
 
 use crate::http::HeaderName;
 
@@ -11,7 +10,7 @@ pub struct JwsHeader<'a> {
     /// Algorithm, should be `ES512`.
     pub alg: JwsAlgorithm,
     /// Signing key id.
-    pub kid: Uuid,
+    pub kid: Cow<'a, str>,
     /// Signing scheme version, e.g. `"2"`.
     ///
     /// Empty implies v1, aka body-only signing.
@@ -27,7 +26,7 @@ pub struct JwsHeader<'a> {
 
 impl<'a> JwsHeader<'a> {
     pub(crate) fn new_v2(
-        kid: Uuid,
+        kid: &'a str,
         headers: &IndexMap<HeaderName<'_>, &[u8]>,
         jku: Option<&'a str>,
     ) -> Self {
@@ -40,7 +39,7 @@ impl<'a> JwsHeader<'a> {
         });
         Self {
             alg: JwsAlgorithm::ES512,
-            kid,
+            kid: Cow::Borrowed(kid),
             tl_version: Some(TlVersion::V2),
             tl_headers: Some(header_keys),
             jku: jku.map(Cow::Borrowed),
