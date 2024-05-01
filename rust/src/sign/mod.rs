@@ -3,6 +3,7 @@ mod signer_v1;
 
 use indexmap::IndexMap;
 use std::fmt;
+use uuid::Uuid;
 
 use crate::{base64::ToUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, Method};
 
@@ -55,8 +56,8 @@ impl<'a> SignerBuilder<'a, Unset, Unset, Unset, Unset, Unset> {
     }
 }
 
-impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, Unset, Unset> {
-    pub fn build_with_pem(kid: &'a str, private_key: &'a [u8]) -> Self {
+impl<'a> SignerBuilder<'a, Uuid, &'a [u8], Unset, Unset, Unset> {
+    pub fn build_with_pem(kid: Uuid, private_key: &'a [u8]) -> Self {
         SignerBuilder {
             kid,
             private_key,
@@ -71,7 +72,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, Unset, Unset> {
 
 impl<'a, Pk, Body, Method, Path> SignerBuilder<'a, Unset, Pk, Body, Method, Path> {
     /// Add the private key kid.
-    pub fn kid(self, kid: &str) -> SignerBuilder<'a, &str, Pk, Body, Method, Path> {
+    pub fn kid(self, kid: Uuid) -> SignerBuilder<'a, Uuid, Pk, Body, Method, Path> {
         SignerBuilder {
             kid,
             private_key: self.private_key,
@@ -183,7 +184,7 @@ impl<'a, K, Pk, Body, Method, Path> SignerBuilder<'a, K, Pk, Body, Method, Path>
     }
 }
 
-impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
+impl<'a> SignerBuilder<'a, Uuid, Unset, &'a [u8], Method, &'a str> {
     /// Builds a [`CustomSigner`]
     ///
     /// requires the kid, body, method, and path to be set to call this function.
@@ -200,7 +201,7 @@ impl<'a> SignerBuilder<'a, &'a str, Unset, &'a [u8], Method, &'a str> {
     }
 }
 
-impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
+impl<'a> SignerBuilder<'a, Uuid, &'a [u8], &'a [u8], Unset, Unset> {
     /// Build a V1 Signer see [`SignerV1`].
     ///
     /// requires the private key, kid, and body to be set to call this function.
@@ -217,7 +218,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Unset, Unset> {
     }
 }
 
-impl<'a> SignerBuilder<'a, &'a str, &'a [u8], &'a [u8], Method, &'a str> {
+impl<'a> SignerBuilder<'a, Uuid, &'a [u8], &'a [u8], Method, &'a str> {
     /// Build a V2 Signer see [`Signer`].
     ///
     /// requires the private key, kid, body, method, and path to be set to call this function.

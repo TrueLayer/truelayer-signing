@@ -1,20 +1,22 @@
 use std::borrow::Cow;
 
-use crate::http::HeaderName;
 use indexmap::IndexMap;
+use uuid::Uuid;
+
+use crate::http::HeaderName;
 
 /// `Tl-Signature` header.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct JwsHeader<'a> {
     /// Algorithm, should be `ES512`.
-    pub alg: Cow<'a, str>,
-    /// Siging key id.
-    pub kid: Cow<'a, str>,
+    pub alg: JwsAlgorithm,
+    /// Signing key id.
+    pub kid: Uuid,
     /// Signing scheme version, e.g. `"2"`.
     ///
     /// Empty implies v1, aka body-only signing.
     #[serde(default)]
-    pub tl_version: Option<Cow<'a, str>>,
+    pub tl_version: Option<TlVersion>,
     /// Comma separated ordered headers used in the signature.
     #[serde(default)]
     pub tl_headers: Option<String>,
@@ -25,7 +27,7 @@ pub struct JwsHeader<'a> {
 
 impl<'a> JwsHeader<'a> {
     pub(crate) fn new_v2(
-        kid: &'a str,
+        kid: Uuid,
         headers: &IndexMap<HeaderName<'_>, &[u8]>,
         jku: Option<&'a str>,
     ) -> Self {
@@ -37,11 +39,34 @@ impl<'a> JwsHeader<'a> {
             all
         });
         Self {
-            alg: Cow::Borrowed("ES512"),
-            kid: Cow::Borrowed(kid),
-            tl_version: Some(Cow::Borrowed("2")),
+            alg: JwsAlgorithm::ES512,
+            kid,
+            tl_version: Some(TlVersion::V2),
             tl_headers: Some(header_keys),
             jku: jku.map(Cow::Borrowed),
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum TlVersion {
+    #[serde(rename = "1")]
+    V1,
+    #[serde(rename = "2")]
+    V2,
+}
+
+impl TlVersion {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            TlVersion::V1 => "1",
+            TlVersion::V2 => "2",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum JwsAlgorithm {
+    #[serde(rename = "ES512")]
+    ES512,
 }

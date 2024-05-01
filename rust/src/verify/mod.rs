@@ -4,7 +4,8 @@ use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
 
 use crate::{
-    base64::DecodeUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, JwsHeader, Method,
+    base64::DecodeUrlSafeBase64, common::Unset, http::HeaderName, jws::TlVersion, openssl, Error,
+    JwsHeader, Method,
 };
 
 pub use self::custom_verifer::CustomVerifier;
@@ -247,7 +248,7 @@ impl<'a> Verifier<'a> {
         let public_key = match self.public_key {
             PublicKey::Pem(pem) => openssl::parse_ec_public_key(pem),
             PublicKey::Jwks(jwks) => {
-                openssl::find_and_parse_ec_jwk(&parsed_tl_signature.header.kid, jwks)
+                openssl::find_and_parse_ec_jwk(parsed_tl_signature.header.kid, jwks)
             }
         }
         .map_err(Error::InvalidKey)?;
@@ -267,12 +268,12 @@ impl<'a> Verifier<'a> {
         let parsed_tl_signature = parse_tl_signature(tl_signature)?;
 
         match &parsed_tl_signature.header.tl_version {
-            Some(tl_version) if tl_version == "1" => VerifierV1 {
+            None | Some(TlVersion::V1) => VerifierV1 {
                 public_key: self.public_key,
                 body: self.base.body,
             }
             .verify_parsed_body_only(parsed_tl_signature),
-            _ => self.verify_parsed(parsed_tl_signature),
+            Some(TlVersion::V2) => self.verify_parsed(parsed_tl_signature),
         }
     }
 }

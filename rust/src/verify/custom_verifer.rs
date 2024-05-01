@@ -3,7 +3,10 @@ use std::fmt;
 use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
 
-use crate::{base64::ToUrlSafeBase64, http::HeaderName, sign::build_v2_signing_payload, Error};
+use crate::{
+    base64::ToUrlSafeBase64, http::HeaderName, jws::TlVersion, sign::build_v2_signing_payload,
+    Error,
+};
 
 use super::{parse_tl_signature, ParsedTlSignature};
 
@@ -46,21 +49,28 @@ impl<'a> CustomVerifier<'a> {
 
         let mut required_headers = self.required_headers.clone();
 
-        let version = jws_header.tl_version.map(|s| s.to_string()).or_else(|| {
-            let version_header_name = HeaderName("Tl-Signature-Version");
-            required_headers.insert(version_header_name);
-            self.get_header_string_value_safe(&version_header_name)
-        });
-        match version {
-            Some(version) if version != "2" => {
-                return Err(Error::JwsError(anyhow!("unexpected header tl_version")))
-            }
-            None => return Err(Error::JwsError(anyhow!("missing header tl_version"))),
-            _ => {}
-        }
+        let version = jws_header
+            .tl_version
+            .map(Ok)
+            .or_else(|| {
+                let version_header_name = HeaderName("Tl-Signature-Version");
+                required_headers.insert(version_header_name);
+                self.get_header_string_value_safe(&version_header_name)
+                    .map(|v| match v.as_str() {
+                        "2" => Ok(TlVersion::V2),
+                        v => Err(Error::JwsError(anyhow!(
+                            "unexpected header tl_version: {}",
+                            v
+                        ))),
+                    })
+            })
+            .ok_or(Error::JwsError(anyhow!("missing header tl_version")))??;
 
-        if jws_header.alg != "ES512" {
-            return Err(Error::JwsError(anyhow!("unexpected header alg")));
+        if version != TlVersion::V2 {
+            return Err(Error::JwsError(anyhow!(
+                "unexpected header tl_version: {}",
+                version.as_str()
+            )));
         }
 
         let included_header_names_csv = jws_header
@@ -134,8 +144,7 @@ impl<'a> CustomVerifier<'a> {
     fn get_header_string_value_safe(&self, header_name: &HeaderName) -> Option<String> {
         self.headers
             .get(header_name)
-            .map(|h| std::str::from_utf8(h).ok())
-            .flatten()
+            .and_then(|h| std::str::from_utf8(h).ok())
             .map(|s| s.to_string())
     }
 }

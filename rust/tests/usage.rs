@@ -1,4 +1,7 @@
-use truelayer_signing::{Error, Method};
+use std::str::FromStr;
+
+use truelayer_signing::{Error, JwsAlgorithm, Method, TlVersion};
+use uuid::Uuid;
 
 const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem");
 const PRIVATE_KEY: &[u8] = include_bytes!("../../test-resources/ec512-private.pem");
@@ -16,8 +19,9 @@ fn full_request_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000,"name":"Foo???"}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -46,8 +50,9 @@ fn full_request_signature() {
 fn full_request_signature_no_headers() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .body(body)
@@ -146,8 +151,9 @@ fn verify_with_invalid_signature_should_error() {
 #[test]
 fn verify_without_signed_trailing_slash() {
     let body = br#"{"foo":"bar"}"#;
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path("/tl-webhook/")
         .body(body)
@@ -169,8 +175,9 @@ fn verify_without_signed_trailing_slash() {
 #[test]
 fn verify_with_unsigned_trailing_slash() {
     let body = br#"{"foo":"bar"}"#;
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path("/tl-webhook")
         .body(body)
@@ -190,7 +197,8 @@ fn verify_with_unsigned_trailing_slash() {
 #[test]
 #[should_panic = r#"Invalid path "https://example.com/the-path" must start with '/'"#]
 fn sign_an_invalid_path() {
-    truelayer_signing::sign_with_pem(KID, PRIVATE_KEY).path("https://example.com/the-path");
+    let kid = Uuid::from_str(KID).unwrap();
+    truelayer_signing::sign_with_pem(kid, PRIVATE_KEY).path("https://example.com/the-path");
 }
 
 #[test]
@@ -206,8 +214,9 @@ fn full_request_signature_method_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -232,8 +241,9 @@ fn full_request_signature_path_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -258,8 +268,9 @@ fn full_request_signature_header_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -284,8 +295,9 @@ fn full_request_signature_body_mismatch() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -310,8 +322,9 @@ fn full_request_signature_missing_signature_header() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -336,8 +349,9 @@ fn full_request_signature_required_header_missing_from_signature() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -362,8 +376,9 @@ fn full_request_signature_required_header_case_insensitive() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -388,8 +403,9 @@ fn flexible_header_case_order_verify() {
     let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
     let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
     let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .method(Method::Post)
         .path(path)
         .header("Idempotency-Key", idempotency_key)
@@ -414,7 +430,8 @@ fn flexible_header_case_order_verify() {
 /// directly, or necessary in all langs.
 #[test]
 fn set_jku() {
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let kid = Uuid::from_str(KID).unwrap();
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .jku("https://webhooks.truelayer.com/.well-known/jwks")
         .method(Method::Post)
         .path("/tl-webhook")
@@ -440,13 +457,14 @@ fn set_jku() {
 #[test]
 fn extract_jws_header() {
     let tl_signature = include_str!("../../test-resources/webhook-signature.txt").trim();
+    let kid = Uuid::from_str(KID).unwrap();
 
     let jws_header =
         truelayer_signing::extract_jws_header(tl_signature).expect("extract_jws_header");
 
-    assert_eq!(jws_header.alg, "ES512");
-    assert_eq!(jws_header.kid, KID);
-    assert_eq!(jws_header.tl_version, Some("2".into()));
+    assert_eq!(jws_header.alg, JwsAlgorithm::ES512);
+    assert_eq!(jws_header.kid, kid);
+    assert_eq!(jws_header.tl_version, Some(TlVersion::V2));
     assert_eq!(
         jws_header.tl_headers,
         Some("X-Tl-Webhook-Timestamp,Content-Type".into())
@@ -490,8 +508,9 @@ fn verify_with_jwks() {
 #[test]
 fn body_signature() {
     let body = br#"{"abc":123}"#;
+    let kid = Uuid::from_str(KID).unwrap();
 
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .body(body)
         .build_v1_signer()
         .sign_body_only()
@@ -509,7 +528,8 @@ fn body_signature() {
 
 #[test]
 fn body_signature_mismatch() {
-    let tl_signature = truelayer_signing::sign_with_pem(KID, PRIVATE_KEY)
+    let kid = Uuid::from_str(KID).unwrap();
+    let tl_signature = truelayer_signing::sign_with_pem(kid, PRIVATE_KEY)
         .body(br#"{"abc":123}"#)
         .build_v1_signer()
         .sign_body_only()
@@ -551,7 +571,7 @@ fn custom_jose_headers_supplied_as_http_headers_but_not_in_payload() {
         .header("Idempotency-Key", idempotency_key)
         .body(body)
         .build_verifier()
-        .verify(&tl_signature)
+        .verify(tl_signature)
         .expect_err("verify should fail");
 }
 
@@ -575,6 +595,6 @@ fn custom_jose_headers_supplied_as_http_headers() {
         .header("Idempotency-Key", idempotency_key)
         .body(body)
         .build_verifier()
-        .verify(&tl_signature)
+        .verify(tl_signature)
         .expect("verify");
 }

@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use indexmap::IndexMap;
+use uuid::Uuid;
 
 use crate::{base64::ToUrlSafeBase64, http::HeaderName, Error, JwsHeader};
 
@@ -23,7 +24,7 @@ use super::build_v2_signing_payload;
 /// # Ok(()) }
 /// ```
 pub struct CustomSigner<'a> {
-    pub(crate) kid: &'a str,
+    pub(crate) kid: Uuid,
     pub(crate) body: &'a [u8],
     pub(crate) method: &'static str,
     pub(crate) path: &'a str,

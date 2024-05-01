@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use crate::{base64::ToUrlSafeBase64, openssl, Error};
 
 /// Produce a JWS `Tl-Signature` v1 header value, signing just the request body.
@@ -7,7 +9,7 @@ use crate::{base64::ToUrlSafeBase64, openssl, Error};
 /// In general full request signing should be preferred, see [`Signer::sign`].
 pub struct SignerV1<'a> {
     pub(crate) private_key: &'a [u8],
-    pub(crate) kid: &'a str,
+    pub(crate) kid: Uuid,
     pub(crate) body: &'a [u8],
     pub(crate) jws_jku: Option<&'a str>,
 }
