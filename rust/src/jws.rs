@@ -55,15 +55,6 @@ pub enum TlVersion {
     V2,
 }
 
-impl TlVersion {
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            TlVersion::V1 => "1",
-            TlVersion::V2 => "2",
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum JwsAlgorithm {
     #[serde(rename = "ES512")]

@@ -68,8 +68,8 @@ impl<'a> CustomVerifier<'a> {
 
         if version != TlVersion::V2 {
             return Err(Error::JwsError(anyhow!(
-                "unexpected header tl_version: {}",
-                version.as_str()
+                "expected header tl_version v2 found {:?}",
+                version
             )));
         }
 
