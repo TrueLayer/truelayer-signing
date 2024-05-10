@@ -40,7 +40,7 @@ jobs:
   publish:
     name: Rust Release
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     steps:
       - name: Checkout repository
