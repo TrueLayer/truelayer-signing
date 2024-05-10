@@ -36,3 +36,21 @@ jobs:
     - run: rustup update stable
     - uses: actions/checkout@v4
     - run: cargo check --manifest-path=rust/examples/webhook-server/Cargo.toml
+
+  release-plz:
+    name: Rust Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run release-plz
+        uses: MarcoIeni/release-plz-action@v0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
