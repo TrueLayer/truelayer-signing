@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageVersion>0.1.15-rc3</PackageVersion>
+    <PackageVersion>0.1.16-rc1</PackageVersion>
     <TargetFrameworks>net5.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <Nullable>enable</Nullable>

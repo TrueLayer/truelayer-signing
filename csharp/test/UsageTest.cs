@@ -497,6 +497,34 @@ namespace TrueLayer.Signing.Tests
                 .Headers(headers)
                 .Body(body)
                 .Verify(tlSignature); // should not throw
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_WithJku(TestCase testCase)
+        {
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":1}";
+            var idempotency_key = $"idemp-{Guid.NewGuid()}";
+            var path = "/payments";
+            var jku = $"https://{Guid.NewGuid()}.com/.well-known/jwks";
+
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Header("Idempotency-Key", idempotency_key)
+                .Body(body)
+                .Jku(jku)
+                .Sign();
+
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("post")
+                .Path(path)
+                .Header("X-Extra-1", "qwerty")
+                .Header("IDEMPOTENCY-KEY", idempotency_key)
+                .Body(body)
+                .Verify(tlSignature); // should not throw
+
+            var signatureJku = Verifier.ExtractJku(tlSignature);
+            signatureJku.Should().Be(jku);
         }
         
         public sealed class TestCase
