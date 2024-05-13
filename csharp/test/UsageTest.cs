@@ -497,6 +497,7 @@ namespace TrueLayer.Signing.Tests
                 .Headers(headers)
                 .Body(body)
                 .Verify(tlSignature); // should not throw
+        }
 
         [Theory]
         [MemberData(nameof(TestCases))]
