@@ -1,2 +1,3 @@
-* @TrueLayer/rust-oss @TrueLayer/paydirect-api
+* @TrueLayer/rust-oss
+csharp/ @TrueLayer/dotnet-libs
 php/ @TrueLayer/php-oss
