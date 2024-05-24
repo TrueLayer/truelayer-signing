@@ -71,7 +71,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, Unset, Unset> {
 
 impl<'a, Pk, Body, Method, Path> SignerBuilder<'a, Unset, Pk, Body, Method, Path> {
     /// Add the private key kid.
-    pub fn kid(self, kid: &str) -> SignerBuilder<'a, &str, Pk, Body, Method, Path> {
+    pub fn kid(self, kid: &'a str) -> SignerBuilder<'a, &'a str, Pk, Body, Method, Path> {
         SignerBuilder {
             kid,
             private_key: self.private_key,
