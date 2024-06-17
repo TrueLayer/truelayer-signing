@@ -35,7 +35,7 @@ jobs:
           distribution: 'adopt'
           cache: gradle
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v3.3.2
+        uses: gradle/wrapper-validation-action@v3.4.1
       - name: Test
         run: cd java7 && ./gradlew test
 
@@ -78,7 +78,7 @@ jobs:
           distribution: 'adopt'
           cache: gradle
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v3.3.2
+        uses: gradle/wrapper-validation-action@v3.4.1
       - name: Publish to Sonatype and Maven Central
         run: cd java7 && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
