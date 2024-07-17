@@ -1,6 +1,6 @@
 [package]
 name = "truelayer-signing"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Alex Butler <alex.butler@truelayer.com>"]
 edition = "2021"
 description = "Produce & verify TrueLayer API requests signatures"
