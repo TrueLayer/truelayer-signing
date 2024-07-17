@@ -45,7 +45,7 @@ public class Utils {
                 path +
                 "\n" +
                 headerStringBuilder +
-                new String(body);
+                new String(body, StandardCharsets.UTF_8);
 
 
         String base64payload = encodeBase64URLSafeString(payload.getBytes(StandardCharsets.UTF_8));
