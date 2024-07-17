@@ -4,8 +4,8 @@ use anyhow::anyhow;
 use indexmap::{IndexMap, IndexSet};
 
 use crate::{
-    base64::DecodeUrlSafeBase64, common::Unset, http::HeaderName, jws::TlVersion, openssl, Error,
-    JwsHeader, Method,
+    base64::DecodeUrlSafeBase64, http::HeaderName, jws::TlVersion, openssl, Error, JwsHeader,
+    Method, Unset,
 };
 
 pub use self::custom_verifer::CustomVerifier;

@@ -4,7 +4,7 @@ mod signer_v1;
 use indexmap::IndexMap;
 use std::fmt;
 
-use crate::{base64::ToUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, Method};
+use crate::{base64::ToUrlSafeBase64, http::HeaderName, openssl, Error, Method, Unset};
 
 pub use self::custom_signer::CustomSigner;
 use self::signer_v1::SignerV1;
