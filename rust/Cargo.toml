@@ -1,6 +1,6 @@
 [package]
 name = "truelayer-signing"
-version = "0.2.1"
+version = "0.3.1"
 authors = ["Alex Butler <alex.butler@truelayer.com>"]
 edition = "2021"
 description = "Produce & verify TrueLayer API requests signatures"
@@ -10,10 +10,10 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies]
-openssl = "0.10"
-base64 = "0.22"
-thiserror = "1.0"
 anyhow = "1.0"
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+base64 = "0.22"
 indexmap = "2.2"
+openssl = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"

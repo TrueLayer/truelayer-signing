@@ -59,6 +59,7 @@ namespace TrueLayer.Signing
         protected internal string _path = "";
         protected internal readonly Dictionary<string, byte[]> _headers = new(new HeaderNameComparer());
         protected internal byte[] _body = Array.Empty<byte>();
+        protected internal string? _jku;
 
         protected internal Signer(string kid)
         {
@@ -155,14 +156,32 @@ namespace TrueLayer.Signing
         /// </summary>
         public TSigner Body(string body) => Body(body.ToUtf8());
         
-        protected internal Dictionary<string, object> CreateJwsHeaders() =>
-            new()
+        /// <summary>
+        /// Sets the jku (JSON Web Key Set URL) in the JWS headers of the signature. 
+        /// </summary>
+        public TSigner Jku(string jku)
+        {
+            _jku = jku;
+            return _this;
+        }
+
+        protected internal Dictionary<string, object> CreateJwsHeaders()
+        {
+            var jwsHeaders = new Dictionary<string, object>
             {
                 {"alg", "ES512"},
                 {"kid", _kid},
                 {"tl_version", "2"},
                 {"tl_headers", string.Join(",", _headers.Select(h => h.Key))},
             };
+
+            if (_jku is not null)
+            {
+                jwsHeaders.Add("jku", _jku);
+            }
+
+            return jwsHeaders;
+        }
     }
     
     /// <summary>
