@@ -1,18 +1,19 @@
 //! Produce & verify TrueLayer API `Tl-Signature` request headers.
 mod base64;
-mod common;
 mod http;
 mod jws;
 mod openssl;
 mod sign;
 mod verify;
 
-use common::Unset;
 pub use http::Method;
-pub use jws::JwsHeader;
+pub use jws::{JwsAlgorithm, JwsHeader, TlVersion};
 pub use sign::{CustomSigner, Signer, SignerBuilder};
 use verify::PublicKey;
 pub use verify::{CustomVerifier, Verifier, VerifierBuilder};
+
+/// A utility unit type to denote an item hasn't been set.
+pub struct Unset;
 
 /// Start building a request `Tl-Signature` header value using private key
 /// pem data & the key's `kid`.
@@ -86,7 +87,7 @@ pub fn verify_with_jwks(jwks: &[u8]) -> VerifierBuilder<'_, PublicKey<'_>, Unset
 ///
 /// This can then be used to pick a verification key using the `kid` etc.
 pub fn extract_jws_header(tl_signature: &str) -> Result<JwsHeader, Error> {
-    Ok(verify::parse_tl_signature(tl_signature)?.0)
+    Ok(verify::parse_tl_signature(tl_signature)?.header)
 }
 
 /// Sign/verification error.
