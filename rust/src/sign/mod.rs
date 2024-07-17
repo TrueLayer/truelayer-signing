@@ -4,7 +4,7 @@ mod signer_v1;
 use indexmap::IndexMap;
 use std::fmt;
 
-use crate::{base64::ToUrlSafeBase64, common::Unset, http::HeaderName, openssl, Error, Method};
+use crate::{base64::ToUrlSafeBase64, http::HeaderName, openssl, Error, Method, Unset};
 
 pub use self::custom_signer::CustomSigner;
 use self::signer_v1::SignerV1;
@@ -71,7 +71,7 @@ impl<'a> SignerBuilder<'a, &'a str, &'a [u8], Unset, Unset, Unset> {
 
 impl<'a, Pk, Body, Method, Path> SignerBuilder<'a, Unset, Pk, Body, Method, Path> {
     /// Add the private key kid.
-    pub fn kid(self, kid: &str) -> SignerBuilder<'a, &str, Pk, Body, Method, Path> {
+    pub fn kid(self, kid: &'a str) -> SignerBuilder<'a, &'a str, Pk, Body, Method, Path> {
         SignerBuilder {
             kid,
             private_key: self.private_key,
