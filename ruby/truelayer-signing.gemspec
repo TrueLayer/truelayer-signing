@@ -32,5 +32,5 @@ Gem::Specification.new do |s|
   s.require_path = "lib"
 
   s.required_ruby_version = ">= 2.7"
-  s.add_runtime_dependency("jwt", "~> 2.7")
+  s.add_dependency("jwt", "~> 2.7")
 end
