@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "lib"))
 
 Gem::Specification.new do |s|
   s.name = "truelayer-signing"
-  s.version = "0.2.2"
+  s.version = "0.2.3"
   s.summary = "Ruby gem to produce and verify TrueLayer API requests signatures"
   s.description = "TrueLayer provides instant access to open banking to " \
     "easily integrate next-generation payments and financial data into any app." \
@@ -32,5 +32,5 @@ Gem::Specification.new do |s|
   s.require_path = "lib"
 
   s.required_ruby_version = ">= 2.7"
-  s.add_runtime_dependency("jwt", "~> 2.7")
+  s.add_dependency("jwt", "~> 2.7.0")
 end
