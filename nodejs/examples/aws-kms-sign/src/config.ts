@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 
 const throwMissingEnvVar: (envVarName: string) => never = (envVarName: string) => {
   throw new Error(`Expected '${envVarName}' environment variable`);
-}; 
+};
 
 export const TL_CLIENT_DATA: {
   readonly publicKeyKid: string,
@@ -19,7 +19,7 @@ export const REQUEST_DATA: {
   readonly headers: Record<string, string>,
 } = {
   method: 'POST',
-  path: '/payments',
+  path: '/v3/payments',
   body: '{"currency":"GBP","amount_in_minor":100}',
   headers: {
     'Authorization': 'Bearer my-secret-auth-token',
