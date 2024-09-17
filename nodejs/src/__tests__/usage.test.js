@@ -5,20 +5,24 @@ const jwa = require("jwa");
 // Use the same values as rust tests for cross-lang consistency assurance
 const PUBLIC_KEY = readFileSync("../test-resources/ec512-public.pem", "utf8");
 const PRIVATE_KEY = readFileSync("../test-resources/ec512-private.pem", "utf8");
-const WEBHOOK_SIGNATURE = readFileSync("../test-resources/webhook-signature.txt", "utf8").trim();
+const WEBHOOK_SIGNATURE = readFileSync(
+  "../test-resources/webhook-signature.txt",
+  "utf8"
+).trim();
 const JWKS_JSON = readFileSync("../test-resources/jwks.json", "utf8");
 const KID = "45fc75cf-5649-4134-84b3-192c2c78e990";
 const SIGNING_FUNCTION = (message) => {
-  const algo = jwa('ES512');
+  const algo = jwa("ES512");
   const signature = algo.sign(message, PRIVATE_KEY);
   return Promise.resolve(signature);
 };
 
-describe('sign', () => {
+describe("sign", () => {
   it("should sign a full request which can be successfully verified (verify won't throw)", () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
-    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    const path =
+      "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     const signature = sign({
       kid: KID,
@@ -39,32 +43,37 @@ describe('sign', () => {
       headers: {
         "X-Whatever-2": "yarshtarst",
         "Idempotency-Key": idempotencyKey,
-      }
+      },
     });
   });
 
   it("should throw if using a non-string body", () => {
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
-    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    const path =
+      "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-    const fn = () => sign({
-      kid: KID,
-      privateKeyPem: PRIVATE_KEY,
-      method: "post",
-      path,
-      headers: { "Idempotency-Key": idempotencyKey },
-      body: { "currency": "GBP", "max_amount_in_minor": 5000000 }, // wrong
-    });
+    const fn = () =>
+      sign({
+        kid: KID,
+        privateKeyPem: PRIVATE_KEY,
+        method: "post",
+        path,
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: { currency: "GBP", max_amount_in_minor: 5000000 }, // wrong
+      });
 
-    expect(fn).toThrow(new Error("Invalid body 'object' type must be a string"));
+    expect(fn).toThrow(
+      new Error("Invalid body 'object' type must be a string")
+    );
   });
 });
 
-describe('sign with function', () => {
+describe("sign with function", () => {
   it("should sign a full request which can be successfully verified (verify won't throw)", async () => {
     const body = '{"currency":"GBP","max_amount_in_minor":5000000}';
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
-    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    const path =
+      "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
     const signature = await sign({
       kid: KID,
@@ -85,29 +94,73 @@ describe('sign with function', () => {
       headers: {
         "X-Whatever-2": "yarshtarst",
         "Idempotency-Key": idempotencyKey,
-      }
+      },
+    });
+  });
+
+  it("should not throw when the body contains nested objects", async () => {
+    const body = '{"foo":{"bar":"baz"}}';
+
+    const signature = await sign({
+      kid: KID,
+      signingFunction: SIGNING_FUNCTION,
+      method: "POST",
+      path: "/tl-webhook/",
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "POST",
+      path: "/tl-webhook",
+      body,
+    });
+  });
+
+  it("should not throw when the body contains special characters", async () => {
+    const body = '{"foo":"!?£$%^&*()+"}';
+
+    const signature = await sign({
+      kid: KID,
+      signingFunction: SIGNING_FUNCTION,
+      method: "POST",
+      path: "/tl-webhook/",
+      body,
+    });
+
+    verify({
+      publicKeyPem: PUBLIC_KEY,
+      signature,
+      method: "POST",
+      path: "/tl-webhook",
+      body,
     });
   });
 
   it("should throw if using a non-string body", () => {
     const idempotencyKey = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
-    const path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+    const path =
+      "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
 
-    const fn = () => sign({
-      kid: KID,
-      signingFunction: SIGNING_FUNCTION,
-      method: "post",
-      path,
-      headers: { "Idempotency-Key": idempotencyKey },
-      body: { "currency": "GBP", "max_amount_in_minor": 5000000 }, // wrong
-    });
+    const fn = () =>
+      sign({
+        kid: KID,
+        signingFunction: SIGNING_FUNCTION,
+        method: "post",
+        path,
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: { currency: "GBP", max_amount_in_minor: 5000000 }, // wrong
+      });
 
-    expect(fn).toThrow(new Error("Invalid body 'object' type must be a string"));
+    expect(fn).toThrow(
+      new Error("Invalid body 'object' type must be a string")
+    );
   });
 });
 
 describe("verify", () => {
-  it('should allow using jwks json instead of publicKeyPem', () => {
+  it("should allow using jwks json instead of publicKeyPem", () => {
     verify({
       jwks: JWKS_JSON,
       signature: WEBHOOK_SIGNATURE,
@@ -116,8 +169,8 @@ describe("verify", () => {
       body: '{"event_type":"example","event_id":"18b2842b-a57b-4887-a0a6-d3c7c36f1020"}',
       headers: {
         "x-tl-webhook-timestamp": "2021-11-29T11:42:55Z",
-        "content-type": "application/json"
+        "content-type": "application/json",
       },
     });
   });
-})
+});

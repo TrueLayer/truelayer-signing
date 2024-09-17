@@ -7,7 +7,7 @@ Sends a signed request to `https://api.truelayer-sandbox.com/test-signature`.
 Set the following environment variables:
 
 * `TRUELAYER_SIGNING_ACCESS_TOKEN` – a valid JWT access token for the `payments` scope (see our
-    [docs](https://docs.truelayer.com/docs/retrieve-a-token-in-your-server)).
+    [docs](https://docs.truelayer.com/docs/generate-a-payments-access-token)).
 * `TRUELAYER_SIGNING_CERTIFICATE_ID` – the certificate/key UUID associated with your public key
     uploaded at [console.truelayer.com](https://console.truelayer.com).
 * `TRUELAYER_SIGNING_PRIVATE_KEY` – the private key PEM string that matches the certificate ID of the
@@ -20,7 +20,7 @@ Install the required dependencies:
 $ bundle
 ```
 
-Execute the request-signing example script: 
+Execute the request-signing example script:
 
 ```sh
 $ ruby main.rb
