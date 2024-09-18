@@ -20,7 +20,7 @@ const signature = tlSigning.sign({
   kid,
   privateKeyPem,
   method: "POST",
-  path: "/payouts",
+  path: "/v3/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
 });
@@ -35,7 +35,7 @@ const signature = tlSigning.sign({
   kid,
   privateKeyPem,
   method: tlSigning.HttpMethod.Post,
-  path: "/payouts",
+  path: "/v3/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
 });
@@ -53,7 +53,7 @@ const tlSigning = require('truelayer-signing');
 const signature = tlSigning.sign({
   kid,
   method: "POST",
-  path: "/payouts",
+  path: "/v3/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
   signingFunction: async (message) => {
@@ -71,7 +71,7 @@ import * as tlSigning from 'truelayer-signing';
 const signature = tlSigning.sign({
   kid,
   method: tlSigning.HttpMethod.Post,
-  path: "/payouts",
+  path: "/v3/payouts",
   headers: { "Idempotency-Key": idempotencyKey },
   body,
   signingFunction: async (message: string): Promise<string> => {
