@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageVersion>0.1.15</PackageVersion>
-    <TargetFrameworks>net5.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <PackageVersion>0.2.0</PackageVersion>
+    <TargetFrameworks>net8.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <Nullable>enable</Nullable>
     <LangVersion>9</LangVersion>
@@ -25,13 +25,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="jose-jwt" Version="3.2.0" />
+    <PackageReference Include="jose-jwt" Version="5.1.0" />
     <!-- Resolves: Found conflicts between different versions of "System.Text.Encodings.Web" -->
-    <PackageReference Include="System.Text.Encodings.Web" Version="5.0.1" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Text.Json" Version="5.0.1" />
-    <PackageReference Include="Portable.BouncyCastle" Version="1.8.1.2" />
+    <PackageReference Include="System.Text.Json" Version="5.0.2" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>
