@@ -26,7 +26,7 @@ jobs:
         dotnet-version: '8.0.x'
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '2.2.x'
+        dotnet-version: '3.1.x'
     - run: cd csharp && dotnet build && dotnet test
 
   examples:
