@@ -45,10 +45,13 @@ use TrueLayer\Signing\Tests\MockData;
     $uriMock = \Mockery::mock(\Psr\Http\Message\UriInterface::class);
     $uriMock->shouldReceive('getPath')->andReturn($path);
 
+    $bodyMock = \Mockery::mock(\Psr\Http\Message\StreamInterface::class);
+    $bodyMock->shouldReceive('__toString')->andReturn($body);
+
     $requestMock = \Mockery::mock(\Psr\Http\Message\RequestInterface::class);
     $requestMock->shouldReceive('getUri')->andReturn($uriMock);
     $requestMock->shouldReceive('getMethod')->andReturn($method);
-    $requestMock->shouldReceive('getBody')->andReturn($body);
+    $requestMock->shouldReceive('getBody')->andReturn($bodyMock);
     $requestMock->shouldReceive('getHeaders')->andReturn([
         'X-CUSTOM' => ['123'],
     ]);
