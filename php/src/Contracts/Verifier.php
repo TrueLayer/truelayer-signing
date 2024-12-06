@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing\Contracts;
 
-use Jose\Component\Core\JWK;
+use TrueLayer\Jose\Component\Core\JWK;
 use TrueLayer\Signing\Exceptions\InvalidArgumentException;
 
 interface Verifier extends Jws

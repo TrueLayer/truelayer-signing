@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
-use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Core\JWK;
-use Jose\Component\KeyManagement\JWKFactory;
-use Jose\Component\Signature\Algorithm\ES512;
-use Jose\Component\Signature\JWSBuilder;
-use Jose\Component\Signature\Serializer\CompactSerializer;
+use TrueLayer\Jose\Component\Core\AlgorithmManager;
+use TrueLayer\Jose\Component\Core\JWK;
+use TrueLayer\Jose\Component\KeyManagement\JWKFactory;
+use TrueLayer\Jose\Component\Signature\Algorithm\ES512;
+use TrueLayer\Jose\Component\Signature\JWSBuilder;
+use TrueLayer\Jose\Component\Signature\Serializer\CompactSerializer;
 use Psr\Http\Message\RequestInterface;
 use TrueLayer\Signing\Constants\CustomHeaders;
 use TrueLayer\Signing\Constants\TrueLayerSignatures;

@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace TrueLayer\Jose\Component\Console;
+
+use InvalidArgumentException;
+use TrueLayer\Jose\Component\Core\JWKSet;
+use TrueLayer\Jose\Component\KeyManagement\JWKFactory;
+
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+#[AsCommand(name: 'keyset:generate:rsa', description: 'Generate a key set with RSA keys (JWK format)',)]
+final class RsaKeysetGeneratorCommand extends GeneratorCommand
+{
+    protected function configure(): void
+    {
+        parent::configure();
+        $this->addArgument('quantity', InputArgument::REQUIRED, 'Quantity of keys in the key set.')
+            ->addArgument('size', InputArgument::REQUIRED, 'Key size.');
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $quantity = (int) $input->getArgument('quantity');
+        $size = (int) $input->getArgument('size');
+        if ($quantity < 1) {
+            throw new InvalidArgumentException('Invalid quantity');
+        }
+        if ($size < 1) {
+            throw new InvalidArgumentException('Invalid size');
+        }
+
+        $keyset = new JWKSet([]);
+        for ($i = 0; $i < $quantity; ++$i) {
+            $args = $this->getOptions($input);
+            $keyset = $keyset->with(JWKFactory::createRSAKey($size, $args));
+        }
+        $this->prepareJsonOutput($input, $output, $keyset);
+
+        return self::SUCCESS;
+    }
+}
