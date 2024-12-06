@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing;
 
-use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Core\JWK;
-use Jose\Component\KeyManagement\JWKFactory;
-use Jose\Component\Signature\Algorithm\ES512;
-use Jose\Component\Signature\JWSVerifier;
-use Jose\Component\Signature\Serializer\CompactSerializer;
-use Jose\Component\Signature\Serializer\JWSSerializerManager;
+use TrueLayer\Jose\Component\Core\AlgorithmManager;
+use TrueLayer\Jose\Component\Core\JWK;
+use TrueLayer\Jose\Component\KeyManagement\JWKFactory;
+use TrueLayer\Jose\Component\Signature\Algorithm\ES512;
+use TrueLayer\Jose\Component\Signature\JWSVerifier;
+use TrueLayer\Jose\Component\Signature\Serializer\CompactSerializer;
+use TrueLayer\Jose\Component\Signature\Serializer\JWSSerializerManager;
 use TrueLayer\Signing\Constants\TrueLayerSignatures;
 use TrueLayer\Signing\Contracts\Verifier as IVerifier;
 use TrueLayer\Signing\Exceptions\InvalidAlgorithmException;

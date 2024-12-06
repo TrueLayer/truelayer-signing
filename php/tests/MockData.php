@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace TrueLayer\Signing\Tests;
 
-use Jose\Component\Core\JWK;
-use Jose\Component\KeyManagement\JWKFactory;
+use TrueLayer\Jose\Component\Core\JWK;
+use TrueLayer\Jose\Component\KeyManagement\JWKFactory;
 use Ramsey\Uuid\Uuid;
 
 class MockData
