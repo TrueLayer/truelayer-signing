@@ -23,7 +23,7 @@ use TrueLayer\Signing\Signer;
 $signer = Signer::signWithPemFile('kid-value', '/path/to/privatekey');
 $signer = Signer::signWithPem('kid-value', $pemContents);
 $signer = Signer::signWithPemBase64('kid-value', $pemContentsBase64Encoded);
-$signer = Signer::signWithKey('kid-value', new \Jose\Component\Core\JWK());
+$signer = Signer::signWithKey('kid-value', new \TrueLayer\Jose\Component\Core\JWK());
 ```
 
 Then you can use it to create signatures:
@@ -35,7 +35,7 @@ $signature = $signer->method('POST')
     ->path('/path') // The api path
     ->header('Idempotency-Key', 'my-key') // The idempotency key you must send with your request
     ->body('stringified request body')
-    ->sign();    
+    ->sign();
 ```
 
 You can also sign a PSR-7 request which will automatically compile the signature and add it to the `Tl-Signature`
