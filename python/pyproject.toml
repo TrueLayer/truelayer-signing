@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "truelayer-signing"
-version = "0.3.6"
+version = "0.3.7"
 description = "Produce & verify TrueLayer API requests signatures"
 authors = ["tl-flavio-barinas <flavio.barinas@truelayer.com>"]
 license = "Apache-2.0 or MIT"
