@@ -1,4 +1,4 @@
-use truelayer_signing::{Error, Method};
+use truelayer_signing::{Error, JwsAlgorithm, Method, TlVersion};
 
 const PUBLIC_KEY: &[u8] = include_bytes!("../../test-resources/ec512-public.pem");
 const PRIVATE_KEY: &[u8] = include_bytes!("../../test-resources/ec512-private.pem");
@@ -444,10 +444,13 @@ fn extract_jws_header() {
     let jws_header =
         truelayer_signing::extract_jws_header(tl_signature).expect("extract_jws_header");
 
-    assert_eq!(jws_header.alg, "ES512");
+    assert_eq!(jws_header.alg, JwsAlgorithm::ES512);
     assert_eq!(jws_header.kid, KID);
-    assert_eq!(jws_header.tl_version, "2");
-    assert_eq!(jws_header.tl_headers, "X-Tl-Webhook-Timestamp,Content-Type");
+    assert_eq!(jws_header.tl_version, Some(TlVersion::V2));
+    assert_eq!(
+        jws_header.tl_headers,
+        Some("X-Tl-Webhook-Timestamp,Content-Type".into())
+    );
     assert_eq!(
         jws_header.jku.as_deref(),
         Some("https://webhooks.truelayer.com/.well-known/jwks")
@@ -528,5 +531,50 @@ fn verify_body_static_signature() {
         .body(body)
         .build_v1_verifier()
         .verify_body_only(tl_signature)
+        .expect("verify");
+}
+
+#[test]
+fn custom_jose_headers_supplied_as_http_headers_but_not_in_payload() {
+    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..APsK2MCyC5AU4ytlaCDqBK7ou_ihmK48ecfBkXkLUeW9u22jL4KGATUZkqBa4Xj9KdSOBnZ0JrbTxSgBUTbNpbeOAcw0XjYx2r4ELhLtkxDhbE6uT4aLB2CYx1Wa_T87R12IpN8CrSmuEkGg3lJifnFSBycoi8j_EuFbMnMY-0waBmGQ";
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method(Method::Post)
+        .path(path)
+        .require_header("Idempotency-Key")
+        .header("Tl-Signature-Version", b"2")
+        .header("Tl-Signature-Headers", b"Idempotency-Key")
+        .header("Idempotency-Key", idempotency_key)
+        .body(body)
+        .build_verifier()
+        .verify(tl_signature)
+        .expect_err("verify should fail");
+}
+
+#[test]
+fn custom_jose_headers_supplied_as_http_headers() {
+    let body = br#"{"currency":"GBP","max_amount_in_minor":5000000}"#;
+    let idempotency_key = b"idemp-2076717c-9005-4811-a321-9e0787fa0382";
+    let path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+    let tl_signature = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjQ1ZmM3NWNmLTU2NDktNDEzNC04NGIzLTE5MmMyYzc4ZTk5MCJ9..AaynCNbco3vqWTL7BOpB_tNOfVYA9VO3K9VEFHDPa4J9VZ8GsJPZyfDJNVuxEC1v_Ihd0GcYVBneGlvB8x9VBXtpAdG7PBNvbldjx_oJxMovV-tf-u13GpxjtaqC26LxIf5qYCHcupXFuQhUqjI0aSd5eFP1dmAVctmy6KdJDnr_xOPt";
+
+    truelayer_signing::verify_with_pem(PUBLIC_KEY)
+        .method(Method::Post)
+        .path(path)
+        .require_header("Idempotency-Key")
+        .header("Tl-Signature-Version", b"2")
+        .header(
+            "Tl-Signature-Headers",
+            b"Idempotency-Key,Tl-Signature-Version,Tl-Signature-Headers",
+        )
+        .header("Idempotency-Key", idempotency_key)
+        .body(body)
+        .build_verifier()
+        .verify(tl_signature)
         .expect("verify");
 }
