@@ -15,7 +15,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="FluentAssertions" Version="6.12.2" />
+    <PackageReference Include="AwesomeAssertions" Version="9.3.0" />
     <ProjectReference Include="..\src\truelayer-signing.csproj" />
   </ItemGroup>
   <ItemGroup>
