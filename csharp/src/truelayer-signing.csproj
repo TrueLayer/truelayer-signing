@@ -25,7 +25,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="jose-jwt" Version="5.1.0" />
+    <PackageReference Include="jose-jwt" Version="5.2.0" />
     <!-- Resolves: Found conflicts between different versions of "System.Text.Encodings.Web" -->
     <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
   </ItemGroup>
