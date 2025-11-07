@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0
+* Add support for .NET 8.0 and .NET 9.0.
+
+## 0.1.16
+* Add support for providing tl_version and tl_headers via HTTP headers.
+
+## 0.1.15
+* Add ability to specify jku when creating signature.
+
 ## 0.1.14
 * Add ability to sign with a function provided by the consumer.
 
