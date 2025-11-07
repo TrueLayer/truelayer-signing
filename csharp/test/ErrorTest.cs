@@ -1,6 +1,6 @@
 using Xunit;
 using System;
-using FluentAssertions;
+using AwesomeAssertions;
 using Jose;
 using System.Text;
 using System.Collections.Generic;
