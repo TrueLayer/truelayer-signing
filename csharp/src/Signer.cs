@@ -209,7 +209,7 @@ namespace TrueLayer.Signing
         public override string Sign()
         {
             var jwsHeaders = CreateJwsHeaders();
-            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
+            var headerList = _headers.Select(e => (e.Key, e.Value));
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
 
             return JWT.EncodeBytes(
@@ -236,7 +236,7 @@ namespace TrueLayer.Signing
             var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
             var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
 
-            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
+            var headerList = _headers.Select(e => (e.Key, e.Value));
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
             var signingPayloadB64 = Base64Url.Encode(signingPayload);
 
