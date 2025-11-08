@@ -13,6 +13,11 @@ namespace TrueLayer.Signing
     /// </summary>
     public sealed class Verifier
     {
+        private static readonly JsonSerializerOptions JwksJsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        
         /// <summary>
         /// Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
         /// </summary>
@@ -43,10 +48,7 @@ namespace TrueLayer.Signing
         {
             try
             {
-                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                });
+                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, JwksJsonOptions);
                 // ecdsa fully setup later once we know the jwk kid
                 var verifier = VerifyWith(ECDsa.Create());
                 verifier._jwks = jwks ?? new Jwks();
@@ -84,14 +86,14 @@ namespace TrueLayer.Signing
 
         /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        public static string ExtractKid(string tlSignature) => ExtractJwsHeader(tlSignature, "kid");
+        public static string ExtractKid(string tlSignature) => ExtractJwsHeader(tlSignature, JwsHeaders.Kid);
 
         /// <summary>
         /// Extract jku (JSON Web Key URL) from unverified jws Tl-Signature.
         /// Used in webhook signatures providing the public key jwk url.
         /// </summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        public static string ExtractJku(string tlSignature) => ExtractJwsHeader(tlSignature, "jku");
+        public static string ExtractJku(string tlSignature) => ExtractJwsHeader(tlSignature, JwsHeaders.Jku);
 
         private readonly ECDsa _key;
         // Non-null when verifying using jwks data.
@@ -231,17 +233,17 @@ namespace TrueLayer.Signing
             if (_jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data
-                var kid = jwsHeaders.GetString("kid") ?? throw new SignatureException("missing kid");
+                var kid = jwsHeaders.GetString(JwsHeaders.Kid) ?? throw new SignatureException("missing kid");
                 FindAndImportJwk(jwkeys, kid);
             }
 
-            SignatureException.Ensure(jwsHeaders.GetString("alg") == "ES512", "unsupported jws alg");
-            var version = jwsHeaders.GetString("tl_version") ?? TryRequireHeaderString("Tl-Signature-Version");
+            SignatureException.Ensure(jwsHeaders.GetString(JwsHeaders.Alg) == "ES512", "unsupported jws alg");
+            var version = jwsHeaders.GetString(JwsHeaders.TlVersion) ?? TryRequireHeaderString("Tl-Signature-Version");
             SignatureException.Ensure(version == "2", "unsupported jws tl_version");
             var signatureParts = tlSignature.Split('.');
             SignatureException.Ensure(signatureParts.Length >= 3, "invalid signature format");
 
-            var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? TryRequireHeaderString("Tl-Signature-Headers") ?? "")
+            var signatureHeaderNames = (jwsHeaders.GetString(JwsHeaders.TlHeaders) ?? TryRequireHeaderString("Tl-Signature-Headers") ?? "")
                 .Split(',')
                 .Select(h => h.Trim())
                 .Where(h => !string.IsNullOrEmpty(h))

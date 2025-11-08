@@ -181,15 +181,15 @@ namespace TrueLayer.Signing
         {
             var jwsHeaders = new Dictionary<string, object>
             {
-                {"alg", "ES512"},
-                {"kid", _kid},
-                {"tl_version", "2"},
-                {"tl_headers", string.Join(",", _headers.Select(h => h.Key))},
+                {JwsHeaders.Alg, "ES512"},
+                {JwsHeaders.Kid, _kid},
+                {JwsHeaders.TlVersion, "2"},
+                {JwsHeaders.TlHeaders, string.Join(",", _headers.Select(h => h.Key))},
             };
 
             if (_jku is not null)
             {
-                jwsHeaders.Add("jku", _jku);
+                jwsHeaders.Add(JwsHeaders.Jku, _jku);
             }
 
             return jwsHeaders;
