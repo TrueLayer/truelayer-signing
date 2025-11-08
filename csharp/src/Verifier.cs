@@ -256,22 +256,21 @@ namespace TrueLayer.Signing
             var signedHeaders = FilterOrderHeaders(signatureHeaderNames);
 
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, signedHeaders, _body);
-            var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
 
             SignatureException.Try(() =>
             {
                 try
                 {
-                    return Jose.JWT.Decode(jws, _key);
+                    return Jose.JWT.DecodeBytes(tlSignature, _key, payload: signingPayload);
                 }
                 catch (Jose.IntegrityException)
                 {
                     // try again with/without a trailing slash (#80)
-                    var path2 = _path + "/";
-                    if (_path.EndsWith("/")) path2 = _path.Remove(_path.Length - 1);
-                    var signingPayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
-                    var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
-                    return Jose.JWT.Decode(jws, _key);
+                    var path2 = _path.EndsWith("/")
+                        ? _path.Substring(0, _path.Length - 1)
+                        : _path + "/";
+                    var alternatePayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
+                    return Jose.JWT.DecodeBytes(tlSignature, _key, payload: alternatePayload);
                 }
             }, "Invalid signature");
         }
