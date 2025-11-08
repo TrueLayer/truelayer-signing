@@ -61,9 +61,9 @@ namespace TrueLayer.Signing
         /// <summary>Start building a `Tl-Signature` header verifier usinga a public key.</summary>
         public static Verifier VerifyWith(ECDsa publicKey) => new Verifier(publicKey);
 
-        /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
+        /// <summary>Extract a header value from unverified jws Tl-Signature.</summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        public static string ExtractKid(string tlSignature)
+        private static string ExtractJwsHeader(string tlSignature, string headerName)
         {
             IDictionary<string, object>? jwsHeaders;
             try
@@ -74,37 +74,24 @@ namespace TrueLayer.Signing
             {
                 throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
             }
-            var kid = jwsHeaders.GetString("kid");
-            if (kid == null)
+            var value = jwsHeaders.GetString(headerName);
+            if (value == null)
             {
-                throw new SignatureException("missing kid");
+                throw new SignatureException($"missing {headerName}");
             }
-            return kid;
+            return value;
         }
+
+        /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        public static string ExtractKid(string tlSignature) => ExtractJwsHeader(tlSignature, "kid");
 
         /// <summary>
         /// Extract jku (JSON Web Key URL) from unverified jws Tl-Signature.
         /// Used in webhook signatures providing the public key jwk url.
         /// </summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        public static string ExtractJku(string tlSignature)
-        {
-            IDictionary<string, object>? jwsHeaders;
-            try
-            {
-                jwsHeaders = Jose.JWT.Headers(tlSignature);
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
-            }
-            var jku = jwsHeaders.GetString("jku");
-            if (jku == null)
-            {
-                throw new SignatureException("missing jku");
-            }
-            return jku;
-        }
+        public static string ExtractJku(string tlSignature) => ExtractJwsHeader(tlSignature, "jku");
 
         private readonly ECDsa _key;
         // Non-null when verifying using jwks data.
