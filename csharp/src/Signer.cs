@@ -57,7 +57,7 @@ namespace TrueLayer.Signing
         private readonly TSigner _this;
         protected internal string _method = "POST";
         protected internal string _path = "";
-        protected internal readonly Dictionary<string, byte[]> _headers = new(new HeaderNameComparer());
+        protected internal readonly Dictionary<string, byte[]> _headers = new(StringComparer.OrdinalIgnoreCase);
         protected internal byte[] _body = Array.Empty<byte>();
         protected internal string? _jku;
 

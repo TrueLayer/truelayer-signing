@@ -165,14 +165,6 @@ namespace TrueLayer.Signing
         }
     }
 
-    /// <summary>Case-insensitive string header name comparison.</summary>
-    internal class HeaderNameComparer : IEqualityComparer<string>
-    {
-        public bool Equals(string? x, string? y)
-            => string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
-
-        public int GetHashCode(string x) => x.ToLowerInvariant().GetHashCode();
-    }
 
     /// <summary>JWKs json object.</summary>
     internal class Jwks

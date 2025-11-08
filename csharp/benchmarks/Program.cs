@@ -26,6 +26,17 @@ if (args.Length > 0)
         case "verifier-metadata":
             BenchmarkRunner.Run<VerifierMetadataBenchmarks>(config);
             break;
+        case "internal":
+        case "performance":
+            BenchmarkRunner.Run<InternalPerformanceBenchmarks>(config);
+            break;
+        case "impact":
+        case "optimization":
+            BenchmarkRunner.Run<OptimizationImpactBenchmarks>(config);
+            break;
+        case "regression":
+            BenchmarkRunner.Run<OptimizationRegressionTests>(config);
+            break;
         case "all":
         default:
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);

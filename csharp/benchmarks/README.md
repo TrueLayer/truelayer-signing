@@ -27,6 +27,51 @@ Performance benchmarks for the TrueLayer signing library using [BenchmarkDotNet]
 - **Extract Kid** - Extract key ID from signature
 - **Extract Jku** - Extract JWK URL from signature
 
+### Internal Performance Benchmarks (`InternalPerformanceBenchmarks`)
+**NEW: Targeted benchmarks for identified performance bottlenecks**
+
+Measures specific internal implementation details to validate optimization opportunities:
+
+- **Priority 1: HeaderNameComparer** - Dictionary/HashSet operations with case-insensitive header names
+  - Current implementation allocates on every hash lookup via `ToLowerInvariant()`
+  - Expected improvement: 20-30% reduction with `StringComparer.OrdinalIgnoreCase`
+
+- **Priority 2: BuildV2SigningPayload** - THE critical hot path
+  - Tests `List<byte>` allocations across various payload sizes (250B to 100KB)
+  - Expected improvement: 40-60% reduction with `ArrayPool<byte>`
+
+- **Priority 3: HTTP Method Conversion** - `method.ToUpperInvariant().ToUtf8()` overhead
+  - Tests conversion for common HTTP methods (GET, POST, PATCH, etc.)
+  - Expected improvement: 10-15% with caching
+
+- **Priority 4-5: String Parsing & LINQ** - Verifier.Verify() allocations
+  - JWS signature parsing with `Split()`
+  - Header name parsing with LINQ chains
+  - Expected improvement: 15-20% with Span-based parsing
+
+- **Priority 6: Header Keys Enumeration** - `Select(h => h.Key)` vs direct `.Keys`
+  - Expected improvement: 5-10%
+
+See `PERFORMANCE_ANALYSIS.md` for detailed analysis of each issue.
+
+### Optimization Impact Benchmarks (`OptimizationImpactBenchmarks`)
+**NEW: End-to-end measurement of combined optimization impact**
+
+- **Sign Operation Baseline** - Complete signing workflow (baseline for comparison)
+- **Verify Operation Baseline** - Complete verification workflow
+- **Full Round-Trip** - Sign + Verify combined
+- **Many Headers Variants** - Tests with high header count
+
+Expected combined improvement: **60-80% allocation reduction**
+
+### Regression Tests (`OptimizationRegressionTests`)
+**NEW: Ensures optimizations don't break edge cases**
+
+- Case-insensitive header matching behavior
+- Empty/whitespace-only header value handling
+- Various payload size edge cases
+- Unicode path handling
+
 ## 🚀 Running Benchmarks
 
 ### Prerequisites
@@ -54,6 +99,19 @@ dotnet run -c Release -- verifier-builder
 
 # Run metadata extraction benchmarks
 dotnet run -c Release -- verifier-metadata
+
+# Run internal performance benchmarks (for optimization work)
+dotnet run -c Release -- internal
+# or
+dotnet run -c Release -- performance
+
+# Run optimization impact benchmarks (measure combined improvements)
+dotnet run -c Release -- impact
+# or
+dotnet run -c Release -- optimization
+
+# Run regression tests (validate edge cases)
+dotnet run -c Release -- regression
 ```
 
 ### Run Specific Benchmark Methods

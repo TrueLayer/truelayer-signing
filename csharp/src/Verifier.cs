@@ -112,8 +112,8 @@ namespace TrueLayer.Signing
         private Jwks? _jwks;
         private string _method = "";
         private string _path = "";
-        private readonly Dictionary<string, byte[]> _headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
-        private readonly HashSet<string> _requiredHeaders = new HashSet<string>(new HeaderNameComparer());
+        private readonly Dictionary<string, byte[]> _headers = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _requiredHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private byte[] _body = Array.Empty<byte>();
 
         private Verifier(ECDsa publicKey) => _key = publicKey;
@@ -260,7 +260,7 @@ namespace TrueLayer.Signing
                 .Where(h => !string.IsNullOrEmpty(h))
                 .ToList();
 
-            var signatureHeaderNameSet = new HashSet<string>(signatureHeaderNames, new HeaderNameComparer());
+            var signatureHeaderNameSet = new HashSet<string>(signatureHeaderNames, StringComparer.OrdinalIgnoreCase);
             var missingRequired = _requiredHeaders.Where(h => !signatureHeaderNameSet.Contains(h)).ToList();
             SignatureException.Ensure(missingRequired.Count == 0, $"signature is missing required headers {string.Join(",", missingRequired)}");
 
