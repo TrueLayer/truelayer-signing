@@ -290,7 +290,7 @@ namespace TrueLayer.Signing
             var orderedHeaders = new List<(string, byte[])>(signedHeaderNames.Count);
             foreach (var name in signedHeaderNames)
             {
-                if (_headers.TryGetValue(name.ToLowerInvariant(), out var value))
+                if (_headers.TryGetValue(name, out var value))
                 {
                     orderedHeaders.Add((name, value));
                 }
