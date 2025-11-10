@@ -96,19 +96,7 @@ namespace TrueLayer.Signing
         /// </summary>
         public TSigner Header(string name, byte[] value)
         {
-#if NET8_0_OR_GREATER
-            var trimmedName = name.AsSpan().Trim();
-            if (trimmedName.Length == name.Length)
-            {
-                _headers.Add(name, value);  // No allocation if already trimmed
-            }
-            else
-            {
-                _headers.Add(trimmedName.ToString(), value);
-            }
-#else
             _headers.Add(name.Trim(), value);
-#endif
             return _this;
         }
 

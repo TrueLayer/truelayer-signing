@@ -133,19 +133,7 @@ namespace TrueLayer.Signing
         /// </summary>
         public Verifier Header(string name, byte[] value)
         {
-#if NET8_0_OR_GREATER
-            var trimmedName = name.AsSpan().Trim();
-            if (trimmedName.Length == name.Length)
-            {
-                this._headers.Add(name, value);  // No allocation if already trimmed
-            }
-            else
-            {
-                this._headers.Add(trimmedName.ToString(), value);
-            }
-#else
             this._headers.Add(name.Trim(), value);
-#endif
             return this;
         }
 
