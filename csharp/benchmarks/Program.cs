@@ -14,28 +14,12 @@ if (args.Length > 0)
         case "signer":
             BenchmarkRunner.Run<SignerBenchmarks>(config);
             break;
-        case "signer-builder":
-            BenchmarkRunner.Run<SignerBuilderBenchmarks>(config);
-            break;
         case "verifier":
             BenchmarkRunner.Run<VerifierBenchmarks>(config);
             break;
-        case "verifier-builder":
-            BenchmarkRunner.Run<VerifierBuilderBenchmarks>(config);
-            break;
-        case "verifier-metadata":
-            BenchmarkRunner.Run<VerifierMetadataBenchmarks>(config);
-            break;
-        case "internal":
-        case "performance":
-            BenchmarkRunner.Run<InternalPerformanceBenchmarks>(config);
-            break;
-        case "impact":
-        case "optimization":
-            BenchmarkRunner.Run<OptimizationImpactBenchmarks>(config);
-            break;
-        case "regression":
-            BenchmarkRunner.Run<OptimizationRegressionTests>(config);
+        case "jws":
+        case "jws-verify":
+            BenchmarkRunner.Run<JwsVerificationBenchmarks>(config);
             break;
         case "all":
         default:
