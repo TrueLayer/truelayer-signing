@@ -162,13 +162,53 @@ public class InternalPerformanceBenchmarks
     }
 
     /// <summary>
-    /// Priority 2: BuildV2SigningPayload with List&lt;byte&gt;
-    /// This is the MOST CRITICAL performance bottleneck in the library.
-    /// Measures allocations and performance of the current List&lt;byte&gt; approach.
-    ///
-    /// Expected improvement: 40-60% reduction with ArrayPool implementation
+    /// OLD implementation using List&lt;byte&gt; for comparison
     /// </summary>
-    [Benchmark(Baseline = true, Description = "BuildV2SigningPayload - Small (250B)")]
+    private static byte[] BuildV2SigningPayload_Old(
+        string method,
+        string path,
+        IEnumerable<(string, byte[])> headers,
+        byte[] body)
+    {
+        var payload = new List<byte>();
+        payload.AddRange(method.ToUpperInvariant().ToUtf8());
+        payload.AddRange(Encoding.UTF8.GetBytes(" "));
+        payload.AddRange(path.ToUtf8());
+        payload.AddRange(Encoding.UTF8.GetBytes("\n"));
+        foreach (var (name, value) in headers)
+        {
+            payload.AddRange(name.ToUtf8());
+            payload.AddRange(Encoding.UTF8.GetBytes(": "));
+            payload.AddRange(value);
+            payload.AddRange(Encoding.UTF8.GetBytes("\n"));
+        }
+        payload.AddRange(body);
+        return payload.ToArray();
+    }
+
+    /// <summary>
+    /// Priority 2: BuildV2SigningPayload Comparison - OLD vs NEW
+    /// This is the MOST CRITICAL performance bottleneck in the library.
+    ///
+    /// OLD: List&lt;byte&gt; with repeated AddRange causing multiple allocations
+    /// NEW: Span-based with pre-calculated size and single allocation
+    ///
+    /// Expected improvement: 40-60% reduction in allocations + CPU
+    /// </summary>
+    [Benchmark(Baseline = true, Description = "BuildSigningPayload - Small - OLD (List)")]
+    public byte[] BuildSigningPayload_Small_Old()
+    {
+        var scenario = TestData.Scenarios.SmallPayment;
+        var headers = scenario.Headers.Select(h => (h.Key, Encoding.UTF8.GetBytes(h.Value)));
+        return BuildV2SigningPayload_Old(
+            scenario.Method,
+            scenario.Path,
+            headers,
+            Encoding.UTF8.GetBytes(scenario.Body)
+        );
+    }
+
+    [Benchmark(Description = "BuildSigningPayload - Small - NEW (Span)")]
     public byte[] BuildSigningPayload_Small()
     {
         var scenario = TestData.Scenarios.SmallPayment;
@@ -181,7 +221,20 @@ public class InternalPerformanceBenchmarks
         );
     }
 
-    [Benchmark(Description = "BuildV2SigningPayload - Medium (1KB)")]
+    [Benchmark(Description = "BuildSigningPayload - Medium - OLD (List)")]
+    public byte[] BuildSigningPayload_Medium_Old()
+    {
+        var scenario = TestData.Scenarios.MediumMandate;
+        var headers = scenario.Headers.Select(h => (h.Key, Encoding.UTF8.GetBytes(h.Value)));
+        return BuildV2SigningPayload_Old(
+            scenario.Method,
+            scenario.Path,
+            headers,
+            Encoding.UTF8.GetBytes(scenario.Body)
+        );
+    }
+
+    [Benchmark(Description = "BuildSigningPayload - Medium - NEW (Span)")]
     public byte[] BuildSigningPayload_Medium()
     {
         var scenario = TestData.Scenarios.MediumMandate;
@@ -194,7 +247,20 @@ public class InternalPerformanceBenchmarks
         );
     }
 
-    [Benchmark(Description = "BuildV2SigningPayload - Large (10KB)")]
+    [Benchmark(Description = "BuildSigningPayload - Large - OLD (List)")]
+    public byte[] BuildSigningPayload_Large_Old()
+    {
+        var scenario = TestData.Scenarios.LargeWebhook;
+        var headers = scenario.Headers.Select(h => (h.Key, Encoding.UTF8.GetBytes(h.Value)));
+        return BuildV2SigningPayload_Old(
+            scenario.Method,
+            scenario.Path,
+            headers,
+            Encoding.UTF8.GetBytes(scenario.Body)
+        );
+    }
+
+    [Benchmark(Description = "BuildSigningPayload - Large - NEW (Span)")]
     public byte[] BuildSigningPayload_Large()
     {
         var scenario = TestData.Scenarios.LargeWebhook;
@@ -207,7 +273,20 @@ public class InternalPerformanceBenchmarks
         );
     }
 
-    [Benchmark(Description = "BuildV2SigningPayload - Many Headers (20)")]
+    [Benchmark(Description = "BuildSigningPayload - ManyHeaders - OLD (List)")]
+    public byte[] BuildSigningPayload_ManyHeaders_Old()
+    {
+        var scenario = TestData.Scenarios.ManyHeaders;
+        var headers = scenario.Headers.Select(h => (h.Key, Encoding.UTF8.GetBytes(h.Value)));
+        return BuildV2SigningPayload_Old(
+            scenario.Method,
+            scenario.Path,
+            headers,
+            Encoding.UTF8.GetBytes(scenario.Body)
+        );
+    }
+
+    [Benchmark(Description = "BuildSigningPayload - ManyHeaders - NEW (Span)")]
     public byte[] BuildSigningPayload_ManyHeaders()
     {
         var scenario = TestData.Scenarios.ManyHeaders;
@@ -246,23 +325,51 @@ public class InternalPerformanceBenchmarks
     }
 
     /// <summary>
-    /// Priority 4 & 5: String parsing and LINQ overhead in Verifier
-    /// Tests the allocation overhead of Split() + LINQ operations
+    /// Priority 4: Span-based String Parsing in Verifier - OLD vs NEW
+    /// Tests the allocation overhead of String.Split() vs Span-based parsing
     ///
-    /// Expected improvement: 15-20% with Span-based parsing
+    /// Expected improvement: 15-20% with Span-based parsing + no LINQ
     /// </summary>
-    [Benchmark(Description = "Parse JWS Signature Parts")]
-    public int ParseSignatureParts()
+
+    // JWS Signature Parsing
+    [Benchmark(Baseline = true, Description = "Parse JWS Signature - OLD (Split)")]
+    public (string, string) ParseSignatureParts_Old()
     {
-        // Simulates Verifier.Verify() line 242
+        // OLD implementation using String.Split
         var parts = _testSignature!.Split('.');
-        return parts.Length;
+        if (parts.Length < 3)
+            throw new InvalidOperationException("invalid signature format");
+
+        return (parts[0], parts[2]);
     }
 
-    [Benchmark(Description = "Parse & Process Header Names (LINQ)")]
-    public List<string> ParseHeaderNamesWithLinq()
+    [Benchmark(Description = "Parse JWS Signature - NEW (Span)")]
+    public (string, string) ParseSignatureParts_New()
     {
-        // Simulates Verifier.Verify() lines 245-249
+#if NET6_0_OR_GREATER
+        // NEW implementation using Span
+        var span = _testSignature!.AsSpan();
+        int firstDot = span.IndexOf('.');
+        int secondDot = firstDot >= 0 ? span.Slice(firstDot + 1).IndexOf('.') : -1;
+
+        if (firstDot <= 0 || secondDot < 0)
+            throw new InvalidOperationException("invalid signature format");
+
+        secondDot += firstDot + 1;
+
+        return (span.Slice(0, firstDot).ToString(), span.Slice(secondDot + 1).ToString());
+#else
+        // Fallback for older frameworks
+        var parts = _testSignature!.Split('.');
+        return (parts[0], parts[2]);
+#endif
+    }
+
+    // Header Names Parsing
+    [Benchmark(Description = "Parse Header Names - OLD (Split + LINQ)")]
+    public List<string> ParseHeaderNames_Old()
+    {
+        // OLD implementation: Split + LINQ chain (allocates intermediate enumerables)
         var headerString = "X-Custom-Header-01, X-Custom-Header-02, X-Custom-Header-03, , X-Custom-Header-05";
 
         return headerString
@@ -272,10 +379,43 @@ public class InternalPerformanceBenchmarks
             .ToList();
     }
 
-    [Benchmark(Description = "Filter Missing Required Headers (LINQ)")]
-    public List<string> FilterMissingHeadersWithLinq()
+    [Benchmark(Description = "Parse Header Names - NEW (Foreach)")]
+    public List<string> ParseHeaderNames_New()
     {
-        // Simulates Verifier.Verify() line 252
+        // NEW implementation: Direct foreach without LINQ
+        var headerString = "X-Custom-Header-01, X-Custom-Header-02, X-Custom-Header-03, , X-Custom-Header-05";
+        var result = new List<string>();
+
+#if NET9_0_OR_GREATER
+        // .NET 9+: Use Span.Split for zero-allocation parsing
+        foreach (var range in headerString.AsSpan().Split(','))
+        {
+            var trimmed = headerString.AsSpan(range).Trim();
+            if (!trimmed.IsEmpty)
+            {
+                result.Add(trimmed.ToString());
+            }
+        }
+#else
+        // Earlier .NET: Use string split but avoid LINQ chain
+        foreach (var header in headerString.Split(','))
+        {
+            var trimmed = header.Trim();
+            if (!string.IsNullOrEmpty(trimmed))
+            {
+                result.Add(trimmed);
+            }
+        }
+#endif
+
+        return result;
+    }
+
+    // Missing Required Headers Filtering
+    [Benchmark(Description = "Filter Missing Headers - OLD (LINQ)")]
+    public List<string> FilterMissingHeaders_Old()
+    {
+        // OLD implementation using LINQ .Where().ToList()
         var requiredHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Idempotency-Key",
@@ -292,6 +432,35 @@ public class InternalPerformanceBenchmarks
         return requiredHeaders
             .Where(h => !signatureHeaders.Contains(h))
             .ToList();
+    }
+
+    [Benchmark(Description = "Filter Missing Headers - NEW (Foreach)")]
+    public List<string> FilterMissingHeaders_New()
+    {
+        // NEW implementation using direct foreach loop
+        var requiredHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Idempotency-Key",
+            "X-Request-Id",
+            "X-TL-Webhook-Timestamp",
+            "NonExistent-Header"
+        };
+
+        var signatureHeaders = new HashSet<string>(
+            TestData.Scenarios.ManyHeaders.Headers.Keys,
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        var missing = new List<string>();
+        foreach (var required in requiredHeaders)
+        {
+            if (!signatureHeaders.Contains(required))
+            {
+                missing.Add(required);
+            }
+        }
+
+        return missing;
     }
 
     /// <summary>
@@ -312,6 +481,65 @@ public class InternalPerformanceBenchmarks
     {
         // Optimized: use Keys collection directly
         return string.Join(",", _testHeaders!.Keys);
+    }
+
+    /// <summary>
+    /// Priority 7: JWS Detached Payload Verification - OLD vs NEW
+    /// Tests the overhead of manual JWS reconstruction vs native detached payload support
+    ///
+    /// OLD: Base64URL encode payload + string concatenation + JWT.Decode
+    /// NEW: Direct JWT.DecodeBytes with detached payload parameter
+    ///
+    /// Expected improvement: 15-25% (eliminates Base64URL encoding + string allocation)
+    /// </summary>
+    [Benchmark(Baseline = true, Description = "JWS Verify - OLD (Manual Reconstruction)")]
+    public string? JwsVerify_Old_ManualReconstruction()
+    {
+        // OLD implementation: Manually reconstruct JWS with Base64URL encoded payload
+        var signatureParts = _testSignature!.Split('.');
+        var scenario = TestData.Scenarios.ManyHeaders;
+        var headers = scenario.Headers.Select(h => (h.Key, Encoding.UTF8.GetBytes(h.Value)));
+        var signingPayload = Util.BuildV2SigningPayload(
+            scenario.Method,
+            scenario.Path,
+            headers,
+            Encoding.UTF8.GetBytes(scenario.Body)
+        );
+
+        // Manual JWS reconstruction (OLD approach)
+        var jws = $"{signatureParts[0]}.{Jose.Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
+
+        try
+        {
+            return Jose.JWT.Decode(jws, _publicKey!);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    [Benchmark(Description = "JWS Verify - NEW (Detached Payload)")]
+    public byte[]? JwsVerify_New_DetachedPayload()
+    {
+        // NEW implementation: Use native detached payload support
+        var scenario = TestData.Scenarios.ManyHeaders;
+        var headers = scenario.Headers.Select(h => (h.Key, Encoding.UTF8.GetBytes(h.Value)));
+        var signingPayload = Util.BuildV2SigningPayload(
+            scenario.Method,
+            scenario.Path,
+            headers,
+            Encoding.UTF8.GetBytes(scenario.Body)
+        );
+
+        try
+        {
+            return Jose.JWT.DecodeBytes(_testSignature!, _publicKey!, payload: signingPayload);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
 
