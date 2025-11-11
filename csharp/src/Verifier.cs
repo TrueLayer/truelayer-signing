@@ -232,11 +232,13 @@ namespace TrueLayer.Signing
             var version = jwsHeaders.GetString(JwsHeaders.TlVersion) ?? TryRequireHeaderString("Tl-Signature-Version");
             SignatureException.Ensure(version == "2", "unsupported jws tl_version");
 
+            var tlHeaders = jwsHeaders.GetString(JwsHeaders.TlHeaders) ??
+                            TryRequireHeaderString("Tl-Signature-Headers") ?? "";
 #if NET8_0_OR_GREATER
-            var signatureHeaderNames = (jwsHeaders.GetString(JwsHeaders.TlHeaders) ?? TryRequireHeaderString("Tl-Signature-Headers") ?? "")
+            var signatureHeaderNames = tlHeaders
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 #else
-            var signatureHeaderNames = (jwsHeaders.GetString(JwsHeaders.TlHeaders) ?? TryRequireHeaderString("Tl-Signature-Headers") ?? "")
+            var signatureHeaderNames = tlHeaders
                 .Split(',')
                 .Select(h => h.Trim())
                 .Where(h => !string.IsNullOrEmpty(h))
