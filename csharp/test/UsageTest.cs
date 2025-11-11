@@ -308,6 +308,49 @@ namespace TrueLayer.Signing.Tests
         }
 
         [Fact]
+        public void SignAndVerify_HeaderNameWhitespaceTrimming()
+        {
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+            var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+            // Sign with header names that have leading/trailing whitespace
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Header("  Idempotency-Key  ", idempotency_key)
+                .Header("\tX-Custom\t", "123")
+                .Body(body)
+                .Sign();
+
+            // Verify with trimmed header names - should work
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Header("Idempotency-Key", idempotency_key)
+                .Header("X-Custom", "123")
+                .Body(body)
+                .Verify(tlSignature);
+
+            // Verify the reverse: sign without whitespace, verify with whitespace
+            var tlSignature2 = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Header("Idempotency-Key", idempotency_key)
+                .Header("X-Custom", "123")
+                .Body(body)
+                .Sign();
+
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Header("  Idempotency-Key  ", idempotency_key)
+                .Header("\tX-Custom\t", "123")
+                .Body(body)
+                .Verify(tlSignature2);
+        }
+
+        [Fact]
         public void Verifier_ExtractKid()
         {
             var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
