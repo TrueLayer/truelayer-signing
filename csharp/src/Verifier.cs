@@ -209,6 +209,9 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public void Verify(string tlSignature)
         {
+            var dotCount = tlSignature.Count(c => c == '.');
+            SignatureException.Ensure(dotCount == 2, "invalid signature format, expected detached JWS (header..signature)");
+
             IDictionary<string, object>? jwsHeaders;
             try
             {
@@ -228,18 +231,23 @@ namespace TrueLayer.Signing
             SignatureException.Ensure(jwsHeaders.GetString(JwsHeaders.Alg) == "ES512", "unsupported jws alg");
             var version = jwsHeaders.GetString(JwsHeaders.TlVersion) ?? TryRequireHeaderString("Tl-Signature-Version");
             SignatureException.Ensure(version == "2", "unsupported jws tl_version");
-            var signatureParts = tlSignature.Split('.');
-            SignatureException.Ensure(signatureParts.Length >= 3, "invalid signature format");
 
+#if NET8_0_OR_GREATER
+            var signatureHeaderNames = (jwsHeaders.GetString(JwsHeaders.TlHeaders) ?? TryRequireHeaderString("Tl-Signature-Headers") ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+#else
             var signatureHeaderNames = (jwsHeaders.GetString(JwsHeaders.TlHeaders) ?? TryRequireHeaderString("Tl-Signature-Headers") ?? "")
                 .Split(',')
                 .Select(h => h.Trim())
                 .Where(h => !string.IsNullOrEmpty(h))
-                .ToList();
+                .ToArray();
+#endif
 
-            var signatureHeaderNameSet = new HashSet<string>(signatureHeaderNames, StringComparer.OrdinalIgnoreCase);
-            var missingRequired = _requiredHeaders.Where(h => !signatureHeaderNameSet.Contains(h)).ToList();
-            SignatureException.Ensure(missingRequired.Count == 0, $"signature is missing required headers {string.Join(",", missingRequired)}");
+            var missingRequired = _requiredHeaders.Except(signatureHeaderNames, StringComparer.OrdinalIgnoreCase);
+            if (missingRequired.Any())
+            {
+                throw new SignatureException($"signature is missing required headers {string.Join(",", missingRequired)}");
+            }
 
             var signedHeaders = FilterOrderHeaders(signatureHeaderNames);
 
@@ -285,9 +293,9 @@ namespace TrueLayer.Signing
         }
 
         /// <summary>Filter and order headers to match jws header `tl_headers`.</summary>
-        private List<(string, byte[])> FilterOrderHeaders(List<string> signedHeaderNames)
+        private List<(string, byte[])> FilterOrderHeaders(string[] signedHeaderNames)
         {
-            var orderedHeaders = new List<(string, byte[])>(signedHeaderNames.Count);
+            var orderedHeaders = new List<(string, byte[])>(signedHeaderNames.Length);
             foreach (var name in signedHeaderNames)
             {
                 if (_headers.TryGetValue(name, out var value))
