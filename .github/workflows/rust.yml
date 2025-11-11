@@ -19,14 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: rustup update stable
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - run: cd rust && cargo test
 
   rustfmt:
     runs-on: ubuntu-latest
     steps:
     - run: rustup update stable
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - run: cargo fmt --manifest-path=rust/Cargo.toml -- --check
     - run: cargo fmt --manifest-path=rust/examples/webhook-server/Cargo.toml -- --check
 
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: rustup update stable
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - run: cargo check --manifest-path=rust/examples/webhook-server/Cargo.toml
 
   publish:
@@ -44,7 +44,7 @@ jobs:
     needs: test
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Install Rust toolchain
