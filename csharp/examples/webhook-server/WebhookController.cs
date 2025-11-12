@@ -3,67 +3,67 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TrueLayer.Signing;
 
-namespace TrueLayer.ExampleWebhookServer
+namespace TrueLayer.ExampleWebhookServer;
+
+[ApiController]
+[Route("[controller]")]
+public sealed class WebhookController(IHttpClientFactory httpClientFactory) : ControllerBase
 {
-    [ApiController]
-    public sealed class WebhookController : ControllerBase
+    private static readonly HashSet<string> AllowedJkus =
+    [
+        "https://webhooks.truelayer.com/.well-known/jwks",
+        "https://webhooks.truelayer-sandbox.com/.well-known/jwks"
+    ];
+
+    // Note: Webhook path can be whatever is configured, here a unique path
+    // is used matching the README example signature.
+    [HttpPost("/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> PostHook(
+        HttpRequest request,
+        [FromHeader(Name = "Tl-Signature")] string? tlSignature)
     {
-        private readonly HttpClient _http;
-
-        public WebhookController(HttpClient httpClient) => _http = httpClient;
-
-        // Note: Webhook path can be whatever is configured, here a unique path 
-        // is used matching the README example signature.
-        [HttpPost("/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b")]
-        public async Task<StatusCodeResult> PostHook()
+        if (string.IsNullOrEmpty(tlSignature))
         {
-            try
-            {
-                await VerifyRequest();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"WARNING: Verification failed: {ex.Message ?? ex.GetType().Name}");
-                return StatusCode(401);
-            }
-
-            // handle verified webhook
-            return StatusCode(202);
+            return Unauthorized(new { error = "Missing Tl-Signature header" });
         }
 
-        async Task VerifyRequest()
+        await VerifyRequest(request, tlSignature);
+
+        // handle verified webhook
+        return Accepted();
+    }
+
+    async Task VerifyRequest(HttpRequest request, string tlSignature)
+    {
+        // Extract jku from signature
+        var jku = Verifier.ExtractJku(tlSignature);
+
+        // Ensure jku is an expected TrueLayer url
+        if (!AllowedJkus.Contains(jku))
         {
-            // extract jku from signature
-            HttpContext.Request.Headers.TryGetValue("Tl-Signature", out var tlSignature);
-            if (!tlSignature.Any()) throw new InvalidOperationException("Missing Tl-Signature header");
-
-            var jku = Verifier.ExtractJku(tlSignature);
-
-            // ensure jku is an expected TrueLayer url
-            if (jku != "https://webhooks.truelayer.com/.well-known/jwks"
-                && jku != "https://webhooks.truelayer-sandbox.com/.well-known/jwks")
-            {
-                throw new InvalidOperationException($"unpermitted jku `{jku}`");
-            }
-
-            // fetch jwks (should cache this according to headers)
-            var jwksResponse = await _http.GetAsync(jku);
-            jwksResponse.EnsureSuccessStatusCode();
-            var jwks = await jwksResponse.Content.ReadAsByteArrayAsync();
-
-            // verify request
-            var allHeaders = HttpContext.Request.Headers.Select(h => KeyValuePair.Create(h.Key, h.Value.First()));
-            var body = await new System.IO.StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-
-            Verifier.VerifyWithJwks(jwks)
-                .Method("POST")
-                .Path(HttpContext.Request.Path)
-                .Headers(allHeaders)
-                .Body(body)
-                .Verify(tlSignature);
+            throw new InvalidOperationException($"Unpermitted jku: {jku}");
         }
+
+        // Fetch jwks (should cache this according to headers)
+        using var httpClient = httpClientFactory.CreateClient("JwksClient");
+        var jwks = await httpClient.GetByteArrayAsync(jku);
+
+        // Read request body as bytes to avoid encoding issues
+        using var ms = new System.IO.MemoryStream();
+        await request.Body.CopyToAsync(ms);
+
+        // Verify request using StringValues overload for direct IHeaderDictionary compatibility
+        Verifier.VerifyWithJwks(jwks)
+            .Method("POST")
+            .Path(request.Path)
+            .Headers(request.Headers)
+            .Body(ms.ToArray())
+            .Verify(tlSignature);
     }
 }
