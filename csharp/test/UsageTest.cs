@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Jose;
+using Microsoft.Extensions.Primitives;
 using static TrueLayer.Signing.Tests.TestData;
 
 namespace TrueLayer.Signing.Tests
@@ -308,6 +309,39 @@ namespace TrueLayer.Signing.Tests
         }
 
         [Fact]
+        public void SignAndVerify_StringValuesHeaders()
+        {
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+            var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Header("Idempotency-Key", idempotency_key)
+                .Header("X-Custom", "123")
+                .Body(body)
+                .Sign();
+
+            // Simulate ASP.NET Core IHeaderDictionary with StringValues
+            var stringValuesHeaders = new Dictionary<string, StringValues>
+            {
+                ["Idempotency-Key"] = new StringValues(idempotency_key),
+                ["X-Custom"] = new StringValues("123"),
+                ["X-Empty"] = StringValues.Empty, // should be skipped
+                ["X-Null"] = new StringValues(new string?[] { null }), // should be skipped
+                ["X-Multiple"] = new StringValues(new[] { "first", "second" }), // only first used
+            };
+
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Headers(stringValuesHeaders)
+                .Body(body)
+                .Verify(tlSignature); // should not throw
+        }
+
+        [Fact]
         public void SignAndVerify_HeaderNameWhitespaceTrimming()
         {
             var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
@@ -570,7 +604,180 @@ namespace TrueLayer.Signing.Tests
             var signatureJku = Verifier.ExtractJku(tlSignature);
             signatureJku.Should().Be(jku);
         }
-        
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_EmptyBody_NotCalled(TestCase testCase)
+        {
+            // Test when .Body() is not called at all - uses default Array.Empty<byte>()
+            var path = "/test/empty-body";
+
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                // .Body() not called - should use default empty byte[]
+                .Sign();
+
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                // .Body() not called - should use default empty byte[]
+                .Verify(tlSignature); // should not throw
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_EmptyBody_EmptyString(TestCase testCase)
+        {
+            // Test with empty string body
+            var path = "/test/empty-string";
+
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Body("")
+                .Sign();
+
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Body("")
+                .Verify(tlSignature); // should not throw
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_EmptyBody_ArrayEmpty(TestCase testCase)
+        {
+            // Test with Array.Empty<byte>()
+            var path = "/test/array-empty";
+
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Body(Array.Empty<byte>())
+                .Sign();
+
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Body(Array.Empty<byte>())
+                .Verify(tlSignature); // should not throw
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_EmptyBody_NewByteArray(TestCase testCase)
+        {
+            // Test with new byte[0]
+            var path = "/test/new-byte-array";
+
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Body(new byte[0])
+                .Sign();
+
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Body(new byte[0])
+                .Verify(tlSignature); // should not throw
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_EmptyBody_InterchangeableForms(TestCase testCase)
+        {
+            // All forms of empty body should be interchangeable
+            var path = "/test/empty-interchange";
+
+            // Sign with not called
+            var sig1 = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Sign();
+
+            // Verify with empty string - should work
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Body("")
+                .Verify(sig1);
+
+            // Sign with empty string
+            var sig2 = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Body("")
+                .Sign();
+
+            // Verify without calling .Body() - should work
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Verify(sig2);
+
+            // Sign with Array.Empty<byte>()
+            var sig3 = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Body(Array.Empty<byte>())
+                .Sign();
+
+            // Verify with new byte[0] - should work
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Body(new byte[0])
+                .Verify(sig3);
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_EmptyBody_Mismatch(TestCase testCase)
+        {
+            // Empty body vs non-empty body should fail verification
+            var path = "/test/empty-mismatch";
+
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Body("") // empty
+                .Sign();
+
+            Action verify = () => Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Body("{}") // not empty
+                .Verify(tlSignature);
+
+            verify.Should().Throw<SignatureException>();
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCases))]
+        public void SignAndVerify_EmptyBody_WithHeaders(TestCase testCase)
+        {
+            // Empty body with headers should work
+            var path = "/test/empty-with-headers";
+            var idempotencyKey = "idemp-empty-body-test";
+
+            var tlSignature = Signer.SignWithPem(testCase.Kid, testCase.PrivateKey)
+                .Method("DELETE")
+                .Path(path)
+                .Header("Idempotency-Key", idempotencyKey)
+                .Body(Array.Empty<byte>())
+                .Sign();
+
+            Verifier.VerifyWithPem(testCase.PublicKey)
+                .Method("DELETE")
+                .Path(path)
+                .Header("Idempotency-Key", idempotencyKey)
+                .Body("")
+                .Verify(tlSignature); // should not throw
+        }
+
         public sealed class TestCase
         {
             public TestCase(string name, string kid, string privateKey, string publicKey)
