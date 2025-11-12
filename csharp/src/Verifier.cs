@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Jose;
+using Microsoft.Extensions.Primitives;
 
 namespace TrueLayer.Signing
 {
@@ -180,6 +181,23 @@ namespace TrueLayer.Signing
             => Headers(headers
                 .Where(e => e.Value.Any())
                 .Select(e => new KeyValuePair<string, string>(e.Key, e.Value.First())));
+
+        /// <summary>
+        /// Appends headers from ASP.NET Core IHeaderDictionary without allocation.
+        /// <br/>
+        /// Warning: Only a single value per header name is supported, the first is used.
+        /// </summary>
+        public Verifier Headers(IEnumerable<KeyValuePair<string, StringValues>> headers)
+        {
+            foreach (var header in headers)
+            {
+                if (header.Value.Count > 0 && header.Value[0] is { } value)
+                {
+                    Header(header.Key, value);
+                }
+            }
+            return this;
+        }
 
         /// <summary>
         /// Require a header name that must be included in the `Tl-Signature`.

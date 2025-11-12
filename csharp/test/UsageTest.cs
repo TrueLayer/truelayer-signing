@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Jose;
+using Microsoft.Extensions.Primitives;
 using static TrueLayer.Signing.Tests.TestData;
 
 namespace TrueLayer.Signing.Tests
@@ -305,6 +306,39 @@ namespace TrueLayer.Signing.Tests
                 .Header("Idempotency-Key", idempotency_key)
                 .Body(body)
                 .Verify(tlSignature);
+        }
+
+        [Fact]
+        public void SignAndVerify_StringValuesHeaders()
+        {
+            var body = "{\"currency\":\"GBP\",\"max_amount_in_minor\":5000000}";
+            var idempotency_key = "idemp-2076717c-9005-4811-a321-9e0787fa0382";
+            var path = "/merchant_accounts/a61acaef-ee05-4077-92f3-25543a11bd8d/sweeping";
+
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path(path)
+                .Header("Idempotency-Key", idempotency_key)
+                .Header("X-Custom", "123")
+                .Body(body)
+                .Sign();
+
+            // Simulate ASP.NET Core IHeaderDictionary with StringValues
+            var stringValuesHeaders = new Dictionary<string, StringValues>
+            {
+                ["Idempotency-Key"] = new StringValues(idempotency_key),
+                ["X-Custom"] = new StringValues("123"),
+                ["X-Empty"] = StringValues.Empty, // should be skipped
+                ["X-Null"] = new StringValues(new string?[] { null }), // should be skipped
+                ["X-Multiple"] = new StringValues(new[] { "first", "second" }), // only first used
+            };
+
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(path)
+                .Headers(stringValuesHeaders)
+                .Body(body)
+                .Verify(tlSignature); // should not throw
         }
 
         [Fact]
