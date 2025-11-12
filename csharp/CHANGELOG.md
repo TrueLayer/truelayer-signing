@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 0.2.3
+* Add `Verifier.Headers(IEnumerable<KeyValuePair<string, StringValues>>)` overload for direct ASP.NET Core IHeaderDictionary compatibility.
 * Performance improvements in `Verifier` reducing memory allocations by ~350-500 bytes per verification (~6% reduction).
 * Optimized signature format validation to avoid unnecessary string allocations.
 * Improved header parsing on .NET 8.0+ using modern string split options.
