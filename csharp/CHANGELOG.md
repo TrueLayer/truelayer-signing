@@ -11,13 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Improved header parsing on .NET 8.0+ using modern string split options.
 * Pre-sized collections to prevent reallocation during verification.
 * Optimized missing header validation for better happy path performance.
-* Added comprehensive test coverage for empty body handling.
 
 ## 0.2.2
 * Use native detached payload verification reducing memory allocations by 34% (45.32 KB → 30.07 KB per verification).
 * Remove redundant `.ToLowerInvariant()` call in header lookups.
 * Cache `JsonSerializerOptions` for JWKS verification.
-* Simplify header trimming logic (rely on .NET 9 optimizations).
+* Simplify header trimming logic
 * Introduce `JwsHeaders` constants class for better maintainability.
 
 ## 0.2.1
