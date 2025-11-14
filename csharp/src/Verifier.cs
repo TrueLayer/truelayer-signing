@@ -61,7 +61,7 @@ namespace TrueLayer.Signing
             }
         }
 
-        /// <summary>Start building a `Tl-Signature` header verifier usinga a public key.</summary>
+        /// <summary>Start building a `Tl-Signature` header verifier using a public key.</summary>
         public static Verifier VerifyWith(ECDsa publicKey) => new Verifier(publicKey);
 
         /// <summary>Extract a header value from unverified jws Tl-Signature.</summary>
