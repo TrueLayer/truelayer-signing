@@ -54,26 +54,31 @@ namespace TrueLayer.Signing
 
     internal static class Util
     {
+        // Cache frequently-used UTF8 byte sequences to avoid repeated encoding
+        private static readonly byte[] SpaceBytes = Encoding.UTF8.GetBytes(" ");
+        private static readonly byte[] NewlineBytes = Encoding.UTF8.GetBytes("\n");
+        private static readonly byte[] ColonSpaceBytes = Encoding.UTF8.GetBytes(": ");
+
         /// <summary>
         /// Build signing payload from method, path, some/none/all headers and body.
         /// </summary>
         internal static byte[] BuildV2SigningPayload(
             string method,
             string path,
-            List<(string, byte[])> headers,
+            IEnumerable<(string, byte[])> headers,
             byte[] body)
         {
             var payload = new List<byte>();
             payload.AddRange(method.ToUpperInvariant().ToUtf8());
-            payload.AddRange(" ".ToUtf8());
+            payload.AddRange(SpaceBytes);
             payload.AddRange(path.ToUtf8());
-            payload.AddRange("\n".ToUtf8());
+            payload.AddRange(NewlineBytes);
             foreach (var (name, value) in headers)
             {
                 payload.AddRange(name.ToUtf8());
-                payload.AddRange(": ".ToUtf8());
+                payload.AddRange(ColonSpaceBytes);
                 payload.AddRange(value);
-                payload.AddRange("\n".ToUtf8());
+                payload.AddRange(NewlineBytes);
             }
             payload.AddRange(body);
             return payload.ToArray();
@@ -137,11 +142,8 @@ namespace TrueLayer.Signing
         /// <summary>Gets a value from the map as a string or null.</summary>
         public static string? GetString(this IDictionary<string, object> dict, string key)
         {
-            if (dict.TryGetValue(key, out var value))
-            {
-                return value as string;
-            }
-            return null;
+            dict.TryGetValue(key, out var value);
+            return value as string;
         }
 
         /// <summary>
@@ -160,14 +162,6 @@ namespace TrueLayer.Signing
         }
     }
 
-    /// <summary>Case-insensitive string header name comparison.</summary>
-    internal class HeaderNameComparer : IEqualityComparer<string>
-    {
-        public bool Equals(string? x, string? y)
-            => string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
-
-        public int GetHashCode(string x) => x.ToLowerInvariant().GetHashCode();
-    }
 
     /// <summary>JWKs json object.</summary>
     internal class Jwks
