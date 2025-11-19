@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageVersion>0.1.15</PackageVersion>
-    <TargetFrameworks>net5.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <PackageVersion>0.2.4</PackageVersion>
+    <TargetFrameworks>net10.0;net9.0;net8.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <Nullable>enable</Nullable>
     <LangVersion>9</LangVersion>
@@ -19,19 +19,25 @@
     <Copyright>Copyright (c) TrueLayer $([System.DateTime]::Now.ToString(yyyy))</Copyright>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <Description>Produce and verify TrueLayer API requests signatures.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <RootNamespace>TrueLayer.Signing</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="jose-jwt" Version="3.2.0" />
+    <None Include="../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="jose-jwt" Version="5.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="9.0.0" />
     <!-- Resolves: Found conflicts between different versions of "System.Text.Encodings.Web" -->
-    <PackageReference Include="System.Text.Encodings.Web" Version="5.0.1" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.10" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Text.Json" Version="5.0.1" />
-    <PackageReference Include="Portable.BouncyCastle" Version="1.8.1.2" />
+    <PackageReference Include="System.Text.Json" Version="5.0.2" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -21,24 +21,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: '5.0.x'
-    - uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '3.1.x'
-    - uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '2.2.x'
+        dotnet-version: |
+          10.0.x
+          9.0.x
+          8.0.x
     - run: cd csharp && dotnet build && dotnet test
 
   examples:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '10.0.x'
     - run: cd csharp/examples/webhook-server && dotnet build
     - run: cd csharp/examples/sign-request && dotnet build
   
@@ -50,9 +47,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 10.0.x
+        dotnet-quality: 'preview'
     - name: Generate NuGet package
       run: |
         cd csharp
