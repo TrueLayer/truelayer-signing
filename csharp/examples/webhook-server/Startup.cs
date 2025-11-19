@@ -1,28 +1,23 @@
-using CacheCow.Client;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace TrueLayer.ExampleWebhookServer
+namespace TrueLayer.ExampleWebhookServer;
+
+public class Startup
 {
-    public class Startup
+    public void ConfigureServices(IServiceCollection services)
     {
-        public Startup(IConfiguration configuration) => Configuration = configuration;
-
-        public IConfiguration Configuration { get; }
-
-        public void ConfigureServices(IServiceCollection services)
+        services.AddHttpClient("JwksClient", client =>
         {
-            services
-                // Setup a http client that will cache jwks responses according to cache-control headers
-                .AddSingleton(s => ClientExtensions.CreateClient())
-                .AddControllers();
-        }
+            client.Timeout = System.TimeSpan.FromSeconds(30);
+        });
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            app.UseRouting().UseEndpoints(endpoints => endpoints.MapControllers());
-        }
+        services.AddControllers();
+    }
+
+    public void Configure(IApplicationBuilder app)
+    {
+        app.UseRouting();
+        app.UseEndpoints(endpoints => endpoints.MapControllers());
     }
 }
