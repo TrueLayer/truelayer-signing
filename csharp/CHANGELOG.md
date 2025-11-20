@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.4
+* Add support for .NET 10.0.
+
+## 0.2.3
+* Add `Verifier.Headers(IEnumerable<KeyValuePair<string, StringValues>>)` overload for direct ASP.NET Core IHeaderDictionary compatibility.
+* Performance improvements in `Verifier` reducing memory allocations by ~350-500 bytes per verification (~6% reduction).
+* Optimized signature format validation to avoid unnecessary string allocations.
+* Improved header parsing on .NET 8.0+ using modern string split options.
+* Pre-sized collections to prevent reallocation during verification.
+* Optimized missing header validation for better happy path performance.
+
+## 0.2.2
+* Use native detached payload verification reducing memory allocations by 34% (45.32 KB → 30.07 KB per verification).
+* Remove redundant `.ToLowerInvariant()` call in header lookups.
+* Cache `JsonSerializerOptions` for JWKS verification.
+* Simplify header trimming logic
+* Introduce `JwsHeaders` constants class for better maintainability.
+
+## 0.2.1
+* Cache frequently-used UTF8 byte sequences to avoid repeated encoding; remove unnecessary .ToList()
+* Include README in NuGet package.
+
+## 0.2.0
+* Add support for .NET 8.0 and .NET 9.0.
+
+## 0.1.16
+* Add support for providing tl_version and tl_headers via HTTP headers.
+
+## 0.1.15
+* Add ability to specify jku when creating signature.
+
 ## 0.1.14
 * Add ability to sign with a function provided by the consumer.
 

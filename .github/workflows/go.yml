@@ -2,44 +2,44 @@ name: Go
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - '.github/workflows/go.yml'
-      - 'go/**'
-      - 'test-resources/**'
+      - ".github/workflows/go.yml"
+      - "go/**"
+      - "test-resources/**"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - '.github/workflows/go.yml'
-      - 'go/**'
-      - 'test-resources/**'
+      - ".github/workflows/go.yml"
+      - "go/**"
+      - "test-resources/**"
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: '^1.14'
+          go-version: "^1.25"
       - run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.6.2
           cd go
           golangci-lint run
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: '^1.14'
+          go-version: "^1.25"
       - run: cd go && go test ./...
   examples:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: '^1.14'
-    - run: cd go/examples/sign-request && go build
-    - run: cd go/examples/webhook-server && go build
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "^1.25"
+      - run: cd go/examples/sign-request && go build
+      - run: cd go/examples/webhook-server && go build

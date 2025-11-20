@@ -1,6 +1,6 @@
 using Xunit;
 using System;
-using FluentAssertions;
+using AwesomeAssertions;
 using Jose;
 using System.Text;
 using System.Collections.Generic;
@@ -148,6 +148,23 @@ namespace TrueLayer.Signing.Tests
 
             verify.Should().Throw<ArgumentException>()
                 .WithMessage("Invalid path \"https://example.com/the-path\" must start with '/'");
+        }
+
+        [Theory]
+        [InlineData("nodots")]
+        [InlineData("one.dot")]
+        [InlineData("too.many.dots.here")]
+        [InlineData("header..signature....")]
+        public void InvalidSignatureFormat(string invalidSignature)
+        {
+            Action verify = () => Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path("/test")
+                .Body("{}")
+                .Verify(invalidSignature);
+
+            verify.Should().Throw<SignatureException>()
+                .WithMessage("invalid signature format, expected detached JWS (header..signature)");
         }
     }
 }
