@@ -27,7 +27,7 @@ Gem::Specification.new do |s|
     "Rakefile",
     "lib/**/*.*",
     "test/**/*.*",
-    "truelayer-signing.gemspec",
+    "truelayer-signing.gemspec"
   ]
   s.require_path = "lib"
 
