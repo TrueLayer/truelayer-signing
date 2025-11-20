@@ -57,7 +57,7 @@ namespace TrueLayer.Signing
         private readonly TSigner _this;
         protected internal string _method = "POST";
         protected internal string _path = "";
-        protected internal readonly Dictionary<string, byte[]> _headers = new(new HeaderNameComparer());
+        protected internal readonly Dictionary<string, byte[]> _headers = new(StringComparer.OrdinalIgnoreCase);
         protected internal byte[] _body = Array.Empty<byte>();
         protected internal string? _jku;
 
@@ -169,15 +169,15 @@ namespace TrueLayer.Signing
         {
             var jwsHeaders = new Dictionary<string, object>
             {
-                {"alg", "ES512"},
-                {"kid", _kid},
-                {"tl_version", "2"},
-                {"tl_headers", string.Join(",", _headers.Select(h => h.Key))},
+                {JwsHeaders.Alg, "ES512"},
+                {JwsHeaders.Kid, _kid},
+                {JwsHeaders.TlVersion, "2"},
+                {JwsHeaders.TlHeaders, string.Join(",", _headers.Select(h => h.Key))},
             };
 
             if (_jku is not null)
             {
-                jwsHeaders.Add("jku", _jku);
+                jwsHeaders.Add(JwsHeaders.Jku, _jku);
             }
 
             return jwsHeaders;
@@ -209,7 +209,7 @@ namespace TrueLayer.Signing
         public override string Sign()
         {
             var jwsHeaders = CreateJwsHeaders();
-            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
+            var headerList = _headers.Select(e => (e.Key, e.Value));
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
 
             return JWT.EncodeBytes(
@@ -236,7 +236,7 @@ namespace TrueLayer.Signing
             var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
             var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
 
-            var headerList = _headers.Select(e => (e.Key, e.Value)).ToList();
+            var headerList = _headers.Select(e => (e.Key, e.Value));
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
             var signingPayloadB64 = Base64Url.Encode(signingPayload);
 

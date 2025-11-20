@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Jose;
+using Microsoft.Extensions.Primitives;
 
 namespace TrueLayer.Signing
 {
@@ -13,6 +14,11 @@ namespace TrueLayer.Signing
     /// </summary>
     public sealed class Verifier
     {
+        private static readonly JsonSerializerOptions JwksJsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        
         /// <summary>
         /// Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
         /// </summary>
@@ -43,13 +49,10 @@ namespace TrueLayer.Signing
         {
             try
             {
-                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                });
+                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, JwksJsonOptions);
                 // ecdsa fully setup later once we know the jwk kid
                 var verifier = VerifyWith(ECDsa.Create());
-                verifier.jwks = jwks ?? new Jwks();
+                verifier._jwks = jwks ?? new Jwks();
                 return verifier;
             }
             catch (JsonException e)
@@ -61,9 +64,9 @@ namespace TrueLayer.Signing
         /// <summary>Start building a `Tl-Signature` header verifier usinga a public key.</summary>
         public static Verifier VerifyWith(ECDsa publicKey) => new Verifier(publicKey);
 
-        /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
+        /// <summary>Extract a header value from unverified jws Tl-Signature.</summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        public static string ExtractKid(string tlSignature)
+        private static string ExtractJwsHeader(string tlSignature, string headerName)
         {
             IDictionary<string, object>? jwsHeaders;
             try
@@ -74,54 +77,41 @@ namespace TrueLayer.Signing
             {
                 throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
             }
-            var kid = jwsHeaders.GetString("kid");
-            if (kid == null)
+            var value = jwsHeaders.GetString(headerName);
+            if (value == null)
             {
-                throw new SignatureException("missing kid");
+                throw new SignatureException($"missing {headerName}");
             }
-            return kid;
+            return value;
         }
+
+        /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        public static string ExtractKid(string tlSignature) => ExtractJwsHeader(tlSignature, JwsHeaders.Kid);
 
         /// <summary>
         /// Extract jku (JSON Web Key URL) from unverified jws Tl-Signature.
         /// Used in webhook signatures providing the public key jwk url.
         /// </summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        public static string ExtractJku(string tlSignature)
-        {
-            IDictionary<string, object>? jwsHeaders;
-            try
-            {
-                jwsHeaders = Jose.JWT.Headers(tlSignature);
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
-            }
-            var jku = jwsHeaders.GetString("jku");
-            if (jku == null)
-            {
-                throw new SignatureException("missing jku");
-            }
-            return jku;
-        }
+        public static string ExtractJku(string tlSignature) => ExtractJwsHeader(tlSignature, JwsHeaders.Jku);
 
-        private ECDsa key;
+        private readonly ECDsa _key;
         // Non-null when verifying using jwks data.
         // This indicates we need to initialize `key` once we have the kid.
-        private Jwks? jwks;
-        private string method = "";
-        private string path = "";
-        private Dictionary<string, byte[]> headers = new Dictionary<string, byte[]>(new HeaderNameComparer());
-        private HashSet<string> requiredHeaders = new HashSet<string>(new HeaderNameComparer());
-        private byte[] body = new byte[0];
+        private Jwks? _jwks;
+        private string _method = "";
+        private string _path = "";
+        private readonly Dictionary<string, byte[]> _headers = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _requiredHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private byte[] _body = Array.Empty<byte>();
 
-        private Verifier(ECDsa publicKey) => key = publicKey;
+        private Verifier(ECDsa publicKey) => _key = publicKey;
 
         /// <summary>Add the request method.</summary>
         public Verifier Method(string method)
         {
-            this.method = method;
+            this._method = method;
             return this;
         }
 
@@ -134,7 +124,7 @@ namespace TrueLayer.Signing
             {
                 throw new ArgumentException($"Invalid path \"{path}\" must start with '/'");
             }
-            this.path = path;
+            this._path = path;
             return this;
         }
 
@@ -144,7 +134,7 @@ namespace TrueLayer.Signing
         /// </summary>
         public Verifier Header(string name, byte[] value)
         {
-            this.headers.Add(name.Trim(), value);
+            this._headers.Add(name.Trim(), value);
             return this;
         }
 
@@ -193,19 +183,36 @@ namespace TrueLayer.Signing
                 .Select(e => new KeyValuePair<string, string>(e.Key, e.Value.First())));
 
         /// <summary>
+        /// Appends headers from ASP.NET Core IHeaderDictionary without allocation.
+        /// <br/>
+        /// Warning: Only a single value per header name is supported, the first is used.
+        /// </summary>
+        public Verifier Headers(IEnumerable<KeyValuePair<string, StringValues>> headers)
+        {
+            foreach (var header in headers)
+            {
+                if (header.Value.Count > 0 && header.Value[0] is { } value)
+                {
+                    Header(header.Key, value);
+                }
+            }
+            return this;
+        }
+
+        /// <summary>
         /// Require a header name that must be included in the `Tl-Signature`.
         /// May be called multiple times to add multiple required headers.
         /// </summary>
         public Verifier RequireHeader(string name)
         {
-            requiredHeaders.Add(name);
+            _requiredHeaders.Add(name);
             return this;
         }
 
         /// <summary>Add the full unmodified request body.</summary>
         public Verifier Body(byte[] body)
         {
-            this.body = body;
+            this._body = body;
             return this;
         }
 
@@ -220,6 +227,9 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         public void Verify(string tlSignature)
         {
+            var dotCount = tlSignature.Count(c => c == '.');
+            SignatureException.Ensure(dotCount == 2, "invalid signature format, expected detached JWS (header..signature)");
+
             IDictionary<string, object>? jwsHeaders;
             try
             {
@@ -229,47 +239,54 @@ namespace TrueLayer.Signing
             {
                 throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
             }
-            if (jwks is Jwks jwkeys)
+            if (_jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data
-                var kid = jwsHeaders.GetString("kid") ?? throw new SignatureException("missing kid");
+                var kid = jwsHeaders.GetString(JwsHeaders.Kid) ?? throw new SignatureException("missing kid");
                 FindAndImportJwk(jwkeys, kid);
             }
 
-            SignatureException.Ensure(jwsHeaders.GetString("alg") == "ES512", "unsupported jws alg");
-            SignatureException.Ensure(jwsHeaders.GetString("tl_version") == "2", "unsupported jws tl_version");
-            var signatureParts = tlSignature.Split('.');
-            SignatureException.Ensure(signatureParts.Length >= 3, "invalid signature format");
+            SignatureException.Ensure(jwsHeaders.GetString(JwsHeaders.Alg) == "ES512", "unsupported jws alg");
+            var version = jwsHeaders.GetString(JwsHeaders.TlVersion) ?? TryRequireHeaderString("Tl-Signature-Version");
+            SignatureException.Ensure(version == "2", "unsupported jws tl_version");
 
-            var signatureHeaderNames = (jwsHeaders.GetString("tl_headers") ?? "")
+            var tlHeaders = jwsHeaders.GetString(JwsHeaders.TlHeaders) ??
+                            TryRequireHeaderString("Tl-Signature-Headers") ?? "";
+#if NET8_0_OR_GREATER
+            var signatureHeaderNames = tlHeaders
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+#else
+            var signatureHeaderNames = tlHeaders
                 .Split(',')
                 .Select(h => h.Trim())
                 .Where(h => !string.IsNullOrEmpty(h))
-                .ToList();
+                .ToArray();
+#endif
 
-            var signatureHeaderNameSet = new HashSet<string>(signatureHeaderNames, new HeaderNameComparer());
-            var missingRequired = requiredHeaders.SingleOrDefault(h => !signatureHeaderNameSet.Contains(h));
-            SignatureException.Ensure(missingRequired == null, $"signature is missing required header {missingRequired}");
+            var missingRequired = _requiredHeaders.Except(signatureHeaderNames, StringComparer.OrdinalIgnoreCase);
+            if (missingRequired.Any())
+            {
+                throw new SignatureException($"signature is missing required headers {string.Join(",", missingRequired)}");
+            }
 
             var signedHeaders = FilterOrderHeaders(signatureHeaderNames);
 
-            var signingPayload = Util.BuildV2SigningPayload(method, path, signedHeaders, body);
-            var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
+            var signingPayload = Util.BuildV2SigningPayload(_method, _path, signedHeaders, _body);
 
             SignatureException.Try(() =>
             {
                 try
                 {
-                    return Jose.JWT.Decode(jws, key);
+                    return Jose.JWT.DecodeBytes(tlSignature, _key, payload: signingPayload);
                 }
                 catch (Jose.IntegrityException)
                 {
                     // try again with/without a trailing slash (#80)
-                    var path2 = path + "/";
-                    if (path.EndsWith("/")) path2 = path.Remove(path.Length - 1);
-                    var signingPayload = Util.BuildV2SigningPayload(method, path2, signedHeaders, body);
-                    var jws = $"{signatureParts[0]}.{Base64Url.Encode(signingPayload)}.{signatureParts[2]}";
-                    return Jose.JWT.Decode(jws, key);
+                    var path2 = _path.EndsWith("/")
+                        ? _path.Substring(0, _path.Length - 1)
+                        : _path + "/";
+                    var alternatePayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
+                    return Jose.JWT.DecodeBytes(tlSignature, _key, payload: alternatePayload);
                 }
             }, "Invalid signature");
         }
@@ -282,7 +299,7 @@ namespace TrueLayer.Signing
             SignatureException.Ensure(jwk.Kty == "EC", "unsupported jwk.kty");
             SignatureException.Ensure(jwk.Crv == "P-521", "unsupported jwk.crv");
 
-            SignatureException.TryAction(() => key.ImportParameters(new ECParameters
+            SignatureException.TryAction(() => _key.ImportParameters(new ECParameters
             {
                 Curve = ECCurve.NamedCurves.nistP521,
                 Q = new ECPoint
@@ -296,12 +313,12 @@ namespace TrueLayer.Signing
         }
 
         /// <summary>Filter and order headers to match jws header `tl_headers`.</summary>
-        private List<(string, byte[])> FilterOrderHeaders(List<string> signedHeaderNames)
+        private List<(string, byte[])> FilterOrderHeaders(string[] signedHeaderNames)
         {
-            var orderedHeaders = new List<(string, byte[])>(signedHeaderNames.Count);
+            var orderedHeaders = new List<(string, byte[])>(signedHeaderNames.Length);
             foreach (var name in signedHeaderNames)
             {
-                if (headers.TryGetValue(name.ToLowerInvariant(), out var value))
+                if (_headers.TryGetValue(name, out var value))
                 {
                     orderedHeaders.Add((name, value));
                 }
@@ -312,5 +329,21 @@ namespace TrueLayer.Signing
             }
             return orderedHeaders;
         }
+
+        private string? TryRequireHeaderString(string name)
+        {
+            if (GetHeaderString(name) is {} value)
+            {
+                _requiredHeaders.Add(name);
+                return value;
+            }
+
+            return null;
+        }
+
+        private string? GetHeaderString(string key) =>
+            _headers.TryGetValue(key, out var value)
+                ? Encoding.UTF8.GetString(value)
+                : null;
     }
 }

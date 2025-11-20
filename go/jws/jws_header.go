@@ -55,7 +55,7 @@ func (j *JwsHeader) FilterHeaders(headers map[string][]byte) (*orderedmap.Ordere
 				Value: value,
 			})
 		} else {
-			return nil, fmt.Errorf("Missing tl_header `%s` declared in signature", headerName)
+			return nil, fmt.Errorf("missing tl_header `%s` declared in signature", headerName)
 		}
 	}
 

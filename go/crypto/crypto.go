@@ -33,7 +33,7 @@ func ParseEcPublicKey(publicKeyData []byte) (*ecdsa.PublicKey, error) {
 	x509Encoded := block.Bytes
 	genericPublicKey, err := x509.ParsePKIXPublicKey(x509Encoded)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("public key parsing failed: %v", err))
+		return nil, fmt.Errorf("public key parsing failed: %w", err)
 	}
 	publicKey, ok := genericPublicKey.(*ecdsa.PublicKey)
 	if !ok {
