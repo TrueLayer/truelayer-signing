@@ -376,7 +376,8 @@ public class UsageTest {
                 SignatureException.class,
                 () -> Verifier.extractJku("an-invalid..signature")
         );
-        assertEquals("Failed to parse JWS: Invalid JWS header: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
+        String expected = "Failed to parse JWS: Invalid JWS header: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $[" + System.lineSeparator() + "See https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure]";
+        assertEquals(expected, e.getMessage());
     }
 
     @Test
@@ -415,7 +416,8 @@ public class UsageTest {
                         .body("{}")
                         .verify("an-invalid..signature")
         );
-        assertEquals("Failed to parse JWS: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
+        String expected = "Failed to parse JWS: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $[" + System.lineSeparator() + "See https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure]";
+        assertEquals(expected, e.getMessage());
     }
 
     @Test
