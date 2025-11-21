@@ -4,8 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.26.1",
-    "express": "^4.18.0",
+    "axios": "^1.13.2",
+    "express": "^5.1.0",
     "truelayer-signing": "file:../.."
   },
   "scripts": {
