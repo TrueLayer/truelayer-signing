@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
@@ -46,7 +46,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2 #we need to make a git diff of the last 2 commits
       - name: Get project version
@@ -71,7 +71,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && needs.set-release-version.outputs.changed_version != ''
     needs: [build-and-test, set-release-version]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
