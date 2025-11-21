@@ -12,6 +12,7 @@ import java.util.HashMap;
 import static java.nio.file.Files.readAllBytes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class UsageTest {
 
@@ -376,8 +377,12 @@ public class UsageTest {
                 SignatureException.class,
                 () -> Verifier.extractJku("an-invalid..signature")
         );
-        String expected = "Failed to parse JWS: Invalid JWS header: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $[" + System.lineSeparator() + "See https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure]";
-        assertEquals(expected, e.getMessage());
+        // The error message format changed in nimbus-jose-jwt 9.40
+        // It now includes "path $[" followed by a newline and Gson troubleshooting link
+        // Normalize line separators to handle platform differences
+        String actual = e.getMessage().replace("\r\n", "\n").replace("\r", "\n");
+        String expected = "Failed to parse JWS: Invalid JWS header: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $[\nSee https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure]";
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -416,8 +421,12 @@ public class UsageTest {
                         .body("{}")
                         .verify("an-invalid..signature")
         );
-        String expected = "Failed to parse JWS: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $[" + System.lineSeparator() + "See https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure]";
-        assertEquals(expected, e.getMessage());
+        // The error message format changed in nimbus-jose-jwt 9.40
+        // It now includes "path $[" followed by a newline and Gson troubleshooting link
+        // Normalize line separators to handle platform differences
+        String actual = e.getMessage().replace("\r\n", "\n").replace("\r", "\n");
+        String expected = "Failed to parse JWS: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $[\nSee https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure]";
+        assertEquals(expected, actual);
     }
 
     @Test
