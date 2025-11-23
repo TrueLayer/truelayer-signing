@@ -142,7 +142,7 @@ namespace TrueLayer.Signing
         }
 
         /// <summary>Gets a value from the map as a string or null.</summary>
-        public static string? GetString(this IDictionary<string, object> dict, string key)
+        public static string? GetString(this Dictionary<string, object> dict, string key)
         {
             if (!dict.TryGetValue(key, out var value))
             {
