@@ -95,6 +95,24 @@ namespace TrueLayer.Signing
                 }
 
                 var headerB64 = tlSignature.Substring(0, firstDot);
+                return ParseJwsHeadersFromB64(headerB64);
+            }
+            catch (SignatureException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
+        }
+
+        /// <summary>Parse JWS headers from base64url-encoded header in an AOT-compatible way.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        private static Dictionary<string, object> ParseJwsHeadersFromB64(string headerB64)
+        {
+            try
+            {
                 var headerJson = Base64Url.Decode(headerB64);
 
 #if NET5_0_OR_GREATER
@@ -259,7 +277,12 @@ namespace TrueLayer.Signing
             var dotCount = tlSignature.Count(c => c == '.');
             SignatureException.Ensure(dotCount == 2, "invalid signature format, expected detached JWS (header..signature)");
 
-            var jwsHeaders = ParseJwsHeaders(tlSignature);
+            // Parse the JWS parts once
+            var parts = tlSignature.Split('.');
+            var headerB64 = parts[0];
+            var signatureB64 = parts[2];
+
+            var jwsHeaders = ParseJwsHeadersFromB64(headerB64);
             if (_jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data
@@ -298,7 +321,7 @@ namespace TrueLayer.Signing
             {
                 try
                 {
-                    VerifyJwsSignature(tlSignature, signingPayload, _key);
+                    VerifyJwsSignature(headerB64, signatureB64, signingPayload, _key);
                     return true;
                 }
                 catch (SignatureException)
@@ -308,7 +331,7 @@ namespace TrueLayer.Signing
                         ? _path.Substring(0, _path.Length - 1)
                         : _path + "/";
                     var alternatePayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
-                    VerifyJwsSignature(tlSignature, alternatePayload, _key);
+                    VerifyJwsSignature(headerB64, signatureB64, alternatePayload, _key);
                     return true;
                 }
             }, "Invalid signature");
@@ -316,20 +339,10 @@ namespace TrueLayer.Signing
 
         /// <summary>Verify JWS signature manually without using reflection-based deserialization (AOT-compatible).</summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        private static void VerifyJwsSignature(string jwsToken, byte[] payload, ECDsa key)
+        private static void VerifyJwsSignature(string headerB64, string signatureB64, byte[] payload, ECDsa key)
         {
             try
             {
-                // JWS format for detached payload: base64url(header)..base64url(signature)
-                var parts = jwsToken.Split('.');
-                if (parts.Length != 3 || !string.IsNullOrEmpty(parts[1]))
-                {
-                    throw new SignatureException("invalid JWS format, expected detached signature");
-                }
-
-                var headerB64 = parts[0];
-                var signatureB64 = parts[2];
-
                 // Decode the signature - ES512 signatures are IEEE P1363 format (raw r||s)
                 var signature = Base64Url.Decode(signatureB64);
 
@@ -339,11 +352,15 @@ namespace TrueLayer.Signing
                 var signingInput = Encoding.UTF8.GetBytes($"{headerB64}.{payloadB64}");
 
                 // Compute SHA-512 hash of the signing input (ES512 uses SHA-512)
+#if NET5_0_OR_GREATER
+                var hash = SHA512.HashData(signingInput);
+#else
                 byte[] hash;
                 using (var sha512 = SHA512.Create())
                 {
                     hash = sha512.ComputeHash(signingInput);
                 }
+#endif
 
                 // Verify the signature using ECDSA
                 // The signature is in IEEE P1363 format (concatenated r||s), which is what VerifyHash expects
