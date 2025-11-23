@@ -5,7 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jose;
 
 namespace TrueLayer.Signing
 {
@@ -209,15 +208,37 @@ namespace TrueLayer.Signing
         public override string Sign()
         {
             var jwsHeaders = CreateJwsHeaders();
+#if NET5_0_OR_GREATER
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders, SigningJsonContext.Default.DictionaryStringObject);
+#else
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
+#endif
+            var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
+
             var headerList = _headers.Select(e => (e.Key, e.Value));
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
+            var signingPayloadB64 = Base64Url.Encode(signingPayload);
 
-            return JWT.EncodeBytes(
-                signingPayload,
-                _key,
-                JwsAlgorithm.ES512,
-                jwsHeaders,
-                options: new JwtOptions {DetachPayload = true});
+            var signingMessage = $"{serializedJwsHeadersB64}.{signingPayloadB64}";
+            var signingMessageBytes = Encoding.UTF8.GetBytes(signingMessage);
+
+            // Compute SHA-512 hash (ES512 uses SHA-512)
+#if NET5_0_OR_GREATER
+            var hash = SHA512.HashData(signingMessageBytes);
+#else
+            byte[] hash;
+            using (var sha512 = SHA512.Create())
+            {
+                hash = sha512.ComputeHash(signingMessageBytes);
+            }
+#endif
+
+            // Sign the hash using ECDSA - signature will be in IEEE P1363 format (r||s)
+            var signature = _key.SignHash(hash);
+            var signatureB64 = Base64Url.Encode(signature);
+
+            // Return detached JWS format: header..signature (empty payload)
+            return $"{serializedJwsHeadersB64}..{signatureB64}";
         }
     }
     
