@@ -14,11 +14,6 @@ namespace TrueLayer.Signing
     /// </summary>
     public sealed class Verifier
     {
-        private static readonly JsonSerializerOptions JwksJsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-        
         /// <summary>
         /// Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
         /// </summary>
@@ -49,7 +44,15 @@ namespace TrueLayer.Signing
         {
             try
             {
-                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, JwksJsonOptions);
+#if NET5_0_OR_GREATER
+                var jwks = JsonSerializer.Deserialize(jwksJson, SigningJsonContext.Default.Jwks);
+#else
+                var jwksJsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, jwksJsonOptions);
+#endif
                 // ecdsa fully setup later once we know the jwk kid
                 var verifier = VerifyWith(ECDsa.Create());
                 verifier._jwks = jwks ?? new Jwks();

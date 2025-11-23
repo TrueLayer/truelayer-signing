@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace TrueLayer.Signing
 {
@@ -178,4 +179,17 @@ namespace TrueLayer.Signing
         public string X { get; set; } = "";
         public string Y { get; set; } = "";
     }
+
+    /// <summary>AOT-compatible JSON serialization context for JWKS.</summary>
+#if NET5_0_OR_GREATER
+    [JsonSourceGenerationOptions(
+        PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.Never)]
+    [JsonSerializable(typeof(Jwks))]
+    [JsonSerializable(typeof(Jwk))]
+    [JsonSerializable(typeof(Dictionary<string, object>))]
+    internal partial class SigningJsonContext : JsonSerializerContext
+    {
+    }
+#endif
 }

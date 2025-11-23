@@ -233,7 +233,11 @@ namespace TrueLayer.Signing
         public override async Task<string> SignAsync()
         {
             var jwsHeaders = CreateJwsHeaders();
+#if NET5_0_OR_GREATER
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders, SigningJsonContext.Default.DictionaryStringObject);
+#else
             var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
+#endif
             var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
 
             var headerList = _headers.Select(e => (e.Key, e.Value));
