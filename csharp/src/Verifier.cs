@@ -71,21 +71,47 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         private static string ExtractJwsHeader(string tlSignature, string headerName)
         {
-            IDictionary<string, object>? jwsHeaders;
-            try
-            {
-                jwsHeaders = Jose.JWT.Headers(tlSignature);
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
-            }
+            var jwsHeaders = ParseJwsHeaders(tlSignature);
             var value = jwsHeaders.GetString(headerName);
             if (value == null)
             {
                 throw new SignatureException($"missing {headerName}");
             }
             return value;
+        }
+
+        /// <summary>Parse JWS headers from a JWS token in an AOT-compatible way.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        private static IDictionary<string, object> ParseJwsHeaders(string tlSignature)
+        {
+            try
+            {
+                // JWS format: header.payload.signature
+                // For detached payload: header..signature
+                var firstDot = tlSignature.IndexOf('.');
+                if (firstDot <= 0)
+                {
+                    throw new SignatureException("invalid JWS format");
+                }
+
+                var headerB64 = tlSignature.Substring(0, firstDot);
+                var headerJson = Base64Url.Decode(headerB64);
+
+#if NET5_0_OR_GREATER
+                var headers = JsonSerializer.Deserialize(headerJson, SigningJsonContext.Default.DictionaryStringObject);
+#else
+                var headers = JsonSerializer.Deserialize<Dictionary<string, object>>(headerJson);
+#endif
+                return headers ?? new Dictionary<string, object>();
+            }
+            catch (SignatureException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
         }
 
         /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
@@ -233,15 +259,7 @@ namespace TrueLayer.Signing
             var dotCount = tlSignature.Count(c => c == '.');
             SignatureException.Ensure(dotCount == 2, "invalid signature format, expected detached JWS (header..signature)");
 
-            IDictionary<string, object>? jwsHeaders;
-            try
-            {
-                jwsHeaders = Jose.JWT.Headers(tlSignature);
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
-            }
+            var jwsHeaders = ParseJwsHeaders(tlSignature);
             if (_jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data

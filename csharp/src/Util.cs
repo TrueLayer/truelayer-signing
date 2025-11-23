@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace TrueLayer.Signing
@@ -143,7 +144,17 @@ namespace TrueLayer.Signing
         /// <summary>Gets a value from the map as a string or null.</summary>
         public static string? GetString(this IDictionary<string, object> dict, string key)
         {
-            dict.TryGetValue(key, out var value);
+            if (!dict.TryGetValue(key, out var value))
+            {
+                return null;
+            }
+
+            // Handle JsonElement (from System.Text.Json deserialization)
+            if (value is JsonElement element && element.ValueKind == JsonValueKind.String)
+            {
+                return element.GetString();
+            }
+
             return value as string;
         }
 
