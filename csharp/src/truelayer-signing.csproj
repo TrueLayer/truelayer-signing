@@ -24,6 +24,9 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <RootNamespace>TrueLayer.Signing</RootNamespace>
     <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,9 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Primitives" Version="9.0.0" />
-    <!-- Resolves: Found conflicts between different versions of "System.Text.Encodings.Web" -->
-    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
@@ -43,7 +44,6 @@
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
   
-
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>TrueLayer.Signing.Tests</_Parameter1>
