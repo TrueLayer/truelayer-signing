@@ -35,7 +35,7 @@ module JWT
     ).segments
   end
 
-  # rubocop:disable Style/OptionalArguments, Style/OptionalBooleanParameter
+  # rubocop:disable Style/OptionalArguments, Style/OptionalBooleanParameter, Naming/BlockForwarding
   def truelayer_decode(jwt, key, verify = true, options, &keyfinder)
     TrueLayerDecode.new(
       jwt,
@@ -45,5 +45,5 @@ module JWT
       &keyfinder
     ).decode_segments
   end
-  # rubocop:enable Style/OptionalArguments, Style/OptionalBooleanParameter
+  # rubocop:enable Style/OptionalArguments, Style/OptionalBooleanParameter, Naming/BlockForwarding
 end
