@@ -16,6 +16,8 @@ module JWT
   class TrueLayerEncode < Encode
     # See https://github.com/jwt/ruby-jwt/blob/main/lib/jwt/encode.rb#L15-L18
     def initialize(options)
+      super
+
       @token     = TrueLayerToken.new(payload: options[:payload], header: options[:headers])
       @key       = options[:key]
       @algorithm = options[:algorithm]
@@ -27,10 +29,10 @@ module JWT
 
     # See https://github.com/jwt/ruby-jwt/blob/main/lib/jwt/encoded_token.rb#L203-L212
     def decode_payload
-      raise JWT::DecodeError, 'Encoded payload is empty' if encoded_payload == ''
+      raise JWT::DecodeError, "Encoded payload is empty" if encoded_payload == ""
 
       if unencoded_payload?
-        verify_claims!(crit: ['b64'])
+        verify_claims!(crit: ["b64"])
         return parse_unencoded(encoded_payload)
       end
 
@@ -41,7 +43,9 @@ module JWT
   class TrueLayerDecode < Decode
     # See https://github.com/jwt/ruby-jwt/blob/main/lib/jwt/decode.rb#L22-L30
     def initialize(jwt, key, verify, options, &keyfinder)
-      raise JWT::DecodeError, 'Nil JSON web token' unless jwt
+      super
+
+      raise JWT::DecodeError, "Nil JSON web token" unless jwt
 
       @token = TrueLayerEncodedToken.new(jwt)
       @key = key
