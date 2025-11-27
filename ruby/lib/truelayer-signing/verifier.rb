@@ -109,25 +109,10 @@ module TrueLayerSigning
 
         raise(Error, "JWKS does not include given `kid` value") unless jwk
 
-        valid_jwk = apply_zero_padding_as_needed(jwk)
-
-        JWT::JWK::EC.import(valid_jwk).public_key
+        JWT::JWK::EC.import(jwk).public_key
       else
         raise(Error, "Type of public key not recognised")
       end
-    end
-
-    def apply_zero_padding_as_needed(jwk)
-      valid_jwk = jwk.clone
-
-      %i(x y).each do |elem|
-        coords = Base64.urlsafe_decode64(valid_jwk[elem])
-        diff = EXPECTED_EC_KEY_COORDS_LENGTH - coords.length
-
-        valid_jwk[elem] = Base64.urlsafe_encode64(("\x00" * diff) + coords) if diff.positive?
-      end
-
-      valid_jwk
     end
 
     def validate_required_headers!(headers)
