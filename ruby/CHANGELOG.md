@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ...
 
+## [0.3.0] – 2025-11-27
+
+- Require Ruby `>= 3.1`
+- Update pinned version for `jwt` from `~> 2.7.0` to `~> 3.1.2`
+
 ## [0.2.3] – 2024-07-29
 
 - Fix `Gemspec/AddRuntimeDependency` linter error
@@ -26,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] – 2023-06-13
 
 - Add support for signature verification using a JWKS: `TrueLayerSigning.verify_with_jwks(jwks)`
-    and `TrueLayerSigning.extract_jws_header(signature)`.
+  and `TrueLayerSigning.extract_jws_header(signature)`.
 
 ## [0.1.2] – 2023-05-19
 
