@@ -5,7 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jose;
 
 namespace TrueLayer.Signing
 {
@@ -39,10 +38,13 @@ namespace TrueLayer.Signing
 
         /// <summary>
         /// Start building a request Tl-Signature header value using the key ID of the signing key (kid)
-        /// and a function that accepts the payload to sign and returns the signature in IEEE P1363 format. 
+        /// and a function that accepts the payload to sign and returns the signature in IEEE P1363 format.
         /// </summary>
         public static AsyncSigner SignWithFunction(string kid, Func<string, Task<string>> signAsync) => new FunctionSigner(kid, signAsync);
-        
+
+        /// <summary>
+        /// Initializes a new instance of the Signer class with the specified key ID.
+        /// </summary>
         protected internal Signer(string kid) : base(kid)
         {
         }
@@ -51,16 +53,27 @@ namespace TrueLayer.Signing
         public abstract string Sign();
     }
 
+    /// <summary>
+    /// Base class for signature builders with fluent API support.
+    /// </summary>
     public abstract class Signer<TSigner> where TSigner : Signer<TSigner>
     {
         private readonly string _kid;
         private readonly TSigner _this;
+        /// <summary>HTTP method for the request.</summary>
         protected internal string _method = "POST";
+        /// <summary>Request path.</summary>
         protected internal string _path = "";
+        /// <summary>Request headers to include in the signature.</summary>
         protected internal readonly Dictionary<string, byte[]> _headers = new(StringComparer.OrdinalIgnoreCase);
+        /// <summary>Request body.</summary>
         protected internal byte[] _body = Array.Empty<byte>();
+        /// <summary>JSON Web Key Set URL.</summary>
         protected internal string? _jku;
 
+        /// <summary>
+        /// Initializes a new instance of the Signer class with the specified key ID.
+        /// </summary>
         protected internal Signer(string kid)
         {
             _kid = kid;
@@ -157,7 +170,7 @@ namespace TrueLayer.Signing
         public TSigner Body(string body) => Body(body.ToUtf8());
         
         /// <summary>
-        /// Sets the jku (JSON Web Key Set URL) in the JWS headers of the signature. 
+        /// Sets the jku (JSON Web Key Set URL) in the JWS headers of the signature.
         /// </summary>
         public TSigner Jku(string jku)
         {
@@ -165,6 +178,9 @@ namespace TrueLayer.Signing
             return _this;
         }
 
+        /// <summary>
+        /// Creates the JWS headers for the signature.
+        /// </summary>
         protected internal Dictionary<string, object> CreateJwsHeaders()
         {
             var jwsHeaders = new Dictionary<string, object>
@@ -189,6 +205,9 @@ namespace TrueLayer.Signing
     /// </summary>
     public abstract class AsyncSigner : Signer<AsyncSigner>
     {
+        /// <summary>
+        /// Initializes a new instance of the AsyncSigner class with the specified key ID.
+        /// </summary>
         protected internal AsyncSigner(string kid) : base(kid)
         {
         }
@@ -209,15 +228,26 @@ namespace TrueLayer.Signing
         public override string Sign()
         {
             var jwsHeaders = CreateJwsHeaders();
+#if NET5_0_OR_GREATER
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders, SigningJsonContext.Default.DictionaryStringObject);
+#else
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
+#endif
+            var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
+
             var headerList = _headers.Select(e => (e.Key, e.Value));
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
+            var signingPayloadB64 = Base64Url.Encode(signingPayload);
 
-            return JWT.EncodeBytes(
-                signingPayload,
-                _key,
-                JwsAlgorithm.ES512,
-                jwsHeaders,
-                options: new JwtOptions {DetachPayload = true});
+            // Compute SHA-512 hash of the JWS signing input
+            var hash = Util.ComputeJwsSigningHash(serializedJwsHeadersB64, signingPayloadB64);
+
+            // Sign the hash using ECDSA - signature will be in IEEE P1363 format (r||s)
+            var signature = _key.SignHash(hash);
+            var signatureB64 = Base64Url.Encode(signature);
+
+            // Return detached JWS format: header..signature (empty payload)
+            return $"{serializedJwsHeadersB64}..{signatureB64}";
         }
     }
     
@@ -233,7 +263,11 @@ namespace TrueLayer.Signing
         public override async Task<string> SignAsync()
         {
             var jwsHeaders = CreateJwsHeaders();
+#if NET5_0_OR_GREATER
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders, SigningJsonContext.Default.DictionaryStringObject);
+#else
             var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
+#endif
             var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
 
             var headerList = _headers.Select(e => (e.Key, e.Value));
