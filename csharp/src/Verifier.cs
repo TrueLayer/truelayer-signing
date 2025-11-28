@@ -345,31 +345,9 @@ namespace TrueLayer.Signing
                 // Decode the signature - ES512 signatures are IEEE P1363 format (raw r||s)
                 var signature = Base64Url.Decode(signatureB64);
 
-                // Build the signing input: base64url(header).base64url(payload)
-                // For detached signatures, we reconstruct using the provided payload
+                // Compute SHA-512 hash of the JWS signing input
                 var payloadB64 = Base64Url.Encode(payload);
-                var signingInput = new byte[headerB64.Length + 1 + payloadB64.Length];
-#if NET5_0_OR_GREATER
-                // Use Span-based API for better performance on modern .NET
-                Encoding.ASCII.GetBytes(headerB64, signingInput.AsSpan(0, headerB64.Length));
-                signingInput[headerB64.Length] = (byte)'.';
-                Encoding.ASCII.GetBytes(payloadB64, signingInput.AsSpan(headerB64.Length + 1));
-#else
-                Encoding.UTF8.GetBytes(headerB64, 0, headerB64.Length, signingInput, 0);
-                signingInput[headerB64.Length] = (byte)'.';
-                Encoding.UTF8.GetBytes(payloadB64, 0, payloadB64.Length, signingInput, headerB64.Length + 1);
-#endif
-
-                // Compute SHA-512 hash of the signing input (ES512 uses SHA-512)
-#if NET5_0_OR_GREATER
-                var hash = SHA512.HashData(signingInput);
-#else
-                byte[] hash;
-                using (var sha512 = SHA512.Create())
-                {
-                    hash = sha512.ComputeHash(signingInput);
-                }
-#endif
+                var hash = Util.ComputeJwsSigningHash(headerB64, payloadB64);
 
                 // Verify the signature using ECDSA
                 // The signature is in IEEE P1363 format (concatenated r||s), which is what VerifyHash expects

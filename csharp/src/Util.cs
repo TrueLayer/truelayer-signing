@@ -171,6 +171,39 @@ namespace TrueLayer.Signing
             Array.Copy(bytes, 0, padded, 1, bytes.Length);
             return padded;
         }
+
+        /// <summary>
+        /// Builds the JWS signing input in the format "base64url(header).base64url(payload)"
+        /// and computes the SHA-512 hash for ES512 signing/verification.
+        /// </summary>
+        /// <param name="headerB64">Base64url-encoded JWS header</param>
+        /// <param name="payloadB64">Base64url-encoded payload</param>
+        /// <returns>SHA-512 hash of the signing input</returns>
+        internal static byte[] ComputeJwsSigningHash(string headerB64, string payloadB64)
+        {
+            // Build the signing input: base64url(header).base64url(payload)
+            var signingInput = new byte[headerB64.Length + 1 + payloadB64.Length];
+#if NET5_0_OR_GREATER
+            // Use Span-based API for better performance on modern .NET
+            Encoding.ASCII.GetBytes(headerB64, signingInput.AsSpan(0, headerB64.Length));
+            signingInput[headerB64.Length] = (byte)'.';
+            Encoding.ASCII.GetBytes(payloadB64, signingInput.AsSpan(headerB64.Length + 1));
+#else
+            Encoding.UTF8.GetBytes(headerB64, 0, headerB64.Length, signingInput, 0);
+            signingInput[headerB64.Length] = (byte)'.';
+            Encoding.UTF8.GetBytes(payloadB64, 0, payloadB64.Length, signingInput, headerB64.Length + 1);
+#endif
+
+            // Compute SHA-512 hash of the signing input (ES512 uses SHA-512)
+#if NET5_0_OR_GREATER
+            return SHA512.HashData(signingInput);
+#else
+            using (var sha512 = SHA512.Create())
+            {
+                return sha512.ComputeHash(signingInput);
+            }
+#endif
+        }
     }
 
 
