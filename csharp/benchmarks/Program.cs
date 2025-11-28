@@ -17,10 +17,6 @@ if (args.Length > 0)
         case "verifier":
             BenchmarkRunner.Run<VerifierBenchmarks>(config);
             break;
-        case "jws":
-        case "jws-verify":
-            BenchmarkRunner.Run<JwsVerificationBenchmarks>(config);
-            break;
         case "all":
         default:
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
