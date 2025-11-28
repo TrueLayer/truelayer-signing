@@ -20,22 +20,21 @@ namespace TrueLayer.Signing.Tests
         [Fact]
         public void ParseJwsHeaders_ValidHeader_ShouldSucceed()
         {
-            // Valid JWS header with required fields
-            var headerDict = new Dictionary<string, object>
-            {
-                ["alg"] = "ES512",
-                ["kid"] = "test-key-id",
-                ["tl_version"] = "2",
-                ["tl_headers"] = "Idempotency-Key"
-            };
-            var headerJson = JsonSerializer.SerializeToUtf8Bytes(headerDict);
-            var headerB64 = Base64Url.Encode(headerJson);
-
-            // Should not throw
-            var result = Verifier.VerifyWithPem(PublicKey)
+            // Valid JWS header with required fields - test that a properly signed request verifies
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
                 .Method("POST")
                 .Path("/test")
-                .Body("{}");
+                .Header("Idempotency-Key", "test-value")
+                .Body("{}")
+                .Sign();
+
+            // Should not throw
+            Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path("/test")
+                .Header("Idempotency-Key", "test-value")
+                .Body("{}")
+                .Verify(tlSignature);
         }
 
         [Fact]
@@ -148,14 +147,6 @@ namespace TrueLayer.Signing.Tests
         public void ParseJwsHeaders_Base64UrlPaddingVariations_ShouldSucceed()
         {
             // Test various padding scenarios in base64url encoding
-            var headerDict = new Dictionary<string, object>
-            {
-                ["alg"] = "ES512",
-                ["kid"] = Kid,
-                ["tl_version"] = "2",
-                ["tl_headers"] = ""
-            };
-
             var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
                 .Method("POST")
                 .Path("/test")
