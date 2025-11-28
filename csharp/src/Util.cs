@@ -191,8 +191,8 @@ namespace TrueLayer.Signing
         public string Y { get; set; } = "";
     }
 
-    /// <summary>AOT-compatible JSON serialization context for JWKS.</summary>
 #if NET5_0_OR_GREATER
+    /// <summary>AOT-compatible JSON serialization context for JWKS.</summary>
     [JsonSourceGenerationOptions(
         PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.Never)]
