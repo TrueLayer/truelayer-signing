@@ -6,7 +6,7 @@ namespace TrueLayer.Signing
     internal static class Base64Url
     {
         /// <summary>Encode bytes to base64url string.</summary>
-        public static string Encode(byte[] input) => Convert.ToBase64String(input).Split('=')[0].Replace('+', '-').Replace('/', '_');
+        public static string Encode(byte[] input) => Convert.ToBase64String(input).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
         /// <summary>Decode base64url string to bytes.</summary>
         public static byte[] Decode(string input)
