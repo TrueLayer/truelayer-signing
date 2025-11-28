@@ -241,9 +241,16 @@ namespace TrueLayer.Signing
 
             // Efficiently build the signing message bytes without intermediate string allocation
             var signingMessageBytes = new byte[serializedJwsHeadersB64.Length + 1 + signingPayloadB64.Length];
+#if NET5_0_OR_GREATER
+            // Use Span-based API for better performance on modern .NET
+            Encoding.ASCII.GetBytes(serializedJwsHeadersB64, signingMessageBytes.AsSpan(0, serializedJwsHeadersB64.Length));
+            signingMessageBytes[serializedJwsHeadersB64.Length] = (byte)'.';
+            Encoding.ASCII.GetBytes(signingPayloadB64, signingMessageBytes.AsSpan(serializedJwsHeadersB64.Length + 1));
+#else
             Encoding.UTF8.GetBytes(serializedJwsHeadersB64, 0, serializedJwsHeadersB64.Length, signingMessageBytes, 0);
             signingMessageBytes[serializedJwsHeadersB64.Length] = (byte)'.';
             Encoding.UTF8.GetBytes(signingPayloadB64, 0, signingPayloadB64.Length, signingMessageBytes, serializedJwsHeadersB64.Length + 1);
+#endif
 
             // Compute SHA-512 hash (ES512 uses SHA-512)
 #if NET5_0_OR_GREATER
