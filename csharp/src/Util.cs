@@ -142,20 +142,19 @@ namespace TrueLayer.Signing
         }
 
         /// <summary>Gets a value from the map as a string or null.</summary>
-        public static string? GetString(this Dictionary<string, object> dict, string key)
+        public static string? GetString(this Dictionary<string, JsonElement> dict, string key)
         {
-            if (!dict.TryGetValue(key, out var value))
+            if (!dict.TryGetValue(key, out var element))
             {
                 return null;
             }
 
-            // Handle JsonElement (from System.Text.Json deserialization)
-            if (value is JsonElement element && element.ValueKind == JsonValueKind.String)
+            if (element.ValueKind == JsonValueKind.String)
             {
                 return element.GetString();
             }
 
-            return value as string;
+            return null;
         }
 
         /// <summary>
@@ -199,6 +198,7 @@ namespace TrueLayer.Signing
     [JsonSerializable(typeof(Jwks))]
     [JsonSerializable(typeof(Jwk))]
     [JsonSerializable(typeof(Dictionary<string, object>))]
+    [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
     internal partial class SigningJsonContext : JsonSerializerContext
     {
     }

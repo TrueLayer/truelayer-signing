@@ -81,7 +81,7 @@ namespace TrueLayer.Signing
 
         /// <summary>Parse JWS headers from a JWS token in an AOT-compatible way.</summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        private static Dictionary<string, object> ParseJwsHeaders(string tlSignature)
+        private static Dictionary<string, JsonElement> ParseJwsHeaders(string tlSignature)
         {
             try
             {
@@ -108,18 +108,18 @@ namespace TrueLayer.Signing
 
         /// <summary>Parse JWS headers from base64url-encoded header in an AOT-compatible way.</summary>
         /// <exception cref="SignatureException">Signature is invalid</exception>
-        private static Dictionary<string, object> ParseJwsHeadersFromB64(string headerB64)
+        private static Dictionary<string, JsonElement> ParseJwsHeadersFromB64(string headerB64)
         {
             try
             {
                 var headerJson = Base64Url.Decode(headerB64);
 
 #if NET5_0_OR_GREATER
-                var headers = JsonSerializer.Deserialize(headerJson, SigningJsonContext.Default.DictionaryStringObject);
+                var headers = JsonSerializer.Deserialize(headerJson, SigningJsonContext.Default.DictionaryStringJsonElement);
 #else
-                var headers = JsonSerializer.Deserialize<Dictionary<string, object>>(headerJson);
+                var headers = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(headerJson);
 #endif
-                return headers ?? new Dictionary<string, object>();
+                return headers ?? new Dictionary<string, JsonElement>();
             }
             catch (SignatureException)
             {
@@ -348,7 +348,10 @@ namespace TrueLayer.Signing
                 // Build the signing input: base64url(header).base64url(payload)
                 // For detached signatures, we reconstruct using the provided payload
                 var payloadB64 = Base64Url.Encode(payload);
-                var signingInput = Encoding.UTF8.GetBytes($"{headerB64}.{payloadB64}");
+                var signingInput = new byte[headerB64.Length + 1 + payloadB64.Length];
+                Encoding.UTF8.GetBytes(headerB64, 0, headerB64.Length, signingInput, 0);
+                signingInput[headerB64.Length] = (byte)'.';
+                Encoding.UTF8.GetBytes(payloadB64, 0, payloadB64.Length, signingInput, headerB64.Length + 1);
 
                 // Compute SHA-512 hash of the signing input (ES512 uses SHA-512)
 #if NET5_0_OR_GREATER

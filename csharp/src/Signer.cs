@@ -239,8 +239,11 @@ namespace TrueLayer.Signing
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
             var signingPayloadB64 = Base64Url.Encode(signingPayload);
 
-            var signingMessage = $"{serializedJwsHeadersB64}.{signingPayloadB64}";
-            var signingMessageBytes = Encoding.UTF8.GetBytes(signingMessage);
+            // Efficiently build the signing message bytes without intermediate string allocation
+            var signingMessageBytes = new byte[serializedJwsHeadersB64.Length + 1 + signingPayloadB64.Length];
+            Encoding.UTF8.GetBytes(serializedJwsHeadersB64, 0, serializedJwsHeadersB64.Length, signingMessageBytes, 0);
+            signingMessageBytes[serializedJwsHeadersB64.Length] = (byte)'.';
+            Encoding.UTF8.GetBytes(signingPayloadB64, 0, signingPayloadB64.Length, signingMessageBytes, serializedJwsHeadersB64.Length + 1);
 
             // Compute SHA-512 hash (ES512 uses SHA-512)
 #if NET5_0_OR_GREATER
