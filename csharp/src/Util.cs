@@ -189,9 +189,9 @@ namespace TrueLayer.Signing
             signingInput[headerB64.Length] = (byte)'.';
             Encoding.ASCII.GetBytes(payloadB64, signingInput.AsSpan(headerB64.Length + 1));
 #else
-            Encoding.UTF8.GetBytes(headerB64, 0, headerB64.Length, signingInput, 0);
+            Encoding.ASCII.GetBytes(headerB64, 0, headerB64.Length, signingInput, 0);
             signingInput[headerB64.Length] = (byte)'.';
-            Encoding.UTF8.GetBytes(payloadB64, 0, payloadB64.Length, signingInput, headerB64.Length + 1);
+            Encoding.ASCII.GetBytes(payloadB64, 0, payloadB64.Length, signingInput, headerB64.Length + 1);
 #endif
 
             // Compute SHA-512 hash of the signing input (ES512 uses SHA-512)
