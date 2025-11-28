@@ -2,8 +2,6 @@
 
 module TrueLayerSigning
   class Verifier < JwsBase
-    EXPECTED_EC_KEY_COORDS_LENGTH = 66
-
     attr_reader :required_headers, :key_type, :key_value
 
     def initialize(args)
