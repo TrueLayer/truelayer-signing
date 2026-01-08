@@ -1,0 +1,102 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+jobs:
+  # Detect which language directories have changed
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      csharp: ${{ steps.filter.outputs.csharp }}
+      go: ${{ steps.filter.outputs.go }}
+      java: ${{ steps.filter.outputs.java }}
+      java7: ${{ steps.filter.outputs.java7 }}
+      javascript: ${{ steps.filter.outputs.javascript }}
+      php: ${{ steps.filter.outputs.php }}
+      python: ${{ steps.filter.outputs.python }}
+      ruby: ${{ steps.filter.outputs.ruby }}
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            csharp:
+              - 'csharp/**'
+            go:
+              - 'go/**'
+            java:
+              - 'java/**'
+            java7:
+              - 'java7/**'
+            javascript:
+              - 'nodejs/**'
+            php:
+              - 'php/**'
+            python:
+              - 'python/**'
+            ruby:
+              - 'ruby/**'
+            rust:
+              - 'rust/**'
+
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    needs: changes
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['csharp', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust']
+
+    # On main branch or schedule: run for all languages
+    # On PR: only run if the language directory has changed
+    if: |
+      github.event_name == 'push' && github.ref == 'refs/heads/main' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'pull_request' && (
+        (matrix.language == 'csharp' && needs.changes.outputs.csharp == 'true') ||
+        (matrix.language == 'go' && needs.changes.outputs.go == 'true') ||
+        (matrix.language == 'java' && (needs.changes.outputs.java == 'true' || needs.changes.outputs.java7 == 'true')) ||
+        (matrix.language == 'javascript' && needs.changes.outputs.javascript == 'true') ||
+        (matrix.language == 'php' && needs.changes.outputs.php == 'true') ||
+        (matrix.language == 'python' && needs.changes.outputs.python == 'true') ||
+        (matrix.language == 'ruby' && needs.changes.outputs.ruby == 'true') ||
+        (matrix.language == 'rust' && needs.changes.outputs.rust == 'true')
+      ))
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        config-file: ./.github/codeql-config.yml
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+        # queries: security-extended,security-and-quality
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{ matrix.language }}"
+

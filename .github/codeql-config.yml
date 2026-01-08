@@ -1,0 +1,26 @@
+name: "CodeQL Config"
+
+paths:
+  - csharp
+  - go
+  - java
+  - java7
+  - nodejs
+  - php
+  - python
+  - ruby
+  - rust
+
+paths-ignore:
+  - '**/*.md'
+  - '**/examples/**'
+  - '**/test/**'
+  - '**/tests/**'
+  - '**/node_modules/**'
+  - '**/vendor/**'
+  - '**/target/**'
+  - '**/bin/**'
+  - '**/obj/**'
+  - '**/.gradle/**'
+  - '**/gradle/wrapper/**'
+
