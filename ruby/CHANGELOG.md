@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ...
 
-## [0.3.0] – 2025-11-28
+## [0.3.0] – 2026-06-15
 
-- Require Ruby `>= 3.1`
-- Update pinned version for `jwt` from `~> 2.7.0` to `~> 3.1.2`
+- Require Ruby `>= 3.2`
+- Update pinned version for `jwt` from `~> 2.7.0` to `~> 3.2.0`
 
 ## [0.2.3] – 2024-07-29
 

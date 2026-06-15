@@ -2,5 +2,5 @@
 
 source "https://rubygems.org"
 
-gem "rake", "~> 13.3", require: false
-gem "rubocop", "~> 1.81", require: false
+gem "rake", "~> 13.4", require: false
+gem "rubocop", "~> 1.87", require: false
