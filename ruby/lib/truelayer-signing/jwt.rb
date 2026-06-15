@@ -14,7 +14,7 @@ module JWT
   end
 
   class TrueLayerEncode < Encode
-    # See https://github.com/jwt/ruby-jwt/blob/main/lib/jwt/encode.rb#L15-L18
+    # See https://github.com/jwt/ruby-jwt/blob/main/lib/jwt/encode.rb#L15-L19
     def initialize(options)
       super
 
@@ -27,7 +27,7 @@ module JWT
   class TrueLayerEncodedToken < EncodedToken
     private
 
-    # See https://github.com/jwt/ruby-jwt/blob/main/lib/jwt/encoded_token.rb#L203-L212
+    # See https://github.com/jwt/ruby-jwt/blob/main/lib/jwt/encoded_token.rb#L189-L198
     def decode_payload
       raise JWT::DecodeError, "Encoded payload is empty" if encoded_payload == ""
 

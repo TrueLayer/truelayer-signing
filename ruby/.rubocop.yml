@@ -2,7 +2,7 @@ AllCops:
   NewCops: enable
   SuggestExtensions: false
   # TODO: bump lowest supported version when dropping support
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 3.2
 Gemspec/RequireMFA:
   Enabled: false
 Layout/LineEndStringConcatenationIndentation:
