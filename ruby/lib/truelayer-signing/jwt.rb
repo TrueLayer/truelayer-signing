@@ -64,8 +64,16 @@ module JWT
     ).segments
   end
 
-  # rubocop:disable Style/OptionalArguments, Style/OptionalBooleanParameter, Naming/BlockForwarding
-  def truelayer_decode(jwt, key, verify = true, options, &keyfinder)
+  # rubocop:disable Style/OptionalBooleanParameter, Naming/BlockForwarding
+  def truelayer_decode(jwt, key, verify = true, options = {}, &keyfinder)
+    # Support both `truelayer_decode(jwt, key, options)` and
+    # `truelayer_decode(jwt, key, verify, options)` call styles by treating a
+    # Hash in the `verify` position as the `options` argument.
+    if verify.is_a?(Hash)
+      options = verify
+      verify = true
+    end
+
     TrueLayerDecode.new(
       jwt,
       key,
@@ -74,5 +82,5 @@ module JWT
       &keyfinder
     ).decode_segments
   end
-  # rubocop:enable Style/OptionalArguments, Style/OptionalBooleanParameter, Naming/BlockForwarding
+  # rubocop:enable Style/OptionalBooleanParameter, Naming/BlockForwarding
 end
