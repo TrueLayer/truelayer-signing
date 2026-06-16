@@ -1,5 +1,6 @@
 name: "CodeQL Config"
 
+# PHP isn't included here as it's not supported by CodeQL
 paths:
   - .github
   - csharp

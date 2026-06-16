@@ -11,6 +11,7 @@ on:
 
 jobs:
   # Detect which language directories have changed
+  # PHP isn't included here as it's not supported by CodeQL
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -62,7 +63,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['actions', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'rust']
+        # build-mode 'none' matches GitHub's default setup: CodeQL creates the
+        # database without compiling the project. Go has no 'none' mode, so it
+        # uses 'autobuild'.
+        include:
+          - language: actions
+            build-mode: none
+          - language: csharp
+            build-mode: none
+          - language: go
+            build-mode: autobuild
+          - language: java
+            build-mode: none
+          - language: javascript
+            build-mode: none
+          - language: python
+            build-mode: none
+          - language: ruby
+            build-mode: none
+          - language: rust
+            build-mode: none
 
     # On main branch or schedule: run for all languages
     # On PR: only run if the language directory has changed
@@ -88,14 +108,12 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
         config-file: ./.github/codeql-config.yml
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: security-extended,security-and-quality
-
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
