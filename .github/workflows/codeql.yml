@@ -19,7 +19,6 @@ jobs:
       java: ${{ steps.filter.outputs.java }}
       java7: ${{ steps.filter.outputs.java7 }}
       javascript: ${{ steps.filter.outputs.javascript }}
-      php: ${{ steps.filter.outputs.php }}
       python: ${{ steps.filter.outputs.python }}
       ruby: ${{ steps.filter.outputs.ruby }}
       rust: ${{ steps.filter.outputs.rust }}
@@ -39,8 +38,6 @@ jobs:
               - 'java7/**'
             javascript:
               - 'nodejs/**'
-            php:
-              - 'php/**'
             python:
               - 'python/**'
             ruby:
@@ -60,7 +57,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['csharp', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust']
+        language: ['csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'rust']
 
     # On main branch or schedule: run for all languages
     # On PR: only run if the language directory has changed
@@ -72,7 +69,6 @@ jobs:
         (matrix.language == 'go' && needs.changes.outputs.go == 'true') ||
         (matrix.language == 'java' && (needs.changes.outputs.java == 'true' || needs.changes.outputs.java7 == 'true')) ||
         (matrix.language == 'javascript' && needs.changes.outputs.javascript == 'true') ||
-        (matrix.language == 'php' && needs.changes.outputs.php == 'true') ||
         (matrix.language == 'python' && needs.changes.outputs.python == 'true') ||
         (matrix.language == 'ruby' && needs.changes.outputs.ruby == 'true') ||
         (matrix.language == 'rust' && needs.changes.outputs.rust == 'true')
