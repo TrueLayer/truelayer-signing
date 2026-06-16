@@ -1,6 +1,7 @@
 name: "CodeQL Config"
 
 paths:
+  - .github
   - csharp
   - go
   - java

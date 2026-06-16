@@ -14,6 +14,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      actions: ${{ steps.filter.outputs.actions }}
       csharp: ${{ steps.filter.outputs.csharp }}
       go: ${{ steps.filter.outputs.go }}
       java: ${{ steps.filter.outputs.java }}
@@ -28,6 +29,10 @@ jobs:
         id: filter
         with:
           filters: |
+            actions:
+              - '.github/workflows/**'
+              - '**/action.yml'
+              - '**/action.yaml'
             csharp:
               - 'csharp/**'
             go:
@@ -57,7 +62,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'rust']
+        language: ['actions', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'rust']
 
     # On main branch or schedule: run for all languages
     # On PR: only run if the language directory has changed
@@ -65,6 +70,7 @@ jobs:
       github.event_name == 'push' && github.ref == 'refs/heads/main' ||
       github.event_name == 'schedule' ||
       (github.event_name == 'pull_request' && (
+        (matrix.language == 'actions' && needs.changes.outputs.actions == 'true') ||
         (matrix.language == 'csharp' && needs.changes.outputs.csharp == 'true') ||
         (matrix.language == 'go' && needs.changes.outputs.go == 'true') ||
         (matrix.language == 'java' && (needs.changes.outputs.java == 'true' || needs.changes.outputs.java7 == 'true')) ||
