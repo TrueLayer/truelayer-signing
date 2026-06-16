@@ -11,6 +11,8 @@ jobs:
   # PHP isn't included here as it's not supported by CodeQL
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       actions: ${{ steps.filter.outputs.actions }}
       csharp: ${{ steps.filter.outputs.csharp }}
