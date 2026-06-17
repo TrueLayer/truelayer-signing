@@ -19,6 +19,9 @@ on:
       - 'python/poetry.lock'
       - 'python/pyproject.toml'
 
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: ./python

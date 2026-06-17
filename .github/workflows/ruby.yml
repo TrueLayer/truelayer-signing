@@ -14,6 +14,10 @@ on:
       - ".github/workflows/ruby.yml"
       - "ruby/**"
       - "test-resources/**"
+
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: ./ruby

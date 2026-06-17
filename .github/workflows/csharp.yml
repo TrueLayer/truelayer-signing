@@ -16,6 +16,9 @@ on:
       - 'csharp/**'
       - 'test-resources/**'
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
