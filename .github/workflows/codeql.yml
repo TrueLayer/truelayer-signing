@@ -9,7 +9,7 @@ on:
 jobs:
   # Detect which language directories changed and build the CodeQL matrix.
   # PHP isn't included as it's not supported by CodeQL.
-  changes:
+  detect_changes:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -89,9 +89,9 @@ jobs:
 
   analyze:
     name: Analyze (${{ matrix.language }})
-    needs: changes
+    needs: detect_changes
     # Skip entirely when no relevant language changed (empty matrix).
-    if: needs.changes.outputs.matrix != '[]'
+    if: needs.detect_changes.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -101,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
+        include: ${{ fromJSON(needs.detect_changes.outputs.matrix) }}
 
     steps:
     - name: Checkout repository
