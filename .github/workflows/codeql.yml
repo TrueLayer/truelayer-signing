@@ -91,6 +91,13 @@ jobs:
     name: Analyze (${{ matrix.language }})
     needs: detect_changes
     # Skip entirely when no relevant language changed (empty matrix).
+    #
+    # Because PRs only analyse changed languages, the code scanning check may
+    # report "configurations not found" / a neutral result: it can't diff the
+    # languages present on main but not re-run here. This is expected and
+    # harmless — unchanged languages can't introduce new alerts, and main still
+    # analyses everything on push. Avoid requiring a "success" (vs neutral)
+    # conclusion for this check in branch protection, or such PRs would block.
     if: needs.detect_changes.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     permissions:

@@ -16,6 +16,9 @@ on:
       - 'java7/**'
       - 'test-resources/**'
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     name: Build and Test
@@ -91,7 +94,10 @@ jobs:
     name: Create Github Release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && !contains(needs.set-release-version.outputs.project_version, 'SNAPSHOT')
-    needs: [publish]
+    needs: [publish, set-release-version]
+    # Creating a git tag and a GitHub release requires write access to contents.
+    permissions:
+      contents: write
     steps:
       - name: Create tag
         id: create_tag
