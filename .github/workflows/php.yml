@@ -76,7 +76,7 @@ jobs:
         id: tag-replacer
         run: |
           TAG=${GITHUB_REF//tags\/php\//tags\/}
-          echo "::set-output name=NEW_TAG::$TAG"
+          echo "NEW_TAG=$TAG" >> "$GITHUB_OUTPUT"
       - uses: stefandanaita/git-subtree-action@17ca5908d7bc20b9c1f98509be1a541362f965f0 # 1.2.0
         with:
           repo: "truelayer/truelayer-signing-php"
