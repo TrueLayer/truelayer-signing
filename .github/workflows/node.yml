@@ -47,7 +47,7 @@ jobs:
     - name: Upgrade npm
       # Trusted publishing (OIDC) requires npm >= 11.5.1, newer than the version
       # bundled with the Node LTS release
-      run: npm install -g npm@latest
+      run: npm install -g "npm@^11.5.1"
     - name: Get version from tag
       uses: actions-ecosystem/action-regex-match@v2
       id: regex-match
@@ -59,6 +59,10 @@ jobs:
       run: |
         cd nodejs
         yarn --frozen-lockfile
-        VERSION=${{ steps.regex-match.outputs.group1 }}
-        npm version $VERSION --no-git-tag-version --allow-same-version
+        VERSION="${{ steps.regex-match.outputs.group1 }}"
+        if [ -z "$VERSION" ]; then
+          echo "::error::Could not extract a version from tag '${{ github.ref_name }}'"
+          exit 1
+        fi
+        npm version "$VERSION" --no-git-tag-version --allow-same-version
         npm publish
