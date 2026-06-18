@@ -56,12 +56,12 @@ jobs:
         id: get_project_version
         run: |
           cd java && PROJECT_VERSION=$(./gradlew properties | grep "version:" | awk '{print $2}')
-          echo "::set-output name=project_version::$PROJECT_VERSION"
+          echo "project_version=$PROJECT_VERSION" >> "$GITHUB_OUTPUT"
       - name: Get changed version from last two commits
         id: get_changed_version
         run: |
           CHANGED_VERSION=$(git diff HEAD^ -- ./java/gradle.properties | grep +version= | awk -F "=" '{print $2}')
-          echo "::set-output name=changed_version::$CHANGED_VERSION"
+          echo "changed_version=$CHANGED_VERSION" >> "$GITHUB_OUTPUT"
       - name: Print changed version from last two commits
         run: echo ${{ steps.get_changed_version.outputs.changed_version }}
     outputs:
