@@ -34,11 +34,20 @@ jobs:
     # Runs only on tags push
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     needs: test
+    permissions:
+      contents: read
+      # Required for npm trusted publishing via OIDC
+      id-token: write
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: 'lts/*'
+        registry-url: 'https://registry.npmjs.org'
+    - name: Upgrade npm
+      # Trusted publishing (OIDC) requires npm >= 11.5.1, newer than the version
+      # bundled with the Node LTS release
+      run: npm install -g npm@latest
     - name: Get version from tag
       uses: actions-ecosystem/action-regex-match@v2
       id: regex-match
@@ -50,7 +59,6 @@ jobs:
       run: |
         cd nodejs
         yarn --frozen-lockfile
-        npm set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
         VERSION=${{ steps.regex-match.outputs.group1 }}
-        npm version $VERSION
+        npm version $VERSION --no-git-tag-version --allow-same-version
         npm publish
