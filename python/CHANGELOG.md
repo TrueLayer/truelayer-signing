@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.0
+
+- **Drop support for Python 3.8 and 3.9 (both EOL); minimum is now Python 3.10**
+- Widen `cryptography` upper bound from `<47` to `<50` (resolves to 49.x)
+- Upgrade dev tooling to latest majors: black 26, flake8 7, mypy 2, pre-commit 4,
+  pylint 4, pytest 9, pytest-cov 7, coverage 7.14, requests 2.34
+- Update pre-commit hook revisions to match (pre-commit-hooks v6, black 26.5.1,
+  flake8 7.3.0; move flake8 hook repo from GitLab to GitHub)
+- Update CI test matrix to Python 3.10–3.14
+- Regenerate `poetry.lock` with Poetry 2.3.2
+
 ## 0.3.9
 
 - Widen `cryptography` upper bound from `<45` to `<47`
