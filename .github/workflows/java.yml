@@ -39,7 +39,7 @@ jobs:
           distribution: ${{ matrix.java-distribution }}
           cache: 'gradle'
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v3.5.0
+        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
       - name: Test
         run: cd java && ./gradlew test
 
@@ -82,7 +82,7 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v3.5.0
+        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
       - name: Publish to Sonatype and Maven Central
         run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
@@ -102,13 +102,13 @@ jobs:
     steps:
       - name: Create tag
         id: create_tag
-        uses: mathieudutour/github-tag-action@v6.2
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ needs.set-release-version.outputs.project_version }}
           tag_prefix: 'java-v'
       - name: Create release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           tag_name: ${{ steps.create_tag.outputs.new_tag }}
           generate_release_notes: false
