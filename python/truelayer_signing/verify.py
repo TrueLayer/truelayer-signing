@@ -98,7 +98,7 @@ def tl_verify(args: VerifyArguments) -> None:
     Raises:
         TlSigningException
     """
-    (jws_header, signature) = _parse_tl_signature(args.tl_signature)
+    jws_header, signature = _parse_tl_signature(args.tl_signature)
 
     # order headers
     try:
@@ -146,7 +146,7 @@ def tl_verify(args: VerifyArguments) -> None:
     try:
         verifier.verify(signature, jws_b64)
     except TlSigningException:
-        (path, slash) = (
+        path, slash = (
             (args.path[:-1], False) if args.path.endswith("/") else (args.path, True)
         )
         _, jws_b64_2 = build_v2_jws_b64(
@@ -168,7 +168,7 @@ def extract_jws_header(tl_signature: str) -> JwsHeader:
         - TlSigningException
     """
     try:
-        (header, _) = signature_split(tl_signature)
+        header, _ = signature_split(tl_signature)
         header_b64 = header.encode()
         headers: Mapping[str, str] = json.loads(
             decode_url_safe_base64(header_b64).decode()
@@ -189,7 +189,7 @@ def _parse_tl_signature(tl_signature: str) -> Tuple[JwsHeader, bytes]:
 
     # decode signature
     try:
-        (_, signature) = signature_split(tl_signature)
+        _, signature = signature_split(tl_signature)
         signature_b64 = signature.encode()
         raw_signature = decode_url_safe_base64(signature_b64)
     except (UnicodeDecodeError, UnicodeEncodeError) as e:

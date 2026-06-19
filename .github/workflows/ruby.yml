@@ -14,6 +14,10 @@ on:
       - ".github/workflows/ruby.yml"
       - "ruby/**"
       - "test-resources/**"
+
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: ./ruby
@@ -24,9 +28,9 @@ jobs:
       matrix:
         ruby-version: ["4.0", "3.4", "3.3", "3.2"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Ruby ${{ matrix.ruby-version }}
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@89f90524b88a01fe6e0b732220432cc6142926af # v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
       - name: Install dependencies
@@ -43,15 +47,15 @@ jobs:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     needs: lint_and_test
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Ruby 3.4
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@89f90524b88a01fe6e0b732220432cc6142926af # v1
         with:
           ruby-version: 3.4
       - name: Build gem
         run: gem build truelayer-signing.gemspec
       - name: Get gem version
-        uses: actions-ecosystem/action-regex-match@v2
+        uses: actions-ecosystem/action-regex-match@9e6c4fb3d5e898f505be7a1fb6e7b0a278f6665b # v2
         id: regex-match
         with:
           text: ${{ github.ref_name }}
