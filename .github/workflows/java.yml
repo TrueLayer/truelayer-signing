@@ -45,7 +45,7 @@ jobs:
             21
           cache: 'gradle'
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
       - name: Test on Java ${{ matrix.java-version }}
         run: cd java && ./gradlew test -PtestJavaVersion=${{ matrix.java-version }}
 
@@ -91,7 +91,7 @@ jobs:
             21
           cache: 'gradle'
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
       - name: Publish to Sonatype and Maven Central
         run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
