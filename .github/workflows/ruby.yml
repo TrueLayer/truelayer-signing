@@ -28,7 +28,7 @@ jobs:
       matrix:
         ruby-version: ["4.0", "3.4", "3.3", "3.2"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Ruby ${{ matrix.ruby-version }}
         uses: ruby/setup-ruby@89f90524b88a01fe6e0b732220432cc6142926af # v1
         with:
@@ -47,7 +47,7 @@ jobs:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     needs: lint_and_test
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Ruby 3.4
         uses: ruby/setup-ruby@89f90524b88a01fe6e0b732220432cc6142926af # v1
         with:

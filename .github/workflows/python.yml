@@ -34,7 +34,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
@@ -65,7 +65,7 @@ jobs:
       version: ${{ steps.get_version.outputs.version }}
       is_published: ${{ steps.check_published.outputs.is_published }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Get current version
         id: get_version
         run: echo version=$(grep -m1 'version = "' pyproject.toml | cut -d '"' -f2) >> $GITHUB_OUTPUT
@@ -86,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python ${{ env.python-version }}
         uses: actions/setup-python@v6
         with:
