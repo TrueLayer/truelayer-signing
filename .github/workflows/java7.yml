@@ -26,6 +26,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
+        # Java 8 only: the library's Java 7 compatibility is guaranteed at compile
+        # time via targetCompatibility = '1.7', and Java 8 is the lowest JDK that can
+        # both run Gradle and execute the tests (Gradle requires Java 8+ to run, and
+        # its toolchains don't support Java 7 as a target), so a real JDK 7 test run
+        # isn't possible here.
         java: [ 8 ]
     runs-on: ${{ matrix.os }}
     steps:
