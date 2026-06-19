@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: gradle
       - name: Validate gradle wrapper
         uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
@@ -78,7 +78,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: '8'
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: gradle
       - name: Validate gradle wrapper
         uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
