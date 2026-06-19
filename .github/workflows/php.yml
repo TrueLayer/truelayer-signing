@@ -16,6 +16,9 @@ on:
       - 'php/**'
       - 'test-resources/**'
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -33,9 +36,9 @@ jobs:
           - "8.3"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: "Install PHP"
-        uses: "shivammathur/setup-php@v2"
+        uses: "shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240" # v2
         with:
           coverage: "pcov"
           php-version: "${{ matrix.php-version }}"
@@ -43,7 +46,7 @@ jobs:
         env:
           update: true
       - name: "Cache dependencies"
-        uses: "actions/cache@v5.0.4"
+        uses: "actions/cache@v5.0.5"
         with:
           path: |
             ~/.composer/cache
@@ -66,15 +69,15 @@ jobs:
     needs: test
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Remove "php/" from tag name
         id: tag-replacer
         run: |
           TAG=${GITHUB_REF//tags\/php\//tags\/}
-          echo "::set-output name=NEW_TAG::$TAG"
-      - uses: stefandanaita/git-subtree-action@1.2.0
+          echo "NEW_TAG=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: stefandanaita/git-subtree-action@17ca5908d7bc20b9c1f98509be1a541362f965f0 # 1.2.0
         with:
           repo: "truelayer/truelayer-signing-php"
           path: "php"
