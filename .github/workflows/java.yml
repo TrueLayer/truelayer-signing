@@ -26,22 +26,28 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        java-version: [ 8, 11, 17, 20, 21 ]
+        java-version: [ 8, 11, 17, 21, 25 ]
         java-distribution: [ temurin ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v7
-      - name: Setup JDK
+      # Install three JDKs: 8 for the compile toolchain (the library is always built
+      # to Java 8 bytecode), the matrix version as the test runtime, and 21 last so it
+      # becomes JAVA_HOME and runs Gradle (Gradle 8.x cannot run on Java 25+).
+      - name: Setup JDKs
         uses: actions/setup-java@v5
         with:
-          java-version: ${{ matrix.java-version }}
           distribution: ${{ matrix.java-distribution }}
+          java-version: |
+            8
+            ${{ matrix.java-version }}
+            21
           cache: 'gradle'
       - name: Validate gradle wrapper
         uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
-      - name: Test
-        run: cd java && ./gradlew test
+      - name: Test on Java ${{ matrix.java-version }}
+        run: cd java && ./gradlew test -PtestJavaVersion=${{ matrix.java-version }}
 
   set-release-version:
     name: Prepare version to tag and release
@@ -75,11 +81,14 @@ jobs:
     needs: [build-and-test, set-release-version]
     steps:
       - uses: actions/checkout@v7
-      - name: Setup JDK
+      # Java 8 for the compile toolchain; 21 last so it runs Gradle.
+      - name: Setup JDKs
         uses: actions/setup-java@v5
         with:
-          java-version: '21'
           distribution: 'temurin'
+          java-version: |
+            8
+            21
           cache: 'gradle'
       - name: Validate gradle wrapper
         uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
