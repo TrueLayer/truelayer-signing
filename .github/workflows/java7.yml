@@ -26,6 +26,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
+        # Java 8 only: this module compiles to Java 7 bytecode (sourceCompatibility/targetCompatibility = '1.7')
+        # but Gradle 8.x requires a Java 8+ runtime, so CI must run the build/tests on at least JDK 8.
+        # (A real JDK 7 runtime can’t execute the Gradle build/tests here.)
         java: [ 8 ]
     runs-on: ${{ matrix.os }}
     steps:
@@ -35,10 +38,10 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: gradle
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
       - name: Test
         run: cd java7 && ./gradlew test
 
@@ -78,10 +81,10 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: '8'
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: gradle
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3.5.0
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
       - name: Publish to Sonatype and Maven Central
         run: cd java7 && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
@@ -107,7 +110,7 @@ jobs:
           custom_tag: ${{ needs.set-release-version.outputs.project_version }}
           tag_prefix: 'java7-v'
       - name: Create release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ steps.create_tag.outputs.new_tag }}
           generate_release_notes: false
