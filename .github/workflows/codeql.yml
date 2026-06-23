@@ -1,0 +1,130 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Detect which language directories changed and build the CodeQL matrix.
+  # PHP isn't included as it's not supported by CodeQL.
+  detect_changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        id: filter
+        with:
+          filters: |
+            actions:
+              - '.github/workflows/**'
+              - '**/action.yml'
+              - '**/action.yaml'
+            csharp:
+              - 'csharp/**'
+            go:
+              - 'go/**'
+            java:
+              - 'java/**'
+            java7:
+              - 'java7/**'
+            javascript:
+              - 'nodejs/**'
+            python:
+              - 'python/**'
+            ruby:
+              - 'ruby/**'
+            rust:
+              - 'rust/**'
+
+      # Build the matrix: all languages on push to main, only the languages
+      # whose directory changed on a pull request (the matrix context isn't
+      # available in a job-level `if`, so the selection has to happen here).
+      # build-mode 'none' matches GitHub's default setup, where CodeQL creates
+      # the database without compiling. Go has no 'none' mode, so it uses
+      # 'autobuild'.
+      - name: Build language matrix
+        id: set-matrix
+        env:
+          ON_MAIN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          actions: ${{ steps.filter.outputs.actions }}
+          csharp: ${{ steps.filter.outputs.csharp }}
+          go: ${{ steps.filter.outputs.go }}
+          java: ${{ steps.filter.outputs.java }}
+          java7: ${{ steps.filter.outputs.java7 }}
+          javascript: ${{ steps.filter.outputs.javascript }}
+          python: ${{ steps.filter.outputs.python }}
+          ruby: ${{ steps.filter.outputs.ruby }}
+          rust: ${{ steps.filter.outputs.rust }}
+        run: |
+          set -euo pipefail
+
+          declare -A build_mode=(
+            [actions]=none [csharp]=none [go]=autobuild [java]=none
+            [javascript]=none [python]=none [ruby]=none [rust]=none
+          )
+
+          # Whether each CodeQL language changed. Java covers both java/ and java7/.
+          declare -A changed=(
+            [actions]="$actions" [csharp]="$csharp" [go]="$go" [java]="$java"
+            [javascript]="$javascript" [python]="$python" [ruby]="$ruby" [rust]="$rust"
+          )
+          if [ "$java7" = "true" ]; then changed[java]=true; fi
+
+          include=()
+          for lang in actions csharp go java javascript python ruby rust; do
+            if [ "$ON_MAIN" = "true" ] || [ "${changed[$lang]}" = "true" ]; then
+              include+=("{\"language\":\"$lang\",\"build-mode\":\"${build_mode[$lang]}\"}")
+            fi
+          done
+
+          matrix="[$(IFS=,; echo "${include[*]}")]"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Selected matrix: $matrix"
+
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    needs: detect_changes
+    # Skip entirely when no relevant language changed (empty matrix).
+    #
+    # Because PRs only analyse changed languages, the code scanning check may
+    # report "configurations not found" / a neutral result: it can't diff the
+    # languages present on main but not re-run here. This is expected and
+    # harmless — unchanged languages can't introduce new alerts, and main still
+    # analyses everything on push. Avoid requiring a "success" (vs neutral)
+    # conclusion for this check in branch protection, or such PRs would block.
+    if: needs.detect_changes.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.detect_changes.outputs.matrix) }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v4
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+        # queries: security-extended,security-and-quality
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v4
+      with:
+        category: "/language:${{ matrix.language }}"
