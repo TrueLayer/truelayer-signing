@@ -8,12 +8,12 @@ repositories {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
 dependencies {
-    implementation("io.javalin:javalin:4.4.0")
+    implementation("io.javalin:javalin:7.2.2")
     implementation project(':lib')
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '5.4.0'
     implementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.18'
