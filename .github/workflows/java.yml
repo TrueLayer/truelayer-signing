@@ -70,8 +70,14 @@ jobs:
           artifact=$(grep -m1 '^artifact_id=' java/gradle.properties | cut -d= -f2)
           version=${{ steps.get_version.outputs.version }}
           package_url=https://repo1.maven.org/maven2/$group_path/$artifact/$version/$artifact-$version.pom
-          status_code=$(curl --write-out %{http_code} --silent --output /dev/null "$package_url")
-          echo "is_published=$(([ "$status_code" -eq 200 ] && echo true) || echo false)" >> "$GITHUB_OUTPUT"
+          # --retry rides out transient network blips so a flake can't fail the workflow.
+          status_code=$(curl --retry 3 --write-out '%{http_code}' --silent --output /dev/null "$package_url")
+          if [ "$status_code" = "200" ]; then
+            is_published=true
+          else
+            is_published=false
+          fi
+          echo "is_published=$is_published" >> "$GITHUB_OUTPUT"
 
   publish:
     name: Publish to Maven Central

@@ -3,7 +3,9 @@
 // blocks are needed here. For a `java-library` project the plugin auto-configures both the
 // javadoc and sources jars, so no explicit `configure(...)` call is required.
 mavenPublishing {
-    publishToMavenCentral(true)          // host = CENTRAL_PORTAL, automatic release
+    // Targets the Sonatype Central Portal — the plugin's default host since 0.30.x
+    // (OSSRH support is removed) — and automatically releases the deployment.
+    publishToMavenCentral(true)
     signAllPublications()
 
     coordinates(rootProject.group, rootProject.artifact_id, rootProject.version.toString())
