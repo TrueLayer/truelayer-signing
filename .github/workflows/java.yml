@@ -16,6 +16,9 @@ on:
       - 'java/**'
       - 'test-resources/**'
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     name: Build and Test
@@ -23,22 +26,28 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        java-version: [ 8, 11, 17, 20, 21 ]
+        java-version: [ 8, 11, 17, 21, 25 ]
         java-distribution: [ temurin ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
-      - name: Setup JDK
+        uses: actions/checkout@v7
+      # Install three JDKs: 8 for the compile toolchain (the library is always built
+      # to Java 8 bytecode), the matrix version as the test runtime, and 21 last so it
+      # becomes JAVA_HOME and runs Gradle (Gradle 8.x cannot run on Java 25+).
+      - name: Setup JDKs
         uses: actions/setup-java@v5
         with:
-          java-version: ${{ matrix.java-version }}
           distribution: ${{ matrix.java-distribution }}
+          java-version: |
+            8
+            ${{ matrix.java-version }}
+            21
           cache: 'gradle'
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v3.5.0
-      - name: Test
-        run: cd java && ./gradlew test
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+      - name: Test on Java ${{ matrix.java-version }}
+        run: cd java && ./gradlew test -PtestJavaVersion=${{ matrix.java-version }}
 
   set-release-version:
     name: Prepare version to tag and release
@@ -46,19 +55,19 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 2 #we need to make a git diff of the last 2 commits
       - name: Get project version
         id: get_project_version
         run: |
           cd java && PROJECT_VERSION=$(./gradlew properties | grep "version:" | awk '{print $2}')
-          echo "::set-output name=project_version::$PROJECT_VERSION"
+          echo "project_version=$PROJECT_VERSION" >> "$GITHUB_OUTPUT"
       - name: Get changed version from last two commits
         id: get_changed_version
         run: |
           CHANGED_VERSION=$(git diff HEAD^ -- ./java/gradle.properties | grep +version= | awk -F "=" '{print $2}')
-          echo "::set-output name=changed_version::$CHANGED_VERSION"
+          echo "changed_version=$CHANGED_VERSION" >> "$GITHUB_OUTPUT"
       - name: Print changed version from last two commits
         run: echo ${{ steps.get_changed_version.outputs.changed_version }}
     outputs:
@@ -71,15 +80,18 @@ jobs:
     if: github.ref == 'refs/heads/main' && needs.set-release-version.outputs.changed_version != ''
     needs: [build-and-test, set-release-version]
     steps:
-      - uses: actions/checkout@v6
-      - name: Setup JDK
+      - uses: actions/checkout@v7
+      # Java 8 for the compile toolchain; 21 last so it runs Gradle.
+      - name: Setup JDKs
         uses: actions/setup-java@v5
         with:
-          java-version: '21'
           distribution: 'temurin'
+          java-version: |
+            8
+            21
           cache: 'gradle'
       - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v3.5.0
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
       - name: Publish to Sonatype and Maven Central
         run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
@@ -92,17 +104,20 @@ jobs:
     name: Create Github Release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && !contains(needs.set-release-version.outputs.project_version, 'SNAPSHOT')
-    needs: [publish]
+    needs: [publish, set-release-version]
+    # Creating a git tag and a GitHub release requires write access to contents.
+    permissions:
+      contents: write
     steps:
       - name: Create tag
         id: create_tag
-        uses: mathieudutour/github-tag-action@v6.2
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ needs.set-release-version.outputs.project_version }}
           tag_prefix: 'java-v'
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ steps.create_tag.outputs.new_tag }}
           generate_release_notes: false
