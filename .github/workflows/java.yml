@@ -70,13 +70,17 @@ jobs:
           artifact=$(grep -m1 '^artifact_id=' java/gradle.properties | cut -d= -f2)
           version=${{ steps.get_version.outputs.version }}
           package_url=https://repo1.maven.org/maven2/$group_path/$artifact/$version/$artifact-$version.pom
-          # --retry rides out transient network blips so a flake can't fail the workflow.
+          # --retry rides out transient network/5xx blips. Only 404 means "not published";
+          # any other unexpected status fails the job rather than risk a spurious publish.
           status_code=$(curl --retry 3 --write-out '%{http_code}' --silent --output /dev/null "$package_url")
-          if [ "$status_code" = "200" ]; then
-            is_published=true
-          else
-            is_published=false
-          fi
+          case "$status_code" in
+            200) is_published=true ;;
+            404) is_published=false ;;
+            *)
+              echo "Unexpected HTTP $status_code from Maven Central ($package_url)" >&2
+              exit 1
+              ;;
+          esac
           echo "is_published=$is_published" >> "$GITHUB_OUTPUT"
 
   publish:
