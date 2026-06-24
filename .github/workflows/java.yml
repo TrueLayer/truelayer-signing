@@ -49,36 +49,36 @@ jobs:
       - name: Test on Java ${{ matrix.java-version }}
         run: cd java && ./gradlew test -PtestJavaVersion=${{ matrix.java-version }}
 
-  set-release-version:
-    name: Prepare version to tag and release
+  check-version:
+    name: Check whether the current version is already published
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 2 #we need to make a git diff of the last 2 commits
-      - name: Get project version
-        id: get_project_version
-        run: |
-          cd java && PROJECT_VERSION=$(./gradlew properties | grep "version:" | awk '{print $2}')
-          echo "project_version=$PROJECT_VERSION" >> "$GITHUB_OUTPUT"
-      - name: Get changed version from last two commits
-        id: get_changed_version
-        run: |
-          CHANGED_VERSION=$(git diff HEAD^ -- ./java/gradle.properties | grep +version= | awk -F "=" '{print $2}')
-          echo "changed_version=$CHANGED_VERSION" >> "$GITHUB_OUTPUT"
-      - name: Print changed version from last two commits
-        run: echo ${{ steps.get_changed_version.outputs.changed_version }}
     outputs:
-      project_version: ${{ steps.get_project_version.outputs.project_version }}
-      changed_version: ${{ steps.get_changed_version.outputs.changed_version }}
+      version: ${{ steps.get_version.outputs.version }}
+      is_published: ${{ steps.check_published.outputs.is_published }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Get current version
+        id: get_version
+        run: echo "version=$(grep -m1 '^version=' java/gradle.properties | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+      # Determine whether to publish by querying Maven Central for the artifact at this
+      # version (mirrors the Python workflow's PyPI check), rather than diffing commits.
+      - name: Check if it's already published
+        id: check_published
+        run: |
+          group_path=$(grep -m1 '^group=' java/gradle.properties | cut -d= -f2 | tr '.' '/')
+          artifact=$(grep -m1 '^artifact_id=' java/gradle.properties | cut -d= -f2)
+          version=${{ steps.get_version.outputs.version }}
+          package_url=https://repo1.maven.org/maven2/$group_path/$artifact/$version/$artifact-$version.pom
+          status_code=$(curl --write-out %{http_code} --silent --output /dev/null "$package_url")
+          echo "is_published=$(([ "$status_code" -eq 200 ] && echo true) || echo false)" >> "$GITHUB_OUTPUT"
 
   publish:
     name: Publish to Maven Central
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.set-release-version.outputs.changed_version != ''
-    needs: [build-and-test, set-release-version]
+    # Runs only on main and only when this version isn't already on Maven Central.
+    if: github.ref == 'refs/heads/main' && needs.check-version.outputs.is_published == 'false'
+    needs: [build-and-test, check-version]
     steps:
       - uses: actions/checkout@v7
       # Java 8 for the compile toolchain; 21 last so it runs Gradle.
@@ -103,8 +103,8 @@ jobs:
   create_github_release:
     name: Create Github Release
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && !contains(needs.set-release-version.outputs.project_version, 'SNAPSHOT')
-    needs: [publish, set-release-version]
+    if: github.ref == 'refs/heads/main' && !contains(needs.check-version.outputs.version, 'SNAPSHOT')
+    needs: [publish, check-version]
     # Creating a git tag and a GitHub release requires write access to contents.
     permissions:
       contents: write
@@ -114,7 +114,7 @@ jobs:
         uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_tag: ${{ needs.set-release-version.outputs.project_version }}
+          custom_tag: ${{ needs.check-version.outputs.version }}
           tag_prefix: 'java-v'
       - name: Create release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
