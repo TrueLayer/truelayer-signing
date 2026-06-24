@@ -75,7 +75,7 @@ jobs:
       changed_version: ${{ steps.get_changed_version.outputs.changed_version }}
 
   publish:
-    name: Publish to Sonatype and Maven Central
+    name: Publish to Maven Central
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && needs.set-release-version.outputs.changed_version != ''
     needs: [build-and-test, set-release-version]
@@ -92,13 +92,13 @@ jobs:
           cache: 'gradle'
       - name: Validate gradle wrapper
         uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
-      - name: Publish to Sonatype and Maven Central
-        run: cd java && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+      - name: Publish to Maven Central
+        run: cd java && ./gradlew publishToMavenCentral --no-configuration-cache
         env:
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_GPG_KEY: ${{ secrets.SONATYPE_GPG_KEY }}
-          SONATYPE_GPG_PASSPHRASE: ${{ secrets.SONATYPE_GPG_PASSPHRASE }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SONATYPE_GPG_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SONATYPE_GPG_PASSPHRASE }}
 
   create_github_release:
     name: Create Github Release

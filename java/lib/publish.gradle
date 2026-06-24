@@ -1,48 +1,34 @@
-// Package javadoc and sources
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
+// Publish to the Sonatype Central Portal. The vanniktech plugin owns the javadoc/sources
+// jars and the in-memory PGP signing, so no separate `java {}`/`publishing {}`/`signing {}`
+// blocks are needed here. For a `java-library` project the plugin auto-configures both the
+// javadoc and sources jars, so no explicit `configure(...)` call is required.
+mavenPublishing {
+    publishToMavenCentral(true)          // host = CENTRAL_PORTAL, automatic release
+    signAllPublications()
 
-// Configure publishing repositories and publications
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from(components.java)
+    coordinates(rootProject.group, rootProject.artifact_id, rootProject.version.toString())
 
-            pom {
-                name = rootProject.project_name
-                artifactId = rootProject.artifact_id
-                packaging = 'jar'
-                description = rootProject.project_description
-                url = rootProject.project_url
-                scm {
-                    connection = rootProject.project_scm
-                    developerConnection = rootProject.project_scm
-                    url = rootProject.project_url
-                }
-                licenses {
-                    license {
-                        name = rootProject.project_license_name
-                        url = rootProject.project_license_url
-                    }
-                }
-                developers {
-                    developer {
-                        id = rootProject.project_developer
-                        name = rootProject.project_developer
-                    }
-                }
+    pom {
+        name = rootProject.project_name
+        packaging = 'jar'
+        description = rootProject.project_description
+        url = rootProject.project_url
+        scm {
+            connection = rootProject.project_scm
+            developerConnection = rootProject.project_scm
+            url = rootProject.project_url
+        }
+        licenses {
+            license {
+                name = rootProject.project_license_name
+                url = rootProject.project_license_url
+            }
+        }
+        developers {
+            developer {
+                id = rootProject.project_developer
+                name = rootProject.project_developer
             }
         }
     }
-}
-
-ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
-signing {
-    def signingKey = System.getenv('SONATYPE_GPG_KEY')
-    def signingPassword = System.getenv('SONATYPE_GPG_PASSPHRASE')
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign publishing.publications.mavenJava
-    required { isReleaseVersion && gradle.taskGraph.hasTask("publish") }
 }

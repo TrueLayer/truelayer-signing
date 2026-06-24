@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
-    id 'maven-publish'
-    id 'signing'
+    // Brings its own maven-publish + signing; publishes to the Sonatype Central Portal.
+    id 'com.vanniktech.maven.publish'
 }
 
 repositories {
