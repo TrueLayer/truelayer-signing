@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jose;
 using Microsoft.Extensions.Primitives;
 using static TrueLayer.Signing.Tests.TestData;
 
