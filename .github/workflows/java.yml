@@ -89,6 +89,12 @@ jobs:
     # Runs only on main and only when this version isn't already on Maven Central.
     if: github.ref == 'refs/heads/main' && needs.check-version.outputs.is_published == 'false'
     needs: [build-and-test, check-version]
+    # Serialize publishes: if a second push to main lands before the first release is
+    # visible on repo1.maven.org, the check-version 404 would otherwise let both run and
+    # race. cancel-in-progress: false lets the in-flight publish finish before the next.
+    concurrency:
+      group: maven-central-publish
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
       # Java 8 for the compile toolchain; 21 last so it runs Gradle.
