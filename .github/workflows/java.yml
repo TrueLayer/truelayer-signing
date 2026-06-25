@@ -118,7 +118,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SONATYPE_GPG_PASSPHRASE }}
 
   create_github_release:
-    name: Create Github Release
+    name: Create GitHub Release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && !contains(needs.check-version.outputs.version, 'SNAPSHOT')
     needs: [publish, check-version]

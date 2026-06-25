@@ -12,7 +12,6 @@ mavenPublishing {
 
     pom {
         name = rootProject.project_name
-        packaging = 'jar'
         description = rootProject.project_description
         url = rootProject.project_url
         scm {
