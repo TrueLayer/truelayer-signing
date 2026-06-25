@@ -86,8 +86,9 @@ jobs:
   publish:
     name: Publish to Maven Central
     runs-on: ubuntu-latest
-    # Runs only on main and only when this version isn't already on Maven Central.
-    if: github.ref == 'refs/heads/main' && needs.check-version.outputs.is_published == 'false'
+    # Runs only on main, only for a non-SNAPSHOT version (Maven Central doesn't host
+    # snapshots, so the check below would always 404), and only when not already published.
+    if: github.ref == 'refs/heads/main' && !contains(needs.check-version.outputs.version, 'SNAPSHOT') && needs.check-version.outputs.is_published == 'false'
     needs: [build-and-test, check-version]
     # Serialize publishes: if a second push to main lands before the first release is
     # visible on repo1.maven.org, the check-version 404 would otherwise let both run and
