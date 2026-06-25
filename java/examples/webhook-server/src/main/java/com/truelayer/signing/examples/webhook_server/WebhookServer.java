@@ -15,11 +15,12 @@ public class WebhookServer {
 
         OkHttpClient httpClient = new OkHttpClient.Builder().cache(cache).build();
 
-        Javalin app = Javalin.create().exception(SignatureException.class, (exception, ctx) -> {
-            System.out.println("WARNING: Verification failed " + exception.getMessage());
-            ctx.status(401);
-        }).start(7000);
-
-        app.post("/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b", new WebhookVerificationHandler(httpClient));
+        Javalin.create(config -> config.routes
+                .exception(SignatureException.class, (exception, ctx) -> {
+                    System.out.println("WARNING: Verification failed " + exception.getMessage());
+                    ctx.status(401);
+                })
+                .post("/hook/d7a2c49d-110a-4ed2-a07d-8fdb3ea6424b", new WebhookVerificationHandler(httpClient))
+        ).start(7000);
     }
 }

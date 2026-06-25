@@ -1,4 +1,22 @@
+// The library is compiled to Java 8 bytecode (see build.gradle toolchain), but the
+// test suite can be executed on any installed JDK to verify runtime compatibility.
+// CI passes -PtestJavaVersion=<n> per matrix entry; locally it defaults to 8.
+def testJavaVersion = (project.findProperty('testJavaVersion') ?: '8') as int
+
 tasks.named('test') {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(testJavaVersion)
+    }
+
+    doFirst {
+        // Surface the three distinct JVMs this build uses so each CI matrix job
+        // (and local runs) can confirm them at a glance.
+        def compileJvm = tasks.named('compileJava').get().javaCompiler.get().metadata.javaRuntimeVersion
+        logger.lifecycle("Compile JVM (toolchain): ${compileJvm}")
+        logger.lifecycle("Gradle daemon JVM: ${System.getProperty('java.version')} (JAVA_HOME=${System.getenv('JAVA_HOME')})")
+        logger.lifecycle("Test runtime JVM: ${javaLauncher.get().metadata.javaRuntimeVersion}")
+    }
+
     testLogging {
         events "passed", "skipped", "failed" //, "standardOut", "standardError"
         showExceptions true
