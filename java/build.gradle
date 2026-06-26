@@ -2,5 +2,5 @@ plugins {
     // Publishes directly to the Sonatype Central Portal (central.sonatype.com),
     // replacing the EOL'd OSSRH / Nexus Repository Manager (s01.oss.sonatype.org).
     // Pinned here; applied in the :lib project, which produces the published artifact.
-    id "com.vanniktech.maven.publish" version "0.34.0" apply false
+    id "com.vanniktech.maven.publish" version "0.37.0" apply false
 }
