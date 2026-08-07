@@ -32,6 +32,10 @@ See our [contributing guide](./CONTRIBUTING.md) and our [wiki](https://github.co
 
 Please adhere to this project's [code of conduct](CODE_OF_CONDUCT.md).
 
+## Security
+
+See our [security policy](SECURITY.md) for details on supported versions and how to report vulnerabilities.
+
 ## License
 
 <sup>
