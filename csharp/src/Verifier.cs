@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Jose;
 using Microsoft.Extensions.Primitives;
 
 namespace TrueLayer.Signing
@@ -14,11 +13,6 @@ namespace TrueLayer.Signing
     /// </summary>
     public sealed class Verifier
     {
-        private static readonly JsonSerializerOptions JwksJsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-        
         /// <summary>
         /// Start building a `Tl-Signature` header verifier using public key RFC 7468 PEM-encoded data.
         /// </summary>
@@ -49,7 +43,15 @@ namespace TrueLayer.Signing
         {
             try
             {
-                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, JwksJsonOptions);
+#if NET5_0_OR_GREATER
+                var jwks = JsonSerializer.Deserialize(jwksJson, SigningJsonContext.Default.Jwks);
+#else
+                var jwksJsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                var jwks = JsonSerializer.Deserialize<Jwks>(jwksJson, jwksJsonOptions);
+#endif
                 // ecdsa fully setup later once we know the jwk kid
                 var verifier = VerifyWith(ECDsa.Create());
                 verifier._jwks = jwks ?? new Jwks();
@@ -68,21 +70,65 @@ namespace TrueLayer.Signing
         /// <exception cref="SignatureException">Signature is invalid</exception>
         private static string ExtractJwsHeader(string tlSignature, string headerName)
         {
-            IDictionary<string, object>? jwsHeaders;
-            try
-            {
-                jwsHeaders = Jose.JWT.Headers(tlSignature);
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
-            }
+            var jwsHeaders = ParseJwsHeaders(tlSignature);
             var value = jwsHeaders.GetString(headerName);
             if (value == null)
             {
                 throw new SignatureException($"missing {headerName}");
             }
             return value;
+        }
+
+        /// <summary>Parse JWS headers from a JWS token in an AOT-compatible way.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        private static Dictionary<string, JsonElement> ParseJwsHeaders(string tlSignature)
+        {
+            try
+            {
+                // JWS format: header.payload.signature
+                // For detached payload: header..signature
+                var firstDot = tlSignature.IndexOf('.');
+                if (firstDot <= 0)
+                {
+                    throw new SignatureException("invalid JWS format");
+                }
+
+                var headerB64 = tlSignature.Substring(0, firstDot);
+                return ParseJwsHeadersFromB64(headerB64);
+            }
+            catch (SignatureException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
+        }
+
+        /// <summary>Parse JWS headers from base64url-encoded header in an AOT-compatible way.</summary>
+        /// <exception cref="SignatureException">Signature is invalid</exception>
+        private static Dictionary<string, JsonElement> ParseJwsHeadersFromB64(string headerB64)
+        {
+            try
+            {
+                var headerJson = Base64Url.Decode(headerB64);
+
+#if NET5_0_OR_GREATER
+                var headers = JsonSerializer.Deserialize(headerJson, SigningJsonContext.Default.DictionaryStringJsonElement);
+#else
+                var headers = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(headerJson);
+#endif
+                return headers ?? new Dictionary<string, JsonElement>();
+            }
+            catch (SignatureException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
+            }
         }
 
         /// <summary>Extract kid from unverified jws Tl-Signature.</summary>
@@ -230,21 +276,21 @@ namespace TrueLayer.Signing
             var dotCount = tlSignature.Count(c => c == '.');
             SignatureException.Ensure(dotCount == 2, "invalid signature format, expected detached JWS (header..signature)");
 
-            IDictionary<string, object>? jwsHeaders;
-            try
-            {
-                jwsHeaders = Jose.JWT.Headers(tlSignature);
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException($"Failed to parse JWS: {e.Message}", e);
-            }
+            // Parse the JWS parts once
+            var parts = tlSignature.Split('.');
+            var headerB64 = parts[0];
+            var signatureB64 = parts[2];
+
+            var jwsHeaders = ParseJwsHeadersFromB64(headerB64);
             if (_jwks is Jwks jwkeys)
             {
                 // initialize public key using jwks data
                 var kid = jwsHeaders.GetString(JwsHeaders.Kid) ?? throw new SignatureException("missing kid");
                 FindAndImportJwk(jwkeys, kid);
             }
+
+            // checked here, not in VerifyWith, as jwks keys are only imported above
+            SignatureException.Ensure(_key.KeySize == 521, "unsupported key, ES512 requires a P-521 key");
 
             SignatureException.Ensure(jwsHeaders.GetString(JwsHeaders.Alg) == "ES512", "unsupported jws alg");
             var version = jwsHeaders.GetString(JwsHeaders.TlVersion) ?? TryRequireHeaderString("Tl-Signature-Version");
@@ -273,22 +319,37 @@ namespace TrueLayer.Signing
 
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, signedHeaders, _body);
 
-            SignatureException.Try(() =>
+            var valid = SignatureException.Try(() =>
             {
-                try
+                if (VerifyJwsSignature(headerB64, signatureB64, signingPayload, _key))
                 {
-                    return Jose.JWT.DecodeBytes(tlSignature, _key, payload: signingPayload);
+                    return true;
                 }
-                catch (Jose.IntegrityException)
-                {
-                    // try again with/without a trailing slash (#80)
-                    var path2 = _path.EndsWith("/")
-                        ? _path.Substring(0, _path.Length - 1)
-                        : _path + "/";
-                    var alternatePayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
-                    return Jose.JWT.DecodeBytes(tlSignature, _key, payload: alternatePayload);
-                }
+
+                // try again with/without a trailing slash (#80)
+                var path2 = _path.EndsWith("/")
+                    ? _path.Substring(0, _path.Length - 1)
+                    : _path + "/";
+                var alternatePayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
+                return VerifyJwsSignature(headerB64, signatureB64, alternatePayload, _key);
             }, "Invalid signature");
+            SignatureException.Ensure(valid, "Invalid signature");
+        }
+
+        /// <summary>Verify JWS signature manually without using reflection-based deserialization (AOT-compatible).</summary>
+        /// <returns>Whether the signature is valid for the given payload.</returns>
+        /// <exception cref="FormatException">Signature is not valid base64url</exception>
+        private static bool VerifyJwsSignature(string headerB64, string signatureB64, byte[] payload, ECDsa key)
+        {
+            // Decode the signature - ES512 signatures are IEEE P1363 format (raw r||s)
+            var signature = Base64Url.Decode(signatureB64);
+
+            // Compute SHA-512 hash of the JWS signing input
+            var payloadB64 = Base64Url.Encode(payload);
+            var hash = Util.ComputeJwsSigningHash(headerB64, payloadB64);
+
+            // The signature is in IEEE P1363 format (concatenated r||s), which is what VerifyHash expects
+            return key.VerifyHash(hash, signature);
         }
 
         /// <summary>Find and import jwk into `key`</summary>

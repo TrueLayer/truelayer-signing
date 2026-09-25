@@ -1,11 +1,11 @@
 using Xunit;
 using System;
 using AwesomeAssertions;
-using Jose;
 using System.Text;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Linq;
+using System.Security.Cryptography;
 
 using static TrueLayer.Signing.Tests.TestData;
 
@@ -33,6 +33,27 @@ namespace TrueLayer.Signing.Tests
                 .Verify("not-a-signature");
 
             verify.Should().Throw<SignatureException>();
+        }
+
+        [Theory]
+        [InlineData("/bar", "")] // payload mismatch
+        [InlineData("/foo", "AAAA")] // wrong signature length
+        [InlineData("/foo", "!")] // signature not base64url
+        public void InvalidSignatureMessage(string verifyPath, string signatureSuffix)
+        {
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path("/foo")
+                .Body("{}")
+                .Sign();
+
+            Action verify = () => Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(verifyPath)
+                .Body("{}")
+                .Verify(tlSignature + signatureSuffix);
+
+            verify.Should().Throw<SignatureException>().WithMessage("Invalid signature");
         }
 
         [Fact]
@@ -166,5 +187,51 @@ namespace TrueLayer.Signing.Tests
             verify.Should().Throw<SignatureException>()
                 .WithMessage("invalid signature format, expected detached JWS (header..signature)");
         }
+
+        [Theory]
+        [InlineData(256)]
+        [InlineData(384)]
+        public void SignWithNonP521Key(int keySize)
+        {
+            using var key = NonP521Key(keySize);
+
+            Action sign = () => Signer.SignWith(Kid, key)
+                .Method("POST")
+                .Path("/test")
+                .Body("{}")
+                .Sign();
+
+            sign.Should().Throw<ArgumentException>()
+                .WithMessage($"ES512 requires a P-521 key, but was given a {keySize} bit key");
+        }
+
+        [Theory]
+        [InlineData(256)]
+        [InlineData(384)]
+        public void VerifyWithNonP521Key(int keySize)
+        {
+            using var key = NonP521Key(keySize);
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path("/test")
+                .Body("{}")
+                .Sign();
+
+            Action verify = () => Verifier.VerifyWith(key)
+                .Method("POST")
+                .Path("/test")
+                .Body("{}")
+                .Verify(tlSignature);
+
+            verify.Should().Throw<SignatureException>()
+                .WithMessage("unsupported key, ES512 requires a P-521 key");
+        }
+
+        private static ECDsa NonP521Key(int keySize) => ECDsa.Create(keySize switch
+        {
+            256 => ECCurve.NamedCurves.nistP256,
+            384 => ECCurve.NamedCurves.nistP384,
+            _ => throw new ArgumentOutOfRangeException(nameof(keySize)),
+        });
     }
 }
