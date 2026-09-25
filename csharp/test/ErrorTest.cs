@@ -35,6 +35,27 @@ namespace TrueLayer.Signing.Tests
             verify.Should().Throw<SignatureException>();
         }
 
+        [Theory]
+        [InlineData("/bar", "")] // payload mismatch
+        [InlineData("/foo", "AAAA")] // wrong signature length
+        [InlineData("/foo", "!")] // signature not base64url
+        public void InvalidSignatureMessage(string verifyPath, string signatureSuffix)
+        {
+            var tlSignature = Signer.SignWithPem(Kid, PrivateKey)
+                .Method("POST")
+                .Path("/foo")
+                .Body("{}")
+                .Sign();
+
+            Action verify = () => Verifier.VerifyWithPem(PublicKey)
+                .Method("POST")
+                .Path(verifyPath)
+                .Body("{}")
+                .Verify(tlSignature + signatureSuffix);
+
+            verify.Should().Throw<SignatureException>().WithMessage("Invalid signature");
+        }
+
         [Fact]
         public void InvalidButPreAttachedJwsBody()
         {

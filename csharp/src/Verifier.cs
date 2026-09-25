@@ -319,54 +319,37 @@ namespace TrueLayer.Signing
 
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, signedHeaders, _body);
 
-            SignatureException.Try(() =>
+            var valid = SignatureException.Try(() =>
             {
-                try
+                if (VerifyJwsSignature(headerB64, signatureB64, signingPayload, _key))
                 {
-                    VerifyJwsSignature(headerB64, signatureB64, signingPayload, _key);
                     return true;
                 }
-                catch (SignatureException)
-                {
-                    // try again with/without a trailing slash (#80)
-                    var path2 = _path.EndsWith("/")
-                        ? _path.Substring(0, _path.Length - 1)
-                        : _path + "/";
-                    var alternatePayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
-                    VerifyJwsSignature(headerB64, signatureB64, alternatePayload, _key);
-                    return true;
-                }
+
+                // try again with/without a trailing slash (#80)
+                var path2 = _path.EndsWith("/")
+                    ? _path.Substring(0, _path.Length - 1)
+                    : _path + "/";
+                var alternatePayload = Util.BuildV2SigningPayload(_method, path2, signedHeaders, _body);
+                return VerifyJwsSignature(headerB64, signatureB64, alternatePayload, _key);
             }, "Invalid signature");
+            SignatureException.Ensure(valid, "Invalid signature");
         }
 
         /// <summary>Verify JWS signature manually without using reflection-based deserialization (AOT-compatible).</summary>
-        /// <exception cref="SignatureException">Signature is invalid</exception>
-        private static void VerifyJwsSignature(string headerB64, string signatureB64, byte[] payload, ECDsa key)
+        /// <returns>Whether the signature is valid for the given payload.</returns>
+        /// <exception cref="FormatException">Signature is not valid base64url</exception>
+        private static bool VerifyJwsSignature(string headerB64, string signatureB64, byte[] payload, ECDsa key)
         {
-            try
-            {
-                // Decode the signature - ES512 signatures are IEEE P1363 format (raw r||s)
-                var signature = Base64Url.Decode(signatureB64);
+            // Decode the signature - ES512 signatures are IEEE P1363 format (raw r||s)
+            var signature = Base64Url.Decode(signatureB64);
 
-                // Compute SHA-512 hash of the JWS signing input
-                var payloadB64 = Base64Url.Encode(payload);
-                var hash = Util.ComputeJwsSigningHash(headerB64, payloadB64);
+            // Compute SHA-512 hash of the JWS signing input
+            var payloadB64 = Base64Url.Encode(payload);
+            var hash = Util.ComputeJwsSigningHash(headerB64, payloadB64);
 
-                // Verify the signature using ECDSA
-                // The signature is in IEEE P1363 format (concatenated r||s), which is what VerifyHash expects
-                if (!key.VerifyHash(hash, signature))
-                {
-                    throw new SignatureException("signature verification failed");
-                }
-            }
-            catch (SignatureException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw new SignatureException($"signature verification failed: {e.Message}", e);
-            }
+            // The signature is in IEEE P1363 format (concatenated r||s), which is what VerifyHash expects
+            return key.VerifyHash(hash, signature);
         }
 
         /// <summary>Find and import jwk into `key`</summary>
