@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0
+* Add Native AOT and trimming support (`IsAotCompatible`, `IsTrimmable`), using System.Text.Json source generation on .NET 5.0+.
+* Remove the `jose-jwt` dependency, JWS signing and verification are now implemented directly on `ECDsa`.
+  Consumers using `Jose.*` types transitively must now reference `jose-jwt` explicitly.
+* Reduce memory allocations by ~38% for verification (14.73 KB → 9.13 KB) and ~47% for signing (13.47 KB → 7.12 KB).
+* `Verify()` with a non P-521 key now fails with `unsupported key, ES512 requires a P-521 key` instead of `Invalid signature`.
+* `Microsoft.Extensions.Primitives` is now referenced per target framework (10.0.0 for net10.0, 9.0.11 for net9.0, 8.0.0 otherwise).
+* Remove the explicit `System.Text.Encodings.Web` reference.
+
 ## 0.2.5
 * Bump System.Text.Json from 5.0.1 to 8.0.4
 

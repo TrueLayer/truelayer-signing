@@ -289,6 +289,9 @@ namespace TrueLayer.Signing
                 FindAndImportJwk(jwkeys, kid);
             }
 
+            // checked here, not in VerifyWith, as jwks keys are only imported above
+            SignatureException.Ensure(_key.KeySize == 521, "unsupported key, ES512 requires a P-521 key");
+
             SignatureException.Ensure(jwsHeaders.GetString(JwsHeaders.Alg) == "ES512", "unsupported jws alg");
             var version = jwsHeaders.GetString(JwsHeaders.TlVersion) ?? TryRequireHeaderString("Tl-Signature-Version");
             SignatureException.Ensure(version == "2", "unsupported jws tl_version");

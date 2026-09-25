@@ -227,6 +227,11 @@ namespace TrueLayer.Signing
         
         public override string Sign()
         {
+            if (_key.KeySize != 521)
+            {
+                throw new ArgumentException($"ES512 requires a P-521 key, but was given a {_key.KeySize} bit key");
+            }
+
             var jwsHeaders = CreateJwsHeaders();
 #if NET5_0_OR_GREATER
             var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders, SigningJsonContext.Default.DictionaryStringObject);
