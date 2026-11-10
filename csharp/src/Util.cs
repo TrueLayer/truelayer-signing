@@ -84,6 +84,108 @@ namespace TrueLayer.Signing
             return payload.ToArray();
         }
 
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Calculate the exact size needed for a V2 signing payload.
+        /// </summary>
+        internal static int CalculateV2SigningPayloadSize(
+            string method,
+            string path,
+            ReadOnlySpan<(string, byte[])> headers,
+            ReadOnlySpan<byte> body)
+        {
+            int totalSize = 0;
+
+            // Method (uppercase) + space
+            string methodUpper = method.ToUpperInvariant();
+            totalSize += Encoding.UTF8.GetByteCount(methodUpper) + SpaceBytes.Length;
+
+            // Path + newline
+            totalSize += Encoding.UTF8.GetByteCount(path) + NewlineBytes.Length;
+
+            // Headers: "name: value\n" for each
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var (name, value) = headers[i];
+                totalSize += Encoding.UTF8.GetByteCount(name);
+                totalSize += ColonSpaceBytes.Length;
+                totalSize += value.Length;
+                totalSize += NewlineBytes.Length;
+            }
+
+            // Body
+            totalSize += body.Length;
+
+            return totalSize;
+        }
+
+        /// <summary>
+        /// Build signing payload directly into a destination span.
+        /// Returns the number of bytes written.
+        /// The destination span must be large enough (use CalculateV2SigningPayloadSize).
+        /// </summary>
+        internal static int BuildV2SigningPayloadInto(
+            Span<byte> destination,
+            string method,
+            string path,
+            ReadOnlySpan<(string, byte[])> headers,
+            ReadOnlySpan<byte> body)
+        {
+            int position = 0;
+
+            // Write method (uppercase) + space
+            string methodUpper = method.ToUpperInvariant();
+            position += Encoding.UTF8.GetBytes(methodUpper, destination.Slice(position));
+            SpaceBytes.AsSpan().CopyTo(destination.Slice(position));
+            position += SpaceBytes.Length;
+
+            // Write path + newline
+            position += Encoding.UTF8.GetBytes(path, destination.Slice(position));
+            NewlineBytes.AsSpan().CopyTo(destination.Slice(position));
+            position += NewlineBytes.Length;
+
+            // Write headers
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var (name, value) = headers[i];
+                position += Encoding.UTF8.GetBytes(name, destination.Slice(position));
+                ColonSpaceBytes.AsSpan().CopyTo(destination.Slice(position));
+                position += ColonSpaceBytes.Length;
+                value.AsSpan().CopyTo(destination.Slice(position));
+                position += value.Length;
+                NewlineBytes.AsSpan().CopyTo(destination.Slice(position));
+                position += NewlineBytes.Length;
+            }
+
+            // Write body
+            body.CopyTo(destination.Slice(position));
+            position += body.Length;
+
+            return position;
+        }
+
+        /// <summary>
+        /// Build signing payload from method, path, some/none/all headers and body.
+        /// Optimized for .NET 8+ using span-based operations with pre-calculated size.
+        /// Eliminates List allocations and intermediate copies.
+        /// </summary>
+        internal static byte[] BuildV2SigningPayload(
+            string method,
+            string path,
+            ReadOnlySpan<(string, byte[])> headers,
+            ReadOnlySpan<byte> body)
+        {
+            // Calculate exact size
+            int totalSize = CalculateV2SigningPayloadSize(method, path, headers, body);
+
+            // Allocate and write
+            byte[] payload = new byte[totalSize];
+            BuildV2SigningPayloadInto(payload, method, path, headers, body);
+
+            return payload;
+        }
+#endif
+
         /// <summary>Convert to utf-8 bytes</summary>
         internal static byte[] ToUtf8(this string text) => Encoding.UTF8.GetBytes(text);
 
