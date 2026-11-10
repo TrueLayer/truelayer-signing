@@ -43,6 +43,16 @@ namespace TrueLayer.Signing
         public static AsyncSigner SignWithFunction(string kid, Func<string, Task<string>> signAsync) => new FunctionSigner(kid, signAsync);
 
         /// <summary>
+        /// Start building a request Tl-Signature header value using the key ID of the signing key (kid)
+        /// and a function that accepts the SHA-512 digest of the JWS signing input and returns the signature
+        /// in IEEE P1363 format, base64url encoded.
+        /// <br/>
+        /// Prefer this over <see cref="SignWithFunction"/> when the key lives in a service that signs digests
+        /// (e.g. a KMS): the signing input is hashed directly, so large bodies don't need to be turned into strings.
+        /// </summary>
+        public static AsyncSigner SignWithDigestFunction(string kid, Func<byte[], Task<string>> signDigestAsync) => new DigestFunctionSigner(kid, signDigestAsync);
+
+        /// <summary>
         /// Initializes a new instance of the Signer class with the specified key ID.
         /// </summary>
         protected internal Signer(string kid) : base(kid)
@@ -77,7 +87,7 @@ namespace TrueLayer.Signing
         protected internal Signer(string kid)
         {
             _kid = kid;
-            _this = (TSigner) this;
+            _this = (TSigner)this;
         }
 
         /// <summary>Add the request method, defaults to `"POST"` if unspecified.</summary>
@@ -168,7 +178,7 @@ namespace TrueLayer.Signing
         /// In this method it is assumed the body will be encoded using UTF-8.
         /// </summary>
         public TSigner Body(string body) => Body(body.ToUtf8());
-        
+
         /// <summary>
         /// Sets the jku (JSON Web Key Set URL) in the JWS headers of the signature.
         /// </summary>
@@ -199,7 +209,7 @@ namespace TrueLayer.Signing
             return jwsHeaders;
         }
     }
-    
+
     /// <summary>
     /// Builder to generate a Tl-Signature header value.
     /// </summary>
@@ -224,7 +234,7 @@ namespace TrueLayer.Signing
         {
             _key = privateKey;
         }
-        
+
         public override string Sign()
         {
             if (_key.KeySize != 521)
@@ -242,10 +252,9 @@ namespace TrueLayer.Signing
 
             var headerList = _headers.Select(e => (e.Key, e.Value));
             var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
-            var signingPayloadB64 = Base64Url.Encode(signingPayload);
 
             // Compute SHA-512 hash of the JWS signing input
-            var hash = Util.ComputeJwsSigningHash(serializedJwsHeadersB64, signingPayloadB64);
+            var hash = Util.ComputeJwsSigningHash(serializedJwsHeadersB64, signingPayload);
 
             // Sign the hash using ECDSA - signature will be in IEEE P1363 format (r||s)
             var signature = _key.SignHash(hash);
@@ -255,16 +264,16 @@ namespace TrueLayer.Signing
             return $"{serializedJwsHeadersB64}..{signatureB64}";
         }
     }
-    
+
     internal sealed class FunctionSigner : AsyncSigner
     {
         private readonly Func<string, Task<string>> _signAsync;
-        
+
         internal FunctionSigner(string kid, Func<string, Task<string>> signAsync) : base(kid)
         {
             _signAsync = signAsync;
         }
-        
+
         public override async Task<string> SignAsync()
         {
             var jwsHeaders = CreateJwsHeaders();
@@ -282,6 +291,35 @@ namespace TrueLayer.Signing
             var signingMessage = $"{serializedJwsHeadersB64}.{signingPayloadB64}";
 
             var signature = await _signAsync(signingMessage);
+
+            return $"{serializedJwsHeadersB64}..{signature}";
+        }
+    }
+
+    internal sealed class DigestFunctionSigner : AsyncSigner
+    {
+        private readonly Func<byte[], Task<string>> _signDigestAsync;
+
+        internal DigestFunctionSigner(string kid, Func<byte[], Task<string>> signDigestAsync) : base(kid)
+        {
+            _signDigestAsync = signDigestAsync;
+        }
+
+        public override async Task<string> SignAsync()
+        {
+            var jwsHeaders = CreateJwsHeaders();
+#if NET5_0_OR_GREATER
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders, SigningJsonContext.Default.DictionaryStringObject);
+#else
+            var serializedJwsHeaders = JsonSerializer.SerializeToUtf8Bytes(jwsHeaders);
+#endif
+            var serializedJwsHeadersB64 = Base64Url.Encode(serializedJwsHeaders);
+
+            var headerList = _headers.Select(e => (e.Key, e.Value));
+            var signingPayload = Util.BuildV2SigningPayload(_method, _path, headerList, _body);
+            var digest = Util.ComputeJwsSigningHash(serializedJwsHeadersB64, signingPayload);
+
+            var signature = await _signDigestAsync(digest);
 
             return $"{serializedJwsHeadersB64}..{signature}";
         }

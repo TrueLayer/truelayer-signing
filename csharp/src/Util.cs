@@ -60,6 +60,7 @@ namespace TrueLayer.Signing
         private static readonly byte[] SpaceBytes = Encoding.UTF8.GetBytes(" ");
         private static readonly byte[] NewlineBytes = Encoding.UTF8.GetBytes("\n");
         private static readonly byte[] ColonSpaceBytes = Encoding.UTF8.GetBytes(": ");
+        private static readonly byte[] DotBytes = Encoding.UTF8.GetBytes(".");
 
         /// <summary>
         /// Build signing payload from method, path, some/none/all headers and body.
@@ -70,20 +71,40 @@ namespace TrueLayer.Signing
             IEnumerable<(string, byte[])> headers,
             byte[] body)
         {
-            var payload = new List<byte>();
-            payload.AddRange(method.ToUpperInvariant().ToUtf8());
-            payload.AddRange(SpaceBytes);
-            payload.AddRange(path.ToUtf8());
-            payload.AddRange(NewlineBytes);
+            var methodBytes = method.ToUpperInvariant().ToUtf8();
+            var pathBytes = path.ToUtf8();
+            var headerList = new List<(byte[] Name, byte[] Value)>();
+            var size = methodBytes.Length + SpaceBytes.Length + pathBytes.Length + NewlineBytes.Length + body.Length;
             foreach (var (name, value) in headers)
             {
-                payload.AddRange(name.ToUtf8());
-                payload.AddRange(ColonSpaceBytes);
-                payload.AddRange(value);
-                payload.AddRange(NewlineBytes);
+                var nameBytes = name.ToUtf8();
+                headerList.Add((nameBytes, value));
+                size += nameBytes.Length + ColonSpaceBytes.Length + value.Length + NewlineBytes.Length;
             }
-            payload.AddRange(body);
-            return payload.ToArray();
+
+            // Exact-size buffer: no List<byte> growth and no ToArray copy
+            var payload = new byte[size];
+            var offset = 0;
+            Append(payload, ref offset, methodBytes);
+            Append(payload, ref offset, SpaceBytes);
+            Append(payload, ref offset, pathBytes);
+            Append(payload, ref offset, NewlineBytes);
+            foreach (var (nameBytes, value) in headerList)
+            {
+                Append(payload, ref offset, nameBytes);
+                Append(payload, ref offset, ColonSpaceBytes);
+                Append(payload, ref offset, value);
+                Append(payload, ref offset, NewlineBytes);
+            }
+
+            Append(payload, ref offset, body);
+            return payload;
+        }
+
+        private static void Append(byte[] destination, ref int offset, byte[] source)
+        {
+            Buffer.BlockCopy(source, 0, destination, offset, source.Length);
+            offset += source.Length;
         }
 
         /// <summary>Convert to utf-8 bytes</summary>
@@ -202,6 +223,34 @@ namespace TrueLayer.Signing
             {
                 return sha512.ComputeHash(signingInput);
             }
+#endif
+        }
+
+        /// <summary>
+        /// Computes the SHA-512 hash of the JWS signing input "base64url(header).base64url(payload)"
+        /// from the raw payload bytes. On .NET 9+ the payload is encoded into a pooled buffer and hashed
+        /// without creating an intermediate base64url string.
+        /// </summary>
+        internal static byte[] ComputeJwsSigningHash(string headerB64, byte[] payload)
+        {
+#if NET9_0_OR_GREATER
+            var encodedLength = System.Buffers.Text.Base64Url.GetEncodedLength(payload.Length);
+            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(encodedLength);
+            try
+            {
+                System.Buffers.Text.Base64Url.EncodeToUtf8(payload, buffer, out _, out var written);
+                using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA512);
+                hash.AppendData(Encoding.ASCII.GetBytes(headerB64));
+                hash.AppendData(DotBytes);
+                hash.AppendData(buffer, 0, written);
+                return hash.GetHashAndReset();
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+            }
+#else
+            return ComputeJwsSigningHash(headerB64, Base64Url.Encode(payload));
 #endif
         }
     }

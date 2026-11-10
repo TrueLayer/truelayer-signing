@@ -1,5 +1,6 @@
 using Xunit;
 using System;
+using System.Linq;
 using System.Text;
 using AwesomeAssertions;
 
@@ -12,6 +13,20 @@ namespace TrueLayer.Signing.Tests
     public class Base64UrlTest
     {
         #region Encode Tests
+
+        [Fact]
+        public void Encode_AllLengthsAndAlphabetEdges_MatchesReferenceEncoding()
+        {
+            // bytes chosen so the standard alphabet produces '+' and '/'; lengths cover every padding case
+            for (var length = 0; length <= 64; length++)
+            {
+                var input = Enumerable.Range(0, length).Select(i => (byte)(i % 2 == 0 ? 0xFB : 0xFF)).ToArray();
+                var expected = Convert.ToBase64String(input).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+                Base64Url.Encode(input).Should().Be(expected, $"length {length}");
+            }
+        }
+
 
         [Fact]
         public void Encode_EmptyInput_ShouldReturnEmptyString()
