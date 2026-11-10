@@ -376,7 +376,7 @@ public class UsageTest {
                 SignatureException.class,
                 () -> Verifier.extractJku("an-invalid..signature")
         );
-        assertEquals("Failed to parse JWS: Invalid JWS header: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
+        assertEquals("Failed to parse JWS: Invalid JWS header: Invalid JSON object", e.getMessage());
     }
 
     @Test
@@ -415,7 +415,7 @@ public class UsageTest {
                         .body("{}")
                         .verify("an-invalid..signature")
         );
-        assertEquals("Failed to parse JWS: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
+        assertEquals("Failed to parse JWS: Invalid JSON object", e.getMessage());
     }
 
     @Test

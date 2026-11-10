@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
-    id 'maven-publish'
-    id 'signing'
+    // Brings its own maven-publish + signing; publishes to the Sonatype Central Portal.
+    id 'com.vanniktech.maven.publish'
 }
 
 repositories {
@@ -18,6 +18,6 @@ apply from: project.file('test.gradle')
 apply from: project.file('publish.gradle')
 
 dependencies {
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
-    implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.84")
+    implementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
 }

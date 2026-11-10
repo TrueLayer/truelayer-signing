@@ -1,16 +1,6 @@
 plugins {
-    //    // nexus publishing
-    id "io.github.gradle-nexus.publish-plugin"  version "2.0.0"
-
-}
-
-nexusPublishing {
-    repositories {
-        sonatype {
-            nexusUrl = uri(sonatype_repository_url)
-            snapshotRepositoryUrl = uri(sonatype_snapshot_repository_url)
-            username = System.getenv("SONATYPE_USERNAME")
-            password = System.getenv("SONATYPE_PASSWORD")
-        }
-    }
+    // Publishes directly to the Sonatype Central Portal (central.sonatype.com),
+    // replacing the EOL'd OSSRH / Nexus Repository Manager (s01.oss.sonatype.org).
+    // Pinned here; applied in the :lib project, which produces the published artifact.
+    id "com.vanniktech.maven.publish" version "0.34.0" apply false
 }

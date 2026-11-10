@@ -1,13 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2023",
     "module": "commonjs",
     "declaration": true,
     "outDir": "./lib",
     "strict": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "lib": [
+      "ES2023",
+      "ESNext.Disposable"
+    ]
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "usage.test.js"],
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "usage.test.js"
+  ]
 }
