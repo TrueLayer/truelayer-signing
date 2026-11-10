@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Add Native AOT and trimming support (`IsAotCompatible`, `IsTrimmable`), using System.Text.Json source generation on .NET 5.0+.
 * Remove the `jose-jwt` dependency, JWS signing and verification are now implemented directly on `ECDsa`.
   Consumers using `Jose.*` types transitively must now reference `jose-jwt` explicitly.
+* Add `Signer.SignWithDigestFunction`, for signers that sign a SHA-512 digest (e.g. a KMS). The signing input is hashed directly, so signing a large body allocates about 1x the body instead of about 11x with `SignWithFunction` (.NET 9+).
+* Reduce `SignWithFunction` allocations by ~32% on .NET 9+: exact-size signing payload, and `Base64Url.Encode` uses `System.Buffers.Text.Base64Url` on .NET 9+.
 * Reduce memory allocations by ~38% for verification (14.73 KB → 9.13 KB) and ~47% for signing (13.47 KB → 7.12 KB).
 * `Verify()` with a non P-521 key now fails with `unsupported key, ES512 requires a P-521 key` instead of `Invalid signature`.
 * `Microsoft.Extensions.Primitives` is now referenced per target framework (10.0.0 for net10.0, 9.0.11 for net9.0, 8.0.0 otherwise).
